@@ -9,19 +9,23 @@
 from mule.validators import ValidateError
 import sys
 
-def validate(ancilFile,fix=False):
+def validate(ancilFile,fix=False,filename=None):
     # Validate ancillary file.
     try:
-        return ancilFile.validate()
+        ancilFile.validate()
     except ValidateError as e:
-        print("Validation failed with the following error message:\n"+\
+        if filename is None:
+            text = ""
+        else:
+            text = f"for '{filename}' "
+        print(f"Validation failed {text}with the following error message:\n"+\
                 "'{}'\n".format('\n'.join(str(e).split('\n')[1:])))
         if not fix:
             sys.exit()
         else:
             print("Fixing validation error...")
-            newAncilFile = _fix_error(e,ancilFile)
-            return newAncilFile
+            ancilFile = _fix_error(e,ancilFile)
+    return ancilFile
 
 def _input(values,prompt):
     output = input(prompt) 

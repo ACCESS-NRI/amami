@@ -5,7 +5,6 @@ import mule
 import itertools
 import numpy as np
 from scipy.interpolate import interpn
-from mule.validators import ValidateError
 import sys
 import os
 
@@ -14,9 +13,15 @@ class FixValidateError(Exception):
 
 def read_ancil(ancilFilename):
     ancilFilename = os.path.abspath(ancilFilename)
-    file = mule.load_umfile(ancilFilename)
-    if not isinstance(file,mule.ancil.AncilFile):
-        sys.exit(f"{ancilFilename} does not appear to be a valid UM ancillary file.")
+    if not os.path.isfile(ancilFilename):
+        sys.exit(f"Ancillary file '{ancilFilename}' does not exist.")
+    try:
+        file = mule.load_umfile(ancilFilename)
+    except ValueError:
+        sys.exit(f"'{ancilFilename}' does not appear to be a valid UM ancillary file.")
+    else:
+        if not isinstance(file,mule.ancil.AncilFile):
+            sys.exit(f"'{ancilFilename}' does not appear to be a valid UM ancillary file.")
     return file
 
 def regrid_ancil(inputFile,lat_out=None,lon_out=None,nlev_out=None):
@@ -49,14 +54,12 @@ def regrid_ancil(inputFile,lat_out=None,lon_out=None,nlev_out=None):
     ntimes = inputFile.integer_constants.num_times
     lbegin = f.lbegin
     # Check if ancil file has pseudolevs
-    pseudoLevs = [f.lbuser5 for f in inputFile.fields[:(len(inputFile.fields)//ntimes)]]
-    pseudoLevs = [val for i,val in enumerate(pseudoLevs[:-1]) if val == 0 or pseudoLevs[i+1]<pseudoLevs[i]]+[pseudoLevs[-1]]
-    if sum(pseudoLevs) == 0:
-        pseudoLevs = [1]
-    elif nlev_out != 1:
+    first_fields = inputFile.fields[:(len(inputFile.fields)//(ntimes*inputFile.integer_constants.num_levels))].copy()
+    npseudoLevs_per_var = [f.lbuser5 for i,f in enumerate(first_fields[:-1]) if f.lbuser5==0 or first_fields[i+1].lbuser5<first_fields[i].lbuser5]+[first_fields[-1].lbuser5]
+    if sum(npseudoLevs_per_var) != 0 and nlev_out != 1:
         raise ValueError("Pseudo-levels found in the ancilFile, but 'nlev_out' is not 1.")
     else:
-        pseudoLevs = [l+1 if l == 0 else l for l in pseudoLevs]
+        npseudoLevs_per_var = [l+1 if l == 0 else l for l in npseudoLevs_per_var]
     # Parse output coords 
     # Latitude
     if lat_out is None:
@@ -123,16 +126,18 @@ def regrid_ancil(inputFile,lat_out=None,lon_out=None,nlev_out=None):
         newfields[0,...]=newfields[0,...].mean(axis=0)
         newfields[-1,...]=newfields[-1,...].mean(axis=0)
 
+    # Regrid
     k=0
-    fldind = [0]+np.cumsum(pseudoLevs).tolist()[:-1]
+    # Create indeces of first new variable
+    varind = [[f.lbuser4 for f in inputFile.fields].index(k) for k in dict.fromkeys([f.lbuser4 for f in inputFile.fields]).keys()]
     for _ in range(ntimes):
-        for _ in range(nlev_out):
-            for ips,nl in enumerate(pseudoLevs):
-                for l in range(1,nl+1):
-                    regriddedFile.fields.append(inputFile.fields[fldind[ips]].copy())
+        for ips,nps in enumerate(npseudoLevs_per_var):
+            for _ in range(nlev_out):
+                for l in range(1,nps+1):
+                    regriddedFile.fields.append(inputFile.fields[varind[ips]].copy())
                     f = regriddedFile.fields[k]
                     # Change field pseudo-level
-                    if len(pseudoLevs) > 1:
+                    if len(npseudoLevs_per_var) > 1:
                         f.lbuser5 = l
                     else:
                         f.lbuser5 = 0

@@ -8,7 +8,7 @@
 # Interpolate an ancillary file onto another grid
 
 def read_files(inputFilename,gridFilename):
-    print(f"====== Reading '{inputFilename}' ancillary file... ======", end="\r")
+    print(f"====== Reading ancillary files... ======")
     # READ FILES
     inputFile = read_ancil(inputFilename)
     try:
@@ -16,25 +16,25 @@ def read_files(inputFilename,gridFilename):
         umgrid=True
     except ValueError:
         try:
-            gridFile = xr.load_dataset(gridFilename)
+            gridFile = xr.load_dataset(gridFilename,decode_times=False)
             umgrid=False
         except ValueError:
             sys.exit(f"GRIDFILE must be either a UM ancillary file or a netCDF file.")
-    print(f"====== Reading '{inputFilename}' ancillary file OK! ======")
+    print(f"====== Reading ancillary files OK! ======")
     return inputFile,gridFile,umgrid
 
-def consistency_check(inputFile,gridFile,umgrid,latcoord=None,loncoord=None,levcoord=None):
-    print("====== Consistency check... ======", end="\r")
+def consistency_check(inputFile,gridFile,umgrid,latcoord=None,loncoord=None,levcoord=None,fix=False):
+    print("====== Consistency check... ======")
     # Check that both ancillary file and grid file are valid.
     # AncilFile
-    validate(inputFile)
+    inputFile = validate(inputFile,filename=inputFilename,fix=fix)
     nlat_input = inputFile.integer_constants.num_rows
     nlon_input = inputFile.integer_constants.num_cols
     nlev_input = inputFile.integer_constants.num_levels
     
     # GridFile
     if umgrid: #If the grid is a um ancil file
-        validate(gridFile)
+        gridFile = validate(gridFile,filename=gridFilename,fix=fix)
         nlat_target = gridFile.integer_constants.num_rows
         firstlat_target = gridFile.real_constants.start_lat
         dlat_target = gridFile.real_constants.row_spacing
@@ -76,7 +76,7 @@ def consistency_check(inputFile,gridFile,umgrid,latcoord=None,loncoord=None,levc
                         "file use the '--level <name>' option.")
         elif levcoord not in gridFile.dims:
             sys.exit(f"Specified vertical level dimension '{levcoord}' not found in netCDF file.")
-        nlev_target = len(gridFile.dims[levcoord])
+        nlev_target = len(gridFile[levcoord])
 
     # Check that both InputFile and gridFile are consistent in case latitude, longitude or levels are of length 1
     # Check Latitude
@@ -104,7 +104,6 @@ def consistency_check(inputFile,gridFile,umgrid,latcoord=None,loncoord=None,levc
     return lat_out,lon_out,nlev_target
 
 def regrid_and_write(inputFile,lat_out,lon_out,nlev_out,outputFilename):
-    print(f"====== Regridding and writing '{outputFilename}' ancillary file... ======", end="\r")
     if outputFilename is None:
         outputFilename=inputFilename+"_regridded"
         k=0
@@ -113,14 +112,14 @@ def regrid_and_write(inputFile,lat_out,lon_out,nlev_out,outputFilename):
             outputFilename = outputFilename+str(k)
     else:
         outputFilename = os.path.abspath(outputFilename)
-
+    print(f"====== Regridding and writing '{outputFilename}'... ======")
     outputFile = regrid_ancil(inputFile,lat_out,lon_out,nlev_out)
     outputFile.to_file(outputFilename)
-    print(f"====== Regridding and writing '{outputFilename}' ancillary file OK! ======")
+    print(f"====== Regridding and writing '{outputFilename}' OK! ======")
 
-def main(inputFilename,gridFilename,outputFilename,loncoord,latcoord,levcoord):
+def main(inputFilename,gridFilename,outputFilename,loncoord,latcoord,levcoord,fix):
     inputFile,gridFile,umgrid = read_files(inputFilename,gridFilename)
-    lat_out,lon_out,nlev_out = consistency_check(inputFile,gridFile,umgrid,latcoord,loncoord,levcoord)
+    lat_out,lon_out,nlev_out = consistency_check(inputFile,gridFile,umgrid,latcoord,loncoord,levcoord,fix)
     regrid_and_write(inputFile,lat_out,lon_out,nlev_out,outputFilename)
 
 if __name__ == '__main__':
@@ -138,11 +137,13 @@ if __name__ == '__main__':
     parser.add_argument('-o', '--output', dest='um_output_file', required=False, type=str,
                         help='UM ancillary output file.')
     parser.add_argument('--lat', '--latitude', dest='ncfile_latitude_name', required=False, type=str,
-                        help='Name of the latitude dimension in the netCDF file.')
+                        help='If GRIDFILE is a netCDF file, name of the latitude dimension in it.')
     parser.add_argument('--lon', '--longitude', dest='ncfile_longitude_name', required=False, type=str,
-                        help='Name of the longitude dimension in the netCDF file.')
+                        help='If GRIDFILE is a netCDF file, name of the longitude dimension in it.')
     parser.add_argument('--lev', '--level', dest='ncfile_level_name', required=False, type=str,
-                        help='Name of the level dimension in the netCDF file.')
+                        help='If GRIDFILE is a netCDF file, name of the vertical level dimension in it.')
+    parser.add_argument('--fix', dest='fix', action='store_true', 
+                        help="Try to fix any validation error.")
 
     args = parser.parse_args()
     inputFilename=os.path.abspath(args.um_input_file)
@@ -151,15 +152,14 @@ if __name__ == '__main__':
     latcoord=args.ncfile_latitude_name
     loncoord=args.ncfile_longitude_name
     levcoord=args.ncfile_level_name
+    fix=args.fix
 
     # Imports here to improve performance when running with '--help' option
     import sys
-    import mule
     import xarray as xr
     import warnings
     warnings.filterwarnings("ignore")
     from umami.utils import regrid_ancil, get_dim_name_from_netcdf, read_ancil
     from umami.utils.validation_tools import validate
 
-
-    main(inputFilename,gridFilename,outputFilename,loncoord,latcoord,levcoord)
+    main(inputFilename,gridFilename,outputFilename,loncoord,latcoord,levcoord,fix)
