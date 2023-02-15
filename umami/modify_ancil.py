@@ -4,6 +4,18 @@
 
 # Modify a UM ancillary file using data from a netCDF file
 
+
+# READ FILES
+def read_files(inputFilename,ncFilename):        
+    inputFile = read_ancil(inputFilename)
+    ncFile = xr.load_dataset(ncFilename, decode_times=False)
+    print(f"====== Reading '{inputFilename}' ancillary file OK! ======")
+    return inputFile, ncFile
+
+def main(inputFilename,ncFilename,outputFilename,latcoord,loncoord,tcoord,
+        levcoord,pseudocoord,nanval,regrid,ignore_levels,fix):
+    pass
+
 import argparse
 import os
 
@@ -35,8 +47,8 @@ parser.add_argument('--ignore-levels', dest='ignore_levels', action="store_true"
                           consider it as having only one level.\
                           (Necessary for a mismatch between the actual level dimension \
                           and the 'integer_constans.num_levels' header in some ancillary files.)")
-parser.add_argument('--fix', dest='fix_validation', required=False, action='store_true',
-                    help='Try to fix any ancillary validation error.')
+parser.add_argument('--fix', dest='fix', action='store_true', 
+                    help="Try to fix any validation error.")
 
 args = parser.parse_args()
 inputFilename=os.path.abspath(args.um_input_file)
@@ -50,167 +62,148 @@ pseudocoord=args.pseudo_level_name
 nanval=args.nanval
 regrid=args.regrid
 ignore_levels=args.ignore_levels
-fix=args.fix_validation
+fix=args.fix
 
-print(f"====== Reading '{inputFilename}' ancillary file... ======", end="\r")
+# Consistency with options
+if ignore_levels is not None and levcoord is not None:
+    sys.exit("The '--levcoord' and '--ignore-levels' options are mutually exclusive.")
+
+print(f"====== Reading '{inputFilename}' ancillary file... ======")
 
 import mule
 from mule.validators import ValidateError
 import xarray as xr
 import sys
 import numpy as np
-from umami.umami.utils.fix_validation_error import validate_and_fix, FixValidateError
+from umami.ancil_utils.validation_tools import validate
 import warnings
 warnings.filterwarnings("ignore")
+from umami.ancil_utils import UM_NANVAL, read_ancil
+from umami.netcdf_utils import get_dim_name
 
-# Set UM nanval
-UM_NANVAL=-1073741824.0 #(-2.0**30)
-
-# READ FILES
-inputFile = mule.AncilFile.from_file(inputFilename)
-ncFile = xr.load_dataset(ncFilename, decode_times=False).squeeze()
-print(f"====== Reading '{inputFilename}' ancillary file OK! ======")
-
-
-del inputFile.fields[-1]
-for f in inputFile.fields:
-    f.lbhem=0
-
+main(inputFilename,ncFilename,outputFilename,latcoord,loncoord,tcoord,
+    levcoord,pseudocoord,nanval,regrid,ignore_levels,fix)
 
 # CONSISTENCY CHECK
-print("====== Consistency check... ======", end="\r")
-# Check that ancillary file is valid.
-try:
-    if fix:
-        inputFile=validate_and_fix(inputFile)
-    else:
-        inputFile.validate()
-except ValidateError as e:
-    sys.exit(f"Validation failed for the input ancillary file '{inputFilename}'.\nValidator spawned the following error message:\n"+\
-            "{}".format('\n'.join(str(e).split('\n')[1:]))+\
-            "If you want to try and fix the error, use the '--fix' option.")
-except FixValidateError as e:
-    sys.exit(f"Validation and fix failed for the input ancillary file '{inputFilename}'.\n\n{str(e)}")
-
-# Check that longitude, latitude and time coords are present in the .nc file and they have consistent lenghts with the ancillary file
-dims=list(ncFile.dims)
-
-# Latitude
-if latcoord is None: #If user has not defined any latitude name
-    if "latitude" in dims:
-        latcoord="latitude"
-    elif "lat" in dims:
-        latcoord="lat"
-    else:
-        sys.exit("No latitude dimension found in the netCDF file."
-            "\nTo specify the name of the latitude dimension in the netCDF file use the '--latitude <name>' option.")
-elif latcoord not in dims:
-    sys.exit(f"Specified latitude dimension '{latcoord}' not found in netCDF file.")
-nlat=len(ncFile[latcoord])
-# Check that latitude dimension is consistent
-if (not regrid) and (nlat != inputFile.integer_constants.num_rows):
-    sys.exit(f"Latitude dimension not consistent!\nLength of netCDF file's latitude: {nlat}."
-        f" Length of ancillary file's latitude: {inputFile.integer_constants.num_rows}."
-        "\nIf you want to regrid the ancillary file onto the netCDF grid, please use the '--regrid' option.")
-dims.remove(latcoord)
-
-# Longitude
-if loncoord is None: #If user has not defined any longitude name
-    if "longitude" in dims:
-        loncoord="longitude"
-    elif "lon" in dims:
-        loncoord="lon"
-    else:
-        sys.exit("No longitude dimension found in the netCDF file."
-            "\nTo specify the name of the longitude dimension in the netCDF file use the '--longitude <name>' option.")
-elif loncoord not in dims:
-    sys.exit(f"Specified longitude dimension '{loncoord}' not found in netCDF file.")
-nlon=len(ncFile[loncoord])
-# Check that longitude dimension is consistent
-if (not regrid) and (nlon != inputFile.integer_constants.num_cols):
-    sys.exit(f"Longitude dimension not consistent!\nLength of netCDF file's longitude: {nlon}."
-        f" Length of ancillary file's longitude: {inputFile.integer_constants.num_cols}."
-        "\nIf you want to regrid the ancillary file onto the netCDF grid, please use the '--regrid' option.")
-dims.remove(loncoord)
-
-# Time
-if inputFile.integer_constants.num_times > 1:
-    if tcoord is None: #If user has not defined any time name
-        if "time" in dims:
-            tcoord="time"
-        elif "t" in dims:
-            tcoord="t"
-        else:
-            sys.exit("No time dimension found in the netCDF file."
-                "\nTo specify the name of the time dimension in the netCDF file use the '--time <name>' option.")
-    elif tcoord not in dims:
-        sys.exit(f"Specified time dimension '{tcoord}' not found in netCDF file.")
-    ntime=len(ncFile[tcoord])
-    dims.remove(tcoord)
-else:
-    ntime = 1
-# Check that level time is consistent
-if ntime != inputFile.integer_constants.num_times:
-    sys.exit(f"Time dimension not consistent!\nLength of netCDF file's time: {ntime}."
-        f" Length of ancillary file's time: {inputFile.integer_constants.num_times}.")
-
-# Level
-if inputFile.integer_constants.num_levels > 1 and not ignore_levels:
-    if levcoord is None: #If user has not defined any level name
-        if len(dims) >= 1:
-            vert_levs=["hybrid","sigma","pressure","depth","surface"]
-            # Check if ancillary file has level variable
-            for vlev in vert_levs:
-                if sum([vlev in s for s in dims]) == 1:
-                    levcoord=dims[[vlev in s for s in dims].index(True)]
-                    break
-                sys.exit(f"Vertical levels found in the ancillary file, but not able to identify vertical level dimension name in the netCDF file."
-                    "\nTo specify the name of the vertical level dimension in the netCDF file use the '--level <name>' option.")  
-        else:
-            sys.exit(f"Vertical levels found in the ancillary file, but no vertical level dimension found in the netCDF file.")
-    elif levcoord not in dims:
-        sys.exit(f"Specified vertical level dimension '{levcoord}' not found in netCDF file.")
-    nlev = len(ncFile[levcoord])
-    dims.remove(levcoord)
-else:
-    if levcoord is not None:
-        sys.exit(f"Vertical level dimension '{levcoord}' specified, but no vertical level dimension found in the ancillary file.")
-    nlev = 1
-# Check that level dimension is consistent
-if nlev != inputFile.integer_constants.num_levels and not ignore_levels:
-    sys.exit(f"Vertical level dimension not consistent!\nLength of netCDF file's vertical level: {nlev}."
-        f" Length of ancillary file's vertical level: {inputFile.integer_constants.num_levels}.")
+def consistency_check(inputFile,ncFile,inputFilename,gridFilename,latcoord=None,loncoord=None,levcoord=None,fix=False):
+    print("====== Consistency check... ======")
+    # Check that ancillary file is valid.
+    inputFile = validate(inputFile,filename=inputFilename,fix=fix)
+    # Check that longitude, latitude and time coords are present in the .nc file and they have consistent lenghts with the ancillary file
+    dims=list(ncFile.dims)
     
-# Pseudo-levels
-if sum([f.lbuser5 for f in inputFile.fields]) != 0:
-    if pseudocoord is None: #If user has not defined any pseudo-level name
-        # Check if ancillary file has pseudo-levels
-            if len(dims) == 0:
-                sys.exit(f"Pseudo-levels found in the ancillary file, but no pseudo-level dimension found in the netCDF file.")
-            elif len(dims) > 1:
-                sys.exit(f"Pseudo-levels found in the ancillary file, but not able to identify pseudo-level dimension name in the netCDF file."
-                            "\nTo specify the name of the pseudo-level dimension in the netCDF file use the '--pseudo <name>' option.")
+    # Check latitude
+    if latcoord is None: #If user has not defined any latitude name
+        latcoord = get_dim_name(ncFile,dim_names=('latitude','lat'),
+            errmsg="No latitude dimension found in the netCDF file.\n"
+                    "To specify the name of the latitude dimension in the netCDF "
+                    "file use the '--latitude <name>' option.")
+    elif latcoord not in ncFile.dims:
+        sys.exit(f"Specified latitude dimension '{latcoord}' not found in netCDF file.")
+    nlat=len(ncFile[latcoord])
+    # Check that latitude dimension is consistent
+    if (not regrid) and (nlat != inputFile.integer_constants.num_rows):
+        sys.exit(f"Latitude dimension not consistent!\nLength of netCDF file's latitude: {nlat}."
+            f" Length of ancillary file's latitude: {inputFile.integer_constants.num_rows}."
+            "\nIf you want to regrid the ancillary file onto the netCDF grid, please use the '--regrid' option.")
+    dims.remove(latcoord)
+
+    # Check longitude
+    if loncoord is None: #If user has not defined any longitude name
+        loncoord = get_dim_name(ncFile,dim_names=('longitude','lon'),
+            errmsg="No longitude dimension found in the netCDF file.\n"
+                    "To specify the name of the longitude dimension in the netCDF "
+                    "file use the '--longitude <name>' option.")
+    elif loncoord not in ncFile.dims:
+        sys.exit(f"Specified longitude dimension '{loncoord}' not found in netCDF file.")
+    nlon=len(ncFile[loncoord])
+    # Check that longitude dimension is consistent
+    if (not regrid) and (nlon != inputFile.integer_constants.num_cols):
+        sys.exit(f"Longitude dimension not consistent!\nLength of netCDF file's longitude: {nlon}."
+            f" Length of ancillary file's longitude: {inputFile.integer_constants.num_cols}."
+            "\nIf you want to regrid the ancillary file onto the netCDF grid, please use the '--regrid' option.")
+    dims.remove(loncoord)
+
+    # Check time
+    if inputFile.integer_constants.num_times > 1:
+        if tcoord is None: #If user has not defined any longitude name
+            tcoord = get_dim_name(ncFile,dim_names=('time','t'),
+                errmsg="No time dimension found in the netCDF file.\n"
+                        "To specify the name of the time dimension in the netCDF "
+                        "file use the '--time <name>' option.")
+        elif tcoord not in ncFile.dims:
+            sys.exit(f"Specified longitude dimension '{tcoord}' not found in netCDF file.")
+        ntime=len(ncFile[tcoord])
+        dims.remove(tcoord)
+    else:
+        ntime = 1
+    # Check that time dimension is consistent
+    if ntime != inputFile.integer_constants.num_times:
+        sys.exit(f"Time dimension not consistent!\nLength of netCDF file's time: {ntime}."
+            f" Length of ancillary file's time: {inputFile.integer_constants.num_times}.")
+    
+    # Check level
+    if ignore_levels:
+        nlev = 1
+    else:
+        if levcoord is None:
+            if inputFile.integer_constants.num_levels == 1:
+                nlev = 1
+            elif len(dims) > 0:
+                levcoord = get_dim_name(ncFile,dim_names=("hybrid","sigma","pressure","depth","surface","vertical_level"),
+                    errmsg="No level dimension found in the netCDF file.\n"
+                            "To specify the name of the level dimension in the netCDF "
+                            "file use the '--level <name>' option."
+                            "\nIf you want to ignore the levels, please use the '--ignore-levels' option. (Note that this may fail)")
+                nlev=len(ncFile[levcoord])
             else:
-                pseudocoord=dims.pop()
-    elif pseudocoord not in dims:
-        sys.exit(f"Specified pseudo-level dimension '{pseudocoord}' not found in netCDF file.")
-    npseudo = len(ncFile[pseudocoord])
-    # Check that pseudo-levels are consistent
-    pseudoLevs=[f.lbuser5 for f in inputFile.fields[:(len(inputFile.fields)//ntime)]]
-    k=0
-    for i,var in enumerate(ncFile.data_vars):
-        if pseudocoord in ncFile[var].dims:
-            if len(set(pseudoLevs[k:k+npseudo])) != npseudo:
-                sys.exit(f"Pseudo dimension not consistent!\n"
-                f"Number of pseudo-levels in the ancillary variable n. {i}: {len(set(pseudoLevs[k:k+npseudo]))}."
-                f" Length of the '{pseudocoord}' dimension in the netCDF variable n. {i} ('{ncFile[var].name}'): {npseudo}.")
-            k+=npseudo
+                sys.exit(f"Vertical levels found in the ancillary file, but no vertical level dimension found in the netCDF file."
+                        "\nIf you want to ignore the levels, please use the '--ignore-levels' option. (Note that this may fail)")
+        elif levcoord not in ncFile.dims:
+            sys.exit(f"Specified level dimension '{levcoord}' not found in netCDF file.")
         else:
-            k+=1
-else:
-    if pseudocoord is not None:
-        sys.exit(f"Pseudo-level dimension '{pseudocoord}' specified, but no pseudo-level dimension found in the ancillary file.")
-    npseudo=1
+            nlev=len(ncFile[levcoord])
+        dims.remove(levcoord)
+        # Check that level dimension is consistent
+        if (not regrid) and (nlev != inputFile.integer_constants.num_levels):
+            sys.exit(f"Level dimension not consistent!\nLength of netCDF file's level: {nlev}."
+                f" Length of ancillary file's level: {inputFile.integer_constants.num_cols}."
+                "\nIf you want to regrid the ancillary file onto the netCDF grid, please use the '--regrid' option."
+                "\nIf you want to ignore the levels, please use the '--ignore-levels' option. (Note that this may fail)")
+
+    # Pseudo-levels
+    if sum([f.lbuser5 for f in inputFile.fields]) != 0:
+        if nlev != 1:
+            sys.exit(f"Inconsistency!! Pseudo-levels found in the ancillary file and number of levels in the netCDF > 1. Please use the '--ignore-level' option.")
+        elif pseudocoord is None: #If user has not defined any pseudo-level name
+            # Check if ancillary file has pseudo-levels
+                if len(dims) > 0:
+                    pseudocoord = get_dim_name(ncFile,dim_names=("pseudo"),
+                    errmsg="Pseudo-levels found in the ancillary file, but no pseudo-level dimension found in the netCDF file.\n"
+                            "To specify the name of the pseudo-level dimension in the netCDF "
+                            "file use the '--pseudo <name>' option.")
+                    npseudo = len(ncFile[pseudocoord])
+                else:
+                    sys.exit(f"Pseudo-levels found in the ancillary file, but no pseudo-level dimension found in the netCDF file.")
+        elif pseudocoord not in ncFile.dims:
+            sys.exit(f"Specified pseudo-level dimension '{pseudocoord}' not found in netCDF file.")
+        else:
+            npseudo = len(ncFile[pseudocoord])
+        # Check that pseudo-levels are consistent
+        pseudoLevs=[f.lbuser5 for f in inputFile.fields[:(len(inputFile.fields)//ntime)]]
+        k=0
+        for i,var in enumerate(ncFile.data_vars):
+            if pseudocoord in ncFile[var].dims:
+                if len(set(pseudoLevs[k:k+npseudo])) != npseudo:
+                    sys.exit(f"Pseudo dimension not consistent!\n"
+                    f"Number of pseudo-levels in the ancillary variable n. {i}: {len(set(pseudoLevs[k:k+npseudo]))}."
+                    f" Length of the '{pseudocoord}' dimension in the netCDF variable n. {i} ('{ncFile[var].name}'): {npseudo}.")
+                k+=npseudo
+            else:
+                k+=1
+    else:
+        if pseudocoord is not None:
+            sys.exit(f"Pseudo-level dimension '{pseudocoord}' specified, but no pseudo-level dimension found in the ancillary file.")
     
 # Check that the number of variables is consistent
 nvarsnc = len(ncFile.data_vars)
@@ -231,7 +224,7 @@ if outputFilename is None:
         outputFilename = outputFilename+str(k)
 else:
     outputFilename = os.path.abspath(outputFilename)
-print(f"====== Writing '{outputFilename}' ancillary file... ======", end="\r")
+print(f"====== Writing '{outputFilename}' ancillary file... ======")
 # Get the correct shape and substitute netCDF nan with the UM nan value
 
 def substitute_nanval(data):

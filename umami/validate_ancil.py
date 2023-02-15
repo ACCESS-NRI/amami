@@ -69,7 +69,7 @@ if __name__ == '__main__':
     import warnings
     import os
     warnings.filterwarnings("ignore")
-    from umami.utils.validation_tools import validate
-    from umami.utils import read_ancil
+    from umami.ancil_utils.validation_tools import validate
+    from umami.ancil_utils import read_ancil
 
     main(ancilFilename,fix,inplace,outFilename)

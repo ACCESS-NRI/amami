@@ -8,8 +8,7 @@ from scipy.interpolate import interpn
 import sys
 import os
 
-class FixValidateError(Exception):
-    pass
+UM_NANVAL=-1073741824.0 #(-2.0**30)
 
 def read_ancil(ancilFilename):
     ancilFilename = os.path.abspath(ancilFilename)
@@ -132,7 +131,7 @@ def regrid_ancil(inputFile,lat_out=None,lon_out=None,nlev_out=None):
     varind = [[f.lbuser4 for f in inputFile.fields].index(k) for k in dict.fromkeys([f.lbuser4 for f in inputFile.fields]).keys()]
     for _ in range(ntimes):
         for ips,nps in enumerate(npseudoLevs_per_var):
-            for _ in range(nlev_out):
+            for lev in range(nlev_out):
                 for l in range(1,nps+1):
                     regriddedFile.fields.append(inputFile.fields[varind[ips]].copy())
                     f = regriddedFile.fields[k]
@@ -151,14 +150,9 @@ def regrid_ancil(inputFile,lat_out=None,lon_out=None,nlev_out=None):
                     f.bdx = dlon_out
                     f.bzy = lat_out[0] - dlat_out
                     f.bzx = lon_out[0] - dlon_out
+                    f.lblev = lev + 1
+                    f.blev = lev + 1 #MODIFY!!!!!!!!!
                     f.set_data_provider(mule.ArrayDataProvider(newfields[:,:,k]))
                     k+=1
     return regriddedFile
-
-def get_dim_name_from_netcdf(inputFile,dim_names,errmsg):
-    for dim in dim_names:
-        if dim in inputFile.dims:
-            return dim
-        else:
-            sys.exit(errmsg)
 

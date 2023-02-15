@@ -4,7 +4,7 @@
 # Created by Davide Marchegiani - davide.marchegiani@anu.edu.au
 def main(maskFilename):
     STASH_CODE = 30
-    mask = _read_ancil(maskFilename)
+    mask = read_ancil(maskFilename)
     # Verify that the ancilfile has the correct stash code.
     if mask.fields[0].lbuser4 != STASH_CODE:
         sys.exit(f"{maskFilename} does not appear to be a valid UM mask file.\n"+\
@@ -24,7 +24,7 @@ if __name__ == '__main__':
     import sys
     import warnings
     warnings.filterwarnings("ignore")
-    from umami.utils import _read_ancil
+    from umami.ancil_utils import read_ancil
 
     main(maskFilename)
 
