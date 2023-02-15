@@ -23,7 +23,7 @@ def read_ancil(ancilFilename):
             sys.exit(f"'{ancilFilename}' does not appear to be a valid UM ancillary file.")
     return file
 
-def regrid_ancil(inputFile,lat_out=None,lon_out=None,nlev_out=None):
+def regrid_ancil(inputFile,lat_out=None,lon_out=None,lev_out=None):
     '''
     Regrids a UM ancilFile over latitude, longitude and UM vertical levels, using scipy.interpolate.interpn function.
 
@@ -33,9 +33,8 @@ def regrid_ancil(inputFile,lat_out=None,lon_out=None,nlev_out=None):
       be performed over latitude.
     - lon_out is an array-like variable with the output longitude coordinate. If set to None, no regridding will
       be performed over longitude.
-    - nlev_out is an integer with the the number of vertical levels in output. If set to None, no regridding 
-      will be performed over vertical levels. Pseudo-levels are not counted as vertical levels and regridding
-      will not be performed for pseudo-levels. If ancilFile has pseudo-levels, nlev_out needs to be 1.
+    - lev_out is an array-like variable with the output vertical level coordinate. If set to None, no regridding will
+      be performed over vertical levels.
     '''
 
     # Parse input file
@@ -49,14 +48,15 @@ def regrid_ancil(inputFile,lat_out=None,lon_out=None,nlev_out=None):
     lon_in = np.linspace(f.bzx+f.bdx,
                         f.bzx+f.bdx+f.bdx*(inputFile.integer_constants.num_cols-1),
                         inputFile.integer_constants.num_cols)
-    lev_in = np.arange(1,inputFile.integer_constants.num_levels+1)
+    lev_in = list(set([f.blev for f in inputFile.fields]))
+    lev_in.sort()
     ntimes = inputFile.integer_constants.num_times
     lbegin = f.lbegin
     # Check if ancil file has pseudolevs
     first_fields = inputFile.fields[:(len(inputFile.fields)//(ntimes*inputFile.integer_constants.num_levels))].copy()
     npseudoLevs_per_var = [f.lbuser5 for i,f in enumerate(first_fields[:-1]) if f.lbuser5==0 or first_fields[i+1].lbuser5<first_fields[i].lbuser5]+[first_fields[-1].lbuser5]
-    if sum(npseudoLevs_per_var) != 0 and nlev_out != 1:
-        raise ValueError("Pseudo-levels found in the ancilFile, but 'nlev_out' is not 1.")
+    if sum(npseudoLevs_per_var) != 0 and len(lev_out) != 1:
+        raise ValueError("Pseudo-levels found in the ancilFile, but length of 'lev_out' is not 1.")
     else:
         npseudoLevs_per_var = [l+1 if l == 0 else l for l in npseudoLevs_per_var]
     # Parse output coords 
@@ -75,15 +75,16 @@ def regrid_ancil(inputFile,lat_out=None,lon_out=None,nlev_out=None):
     elif not hasattr(lon_out,'__iter__'):
         raise TypeError("'lon_out' needs to be an iterable.")
     # Vertical levels
-    if nlev_out is None:
-        lev_out = lev_in        
-    elif not isinstance(nlev_out,int):
-        raise TypeError("'nlev_out' needs to be an integer.")
-    else:
-        lev_out = np.linspace(1,inputFile.integer_constants.num_levels,nlev_out)
+    if lev_out is None:
+        lev_out = lev_in
+    elif isinstance(lev_out,(int, float)) and not isinstance(lon_out, bool):
+        lev_out = [lev_out]
+    elif not hasattr(lev_out,'__iter__'):
+        raise TypeError("'lev_out' needs to be an iterable.")
     
     nlat_out = len(lat_out)
     nlon_out = len(lon_out)
+    nlev_out = len(lev_out)
     if len(lat_out) > 1:
         dlat_out = lat_out[1] - lat_out[0]
     else:
@@ -116,7 +117,8 @@ def regrid_ancil(inputFile,lat_out=None,lon_out=None,nlev_out=None):
             data.append(inputFile.fields[f].copy().get_data())
             f += 1
         values = np.stack(data,axis=2)
-        interp.append(interpn((lat_in,lon_in,lev_in), values, outpoints, bounds_error=False, fill_value=None).reshape(nlat_out,nlon_out,nlev_out))
+        interp.append(interpn((lat_in,lon_in,lev_in), values, outpoints, 
+            bounds_error=False, fill_value=None).reshape(nlat_out,nlon_out,nlev_out))
     newfields = np.stack(interp,axis=3).reshape(nlat_out,nlon_out,-1)
     # If the grid is a global one, force polar values to be the zonal means
     if (inputFile.fixed_length_header.horiz_grid_type == 0 and 
@@ -131,13 +133,13 @@ def regrid_ancil(inputFile,lat_out=None,lon_out=None,nlev_out=None):
     varind = [[f.lbuser4 for f in inputFile.fields].index(k) for k in dict.fromkeys([f.lbuser4 for f in inputFile.fields]).keys()]
     for _ in range(ntimes):
         for ips,nps in enumerate(npseudoLevs_per_var):
-            for lev in range(nlev_out):
-                for l in range(1,nps+1):
+            for ilvl,lvl in enumerate(lev_out):
+                for psl in range(1,nps+1):
                     regriddedFile.fields.append(inputFile.fields[varind[ips]].copy())
                     f = regriddedFile.fields[k]
                     # Change field pseudo-level
                     if len(npseudoLevs_per_var) > 1:
-                        f.lbuser5 = l
+                        f.lbuser5 = psl
                     else:
                         f.lbuser5 = 0
                     # Change field headers relative to coordinates
@@ -150,8 +152,8 @@ def regrid_ancil(inputFile,lat_out=None,lon_out=None,nlev_out=None):
                     f.bdx = dlon_out
                     f.bzy = lat_out[0] - dlat_out
                     f.bzx = lon_out[0] - dlon_out
-                    f.lblev = lev + 1
-                    f.blev = lev + 1 #MODIFY!!!!!!!!!
+                    f.lblev = ilvl + 1
+                    f.blev = lvl + 1 #MODIFY!!!!!!!!!
                     f.set_data_provider(mule.ArrayDataProvider(newfields[:,:,k]))
                     k+=1
     return regriddedFile
