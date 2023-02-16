@@ -1,14 +1,22 @@
 #!/usr/bin/env python
 
+# Copyright 2022 ACCESS-NRI and contributors. See the top-level COPYRIGHT file for details.
+# SPDX-License-Identifier: Apache-2.0
+
+# Created by Davide Marchegiani at ACCESS-NRI - davide.marchegiani@anu.edu.au
+
 # Count land points in land_mask UM ancil file
-# Created by Davide Marchegiani - davide.marchegiani@anu.edu.au
+
+from umami.quieterrors import QValueError
+
 def main(maskFilename):
     STASH_CODE = 30
     mask = read_ancil(maskFilename)
     # Verify that the ancilfile has the correct stash code.
-    if mask.fields[0].lbuser4 != STASH_CODE:
-        sys.exit(f"{maskFilename} does not appear to be a valid UM mask file.\n"+\
-                "Stash code should be {STASH_CODE}, but it is {mask.fields[0].lbuser4}.")
+    stash = mask.fields[0].lbuser4
+    if stash != STASH_CODE:
+        raise QValueError(f"{maskFilename} does not appear to be a valid UM mask file.\n"+\
+                "Stash code should be {STASH_CODE}, but it is {stash}.")
     print(mask.fields[0].get_data().sum())
 
 if __name__ == '__main__':

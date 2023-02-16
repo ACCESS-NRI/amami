@@ -1,10 +1,14 @@
 #!/usr/bin/env python
 
+# Copyright 2022 ACCESS-NRI and contributors. See the top-level COPYRIGHT file for details.
+# SPDX-License-Identifier: Apache-2.0
+
 # Script created by Davide Marchegiani (davide.marchegiani@anu.edu.au) at ACCESS-NRI.
 
 # /g/data3/hh5/public/apps/miniconda3/envs/analysis3-22.07/lib/python3.9/site-packages/mule/validators.py
 
 from mule.validators import ValidateError
+from umami.quieterrors import QFixError
 import sys
 
 def validate(ancilFile,fix=False,filename=None):
@@ -57,7 +61,7 @@ def _fix_error(error,ancilFile):
         newAncilFile.fixed_length_header.horiz_grid_type = int(grid_type)
         for f in newAncilFile.fields: f.lbhem = int(grid_type)%100
     else:
-        sys.exit("The validation error above could not be fixed or is currently not supported.")
+        raise QFixError("The validation error above could not be fixed or is currently not supported.")
     return newAncilFile
 
 

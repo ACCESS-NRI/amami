@@ -1,26 +1,34 @@
 # Copyright 2022 ACCESS-NRI and contributors. See the top-level COPYRIGHT file for details.
 # SPDX-License-Identifier: Apache-2.0
 
+# Script created by Davide Marchegiani (davide.marchegiani@anu.edu.au) at ACCESS-NRI.
+
 import mule
 import itertools
 import numpy as np
 from scipy.interpolate import interpn
 import sys
 import os
+from umami.quieterrors import QValueError
 
 UM_NANVAL=-1073741824.0 #(-2.0**30)
+
+def get_levels(ancilFile):
+    lev=list(set([f.blev for f in ancilFile.fields]))
+    lev.sort()
+    return lev
 
 def read_ancil(ancilFilename):
     ancilFilename = os.path.abspath(ancilFilename)
     if not os.path.isfile(ancilFilename):
-        sys.exit(f"Ancillary file '{ancilFilename}' does not exist.")
+        raise QValueError(f"Ancillary file '{ancilFilename}' does not exist.")
     try:
         file = mule.load_umfile(ancilFilename)
     except ValueError:
-        sys.exit(f"'{ancilFilename}' does not appear to be a valid UM ancillary file.")
+        raise QValueError(f"'{ancilFilename}' does not appear to be a valid UM ancillary file.")
     else:
         if not isinstance(file,mule.ancil.AncilFile):
-            sys.exit(f"'{ancilFilename}' does not appear to be a valid UM ancillary file.")
+            raise QValueError(f"'{ancilFilename}' does not appear to be a valid UM ancillary file.")
     return file
 
 def regrid_ancil(inputFile,lat_out=None,lon_out=None,lev_out=None):
@@ -48,8 +56,7 @@ def regrid_ancil(inputFile,lat_out=None,lon_out=None,lev_out=None):
     lon_in = np.linspace(f.bzx+f.bdx,
                         f.bzx+f.bdx+f.bdx*(inputFile.integer_constants.num_cols-1),
                         inputFile.integer_constants.num_cols)
-    lev_in = list(set([f.blev for f in inputFile.fields]))
-    lev_in.sort()
+    lev_in = get_levels(inputFile)
     ntimes = inputFile.integer_constants.num_times
     lbegin = f.lbegin
     # Check if ancil file has pseudolevs

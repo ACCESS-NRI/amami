@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+# Copyright 2022 ACCESS-NRI and contributors. See the top-level COPYRIGHT file for details.
+# SPDX-License-Identifier: Apache-2.0
+
 # Script created by Davide Marchegiani (davide.marchegiani@anu.edu.au) at ACCESS-NRI.
 
 # Validate a UM ancillary file
@@ -51,18 +54,18 @@ if __name__ == '__main__':
             elif len(others)>1:
                 for opt in ('--fix','--inplace','-o','--output'):
                     if opt in others:
-                        sys.exit("Please place any option before input ancillary file.")
-                    sys.exit("Too many arguments.")
+                        raise QParseError("Please place any option before input ancillary file.")
+                    raise QParseError("Too many arguments.")
         else:
-            sys.exit("The input ancillary file is required.")
+            raise QParseError("The input ancillary file is required.")
     # Consistency with options
     if not fix:
         if inplace:
-            sys.exit("The '--inplace' option can only be used in conjuction with the '--fix' option.")
+            raise QParseError("The '--inplace' option can only be used in conjuction with the '--fix' option.")
         elif outFilename is not None:
-            sys.exit("The '-o/--output' option can only be used in conjuction with the '--fix' option.")
+            raise QParseError("The '-o/--output' option can only be used in conjuction with the '--fix' option.")
     elif inplace and outFilename is not None:
-        sys.exit("The '-o/--output' and '--inplace' options are mutually exclusive.")
+        raise QParseError("The '-o/--output' and '--inplace' options are mutually exclusive.")
             
 
     # Imports here to improve performance when running with '--help' option
@@ -71,5 +74,6 @@ if __name__ == '__main__':
     warnings.filterwarnings("ignore")
     from umami.ancil_utils.validation_tools import validate
     from umami.ancil_utils import read_ancil
+    from umami.quieterrors import QParseError
 
     main(ancilFilename,fix,inplace,outFilename)
