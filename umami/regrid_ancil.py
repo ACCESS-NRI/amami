@@ -127,7 +127,7 @@ def consistency_check(inputFile,gridFile,inputFilename,gridFilename,umgrid,latco
     print("====== Consistency check OK! ======")
     return lat_out,lon_out,lev_out,inputFile
 
-def regrid_and_write(inputFile,lat_out,lon_out,lev_out,outputFilename):
+def regrid_and_write(inputFile,lat_out,lon_out,lev_out,method,outputFilename):
     if outputFilename is None:
         outputFilename=inputFilename+"_regridded"
         k=0
@@ -137,14 +137,14 @@ def regrid_and_write(inputFile,lat_out,lon_out,lev_out,outputFilename):
     else:
         outputFilename = os.path.abspath(outputFilename)
     print(f"====== Regridding and writing '{outputFilename}'... ======")
-    outputFile = regrid_ancil(inputFile,lat_out,lon_out,lev_out)
+    outputFile = regrid_ancil(inputFile,lat_out,lon_out,lev_out,method)
     outputFile.to_file(outputFilename)
     print(f"====== Regridding and writing '{outputFilename}' OK! ======")
 
-def main(inputFilename,gridFilename,outputFilename,loncoord,latcoord,levcoord,pseudocoord,fix):
+def main(inputFilename,gridFilename,outputFilename,loncoord,latcoord,levcoord,pseudocoord,method,fix):
     inputFile,gridFile,umgrid = read_files(inputFilename,gridFilename)
     lat_out,lon_out,lev_out,inputFile = consistency_check(inputFile,gridFile,inputFilename,gridFilename,umgrid,latcoord,loncoord,levcoord,pseudocoord,fix)
-    regrid_and_write(inputFile,lat_out,lon_out,lev_out,outputFilename)
+    regrid_and_write(inputFile,lat_out,lon_out,lev_out,method,outputFilename)
 
 if __name__ == '__main__':
 
@@ -167,7 +167,9 @@ if __name__ == '__main__':
     parser.add_argument('--lev', '--level', dest='ncfile_level_name', required=False, type=str,
                         help='If GRIDFILE is a netCDF file, name of the vertical level dimension in it.')
     parser.add_argument('--ps', '--pseudo', dest='pseudo_level_name', required=False, type=str,
-                    help='If GRIDFILE is a netCDF file, name of the pseudo-level dimension in the netCDF file.')                        
+                    help='If GRIDFILE is a netCDF file, name of the pseudo-level dimension in the netCDF file.')
+    parser.add_argument('--method', dest='method', required=False, type=str,
+                    help="Choose the interpolation method among ('linear', 'nearest', 'cubic', 'quintic', 'pchip').")
     parser.add_argument('--fix', dest='fix', action='store_true', 
                         help="Try to fix any validation error.")
 
@@ -179,6 +181,7 @@ if __name__ == '__main__':
     loncoord=args.ncfile_longitude_name
     levcoord=args.ncfile_level_name
     pseudocoord=args.pseudo_level_name
+    method=args.method 
     fix=args.fix
 
     print(f"====== Reading ancillary files... ======")
@@ -198,4 +201,4 @@ if __name__ == '__main__':
     #     "/g/data3/tm70/dm5220/ancil/abhik/newancil/smc_snow/gswp2_hwsd_vg/qrclim.smow",
     #     None,None,None,True)
 
-    main(inputFilename,gridFilename,outputFilename,loncoord,latcoord,levcoord,pseudocoord,fix)
+    main(inputFilename,gridFilename,outputFilename,loncoord,latcoord,levcoord,pseudocoord,method,fix)

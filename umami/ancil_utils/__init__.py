@@ -8,7 +8,7 @@ import itertools
 import numpy as np
 from scipy.interpolate import interpn
 import os
-from umami.quieterrors import QValueError
+from umami.quieterrors import QValueError, QFileExistsError
 
 UM_NANVAL=-1073741824.0 #(-2.0**30)
 
@@ -62,7 +62,7 @@ def has_pseudo_levels_each_var(ancilFile):
 def read_ancil(ancilFilename):
     ancilFilename = os.path.abspath(ancilFilename)
     if not os.path.isfile(ancilFilename):
-        raise QValueError(f"Ancillary file '{ancilFilename}' does not exist.")
+        raise QFileExistsError(f"Ancillary file '{ancilFilename}' does not exist.")
     try:
         file = mule.load_umfile(ancilFilename)
     except ValueError:
@@ -72,7 +72,7 @@ def read_ancil(ancilFilename):
             raise QValueError(f"'{ancilFilename}' does not appear to be a valid UM ancillary file.")
     return file
 
-def regrid_ancil(inputFile,lat_out=None,lon_out=None,lev_out_each_var=None):
+def regrid_ancil(inputFile,lat_out=None,lon_out=None,lev_out_each_var=None,method=None):
     '''
     Regrids a UM ancilFile over latitude, longitude and UM vertical levels, using scipy.interpolate.interpn function.
 
@@ -84,7 +84,15 @@ def regrid_ancil(inputFile,lat_out=None,lon_out=None,lev_out_each_var=None):
         be performed over longitude.
     -   lev_out is a list of array-like variables with the output vertical level coordinate fpr each variable in ancilFile. 
         If set to None, no regridding will be performed over vertical levels.
+    -   method is a string defining the interpolation method. Methods supported are 'linear', 'nearest', 'cubic', 'quintic' and 'pchip'.
+        If set to None, 'linear' interpolation is used.
     '''
+    # Check method
+    avail_methods=('linear', 'nearest', 'cubic', 'quintic', 'pchip')
+    if method is None:
+        method = 'linear'
+    elif method not in avail_methods:
+        raise QValueError(f"'method' needs to be one in {avail_methods}. You provided {method}.")
 
     # Parse input file
     if not isinstance(inputFile,mule.AncilFile):
@@ -166,7 +174,7 @@ def regrid_ancil(inputFile,lat_out=None,lon_out=None,lev_out_each_var=None):
             data = np.stack(data, axis=-1)
             data = np.where(data == UM_NANVAL,np.nan,data)
             interp_data.append(interpn((lat_in,lon_in,lvls), data, outpoints_each_var[ivar], 
-                bounds_error=False, fill_value=None).reshape(nlat_out,nlon_out,nlev_out_each_var[ivar]))
+                bounds_error=False, fill_value=None, method=method).reshape(nlat_out,nlon_out,nlev_out_each_var[ivar]))
     newfields = np.concatenate(interp_data,axis=-1)
     newfields = np.where(np.isnan(newfields),UM_NANVAL,newfields)
 
