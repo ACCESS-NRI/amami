@@ -31,7 +31,7 @@ def consistency_check(inputFile,gridFile,inputFilename,gridFilename,umgrid,latco
     nlon_input = inputFile.integer_constants.num_cols
     lev_input_each_var,pseudo_in_each_var = get_levels_each_var(inputFile,get_pseudo=True)
     has_pseudo_each_var = has_pseudo_levels_each_var(inputFile)
-    # nlev_input = len(lev_input)
+    nvar_in = len(lev_input_each_var)
 
     # GridFile
     if umgrid: #If the grid is a um ancil file
@@ -45,7 +45,20 @@ def consistency_check(inputFile,gridFile,inputFilename,gridFilename,umgrid,latco
         lat_out = [firstlat_out+dlat_out*i for i in range(nlat_out)]
         lon_out = [firstlon_out+dlon_out*i for i in range(nlon_out)]
         lev_out_each_var,pseudo_out_each_var = get_levels_each_var(gridFile,get_pseudo=True)
+        nvar_out = len(lev_out_each_var)
+        # Check consistency with number of data variables
+        if (nvar_out < nvar_in) and (nvar_out == 1):
+            lev_out_each_var = np.repeat(lev_out_each_var,nvar_in,axis=0).tolist()
+            pseudo_out_each_var = np.repeat(pseudo_out_each_var,nvar_in,axis=0).tolist()
+        elif nvar_out != nvar_in:
+            raise QValueError(f"Number of data variables inconsistent. The input file '{inputFilename}' has {nvar_in} data variables, "
+                f"the grid file '{gridFilename}' has {nvar_out} data variables.")
     else: #If the grid is a netCDF file
+        nvar_out = len(lev_out_each_var)
+        # Check consistency with number of data variables
+        if (nvar_out > nvar_in) or ((nvar_out < nvar_in) and (nvar_out != 1)):
+            raise QValueError(f"Number of data variables inconsistent. The input file '{inputFilename}' has {nvar_in} data variables, "
+                f"the grid file '{gridFilename}' has {nvar_out} data variables.")
         # Check latitude
         if latcoord is None: #If user has not defined any latitude name
             latcoord = get_dim_name(gridFile,dim_names=('latitude','lat'),
@@ -54,8 +67,8 @@ def consistency_check(inputFile,gridFile,inputFilename,gridFilename,umgrid,latco
                         "file use the '--latitude <name>' option.")
         elif latcoord not in gridFile.dims:
             raise QValueError(f"Specified latitude dimension '{latcoord}' not found in netCDF file.")
-        nlat_out = len(gridFile[latcoord])
         lat_out = gridFile[latcoord].values
+        nlat_out = len(lat_out)
         
         # Check longitude
         if loncoord is None: #If user has not defined any longitude name
@@ -65,8 +78,8 @@ def consistency_check(inputFile,gridFile,inputFilename,gridFilename,umgrid,latco
                         "file use the '--longitude <name>' option.")
         elif loncoord not in gridFile.dims:
             raise QValueError(f"Specified longitude dimension '{loncoord}' not found in netCDF file.")
-        nlon_out = len(gridFile[loncoord])
         lon_out = gridFile[loncoord].values
+        nlon_out = len(lon_out)
         
         # Check level
         if levcoord is None: #If user has not defined any level name
@@ -82,7 +95,7 @@ def consistency_check(inputFile,gridFile,inputFilename,gridFilename,umgrid,latco
             raise QValueError(f"Specified vertical level dimension '{levcoord}' not found in netCDF file.")
         else:
             lev_out_each_var = [np.linspace(lev_input_each_var[ivar][0],lev_input_each_var[ivar][-1],len(gridFile[var][levcoord])).tolist() if (levcoord in gridFile[var].dims) and (len(gridFile[var][levcoord]) != len(lev_input_each_var[ivar])) else lev_input_each_var[ivar] for ivar,var in enumerate(gridFile.data_vars)]
-        
+
         # Check pseudo-level
         if any(has_pseudo_each_var): #If there are any pseudo-levels in the ancil file
             if pseudocoord is None: #If user has not defined any pseudo-level name
@@ -97,7 +110,7 @@ def consistency_check(inputFile,gridFile,inputFilename,gridFilename,umgrid,latco
                 pseudo_out_each_var = [gridFile[var][pseudocoord].values if has_pseudo_each_var[ivar] else [0] for ivar,var in enumerate(gridFile.data_vars)]
         elif pseudocoord is not None: #If there are not pseudo-levels in the ancil file but user defined pseudo-level name
             raise QValueError(f"Pseudo-level dimension '{pseudocoord}' specified, but no pseudo-level dimension found in the ancillary file.")
-
+    
     # Check that both InputFile and gridFile are consistent in case latitude, longitude or levels are of length 1
     # Check Latitude
     if (nlat_input == 1 and nlat_out != 1):
@@ -121,8 +134,14 @@ def consistency_check(inputFile,gridFile,inputFilename,gridFilename,umgrid,latco
         elif (len(ilev) != 1) and (len(olev) == 1):
             raise QValueError(f"Levels are inconsistent! Variable {ilvl+1} of the grid file '{gridFilename}' has no vertical level dimension "
                     f"but variable {ilvl+1} of the ancillary file '{inputFilename}' has {len(ilev)} vertical levels.")
+    
+    # Repeat first variable grid in case grid file has only 1 variable and input file has more
+        if nvar_out < nvar_in:
+            lev_out_each_var = np.repeat(lev_out_each_var,nvar_in,axis=0).tolist()
+            pseudo_out_each_var = np.repeat(pseudo_out_each_var,nvar_in,axis=0).tolist()
+
     # Change lev out in case of pseudo-levels
-    lev_out = [pseudo_in_each_var[ivar] if has_pseudo_each_var[ivar] else lev_out_each_var[ivar] for ivar,_ in enumerate(has_pseudo_each_var)]
+    lev_out = [pseudo_out_each_var[ivar] if has_pseudo_each_var[ivar] else lev_out_each_var[ivar] for ivar,_ in enumerate(has_pseudo_each_var)]
 
     print("====== Consistency check OK! ======")
     return lat_out,lon_out,lev_out,inputFile
