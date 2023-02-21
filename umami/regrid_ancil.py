@@ -27,24 +27,20 @@ def consistency_check(inputFile,gridFile,inputFilename,gridFilename,umgrid,latco
     # Check that both ancillary file and grid file are valid.
     # AncilFile
     inputFile = validate(inputFile,filename=inputFilename,fix=fix)
-    nlat_input = inputFile.integer_constants.num_rows
-    nlon_input = inputFile.integer_constants.num_cols
-    lev_input_each_var,pseudo_in_each_var = get_levels_each_var(inputFile,get_pseudo=True)
+    nlat_input = len(get_latitude(inputFile))
+    nlon_input = len(get_longitude(inputFile))
+    lev_input_each_var = get_levels_each_var(inputFile)[0]
     has_pseudo_each_var = has_pseudo_levels_each_var(inputFile)
     nvar_in = len(lev_input_each_var)
 
     # GridFile
     if umgrid: #If the grid is a um ancil file
         gridFile = validate(gridFile,filename=gridFilename,fix=fix)
-        nlat_out = gridFile.integer_constants.num_rows
-        firstlat_out = gridFile.real_constants.start_lat
-        dlat_out = gridFile.real_constants.row_spacing
-        nlon_out = gridFile.integer_constants.num_cols
-        firstlon_out = gridFile.real_constants.start_lon
-        dlon_out = gridFile.real_constants.col_spacing
-        lat_out = [firstlat_out+dlat_out*i for i in range(nlat_out)]
-        lon_out = [firstlon_out+dlon_out*i for i in range(nlon_out)]
-        lev_out_each_var,pseudo_out_each_var = get_levels_each_var(gridFile,get_pseudo=True)
+        lat_out = get_latitude(gridFile)
+        lon_out = get_longitude(gridFile)
+        nlat_out = len(lat_out)
+        nlon_out = len(lon_out)
+        lev_out_each_var,pseudo_out_each_var,_ = get_levels_each_var(gridFile)
         nvar_out = len(lev_out_each_var)
         # Check consistency with number of data variables
         if (nvar_out < nvar_in) and (nvar_out == 1):
@@ -209,15 +205,17 @@ if __name__ == '__main__':
     import warnings
     import numpy as np
     warnings.filterwarnings("ignore")
-    from umami.ancil_utils import regrid_ancil, read_ancil, get_levels_each_var, has_pseudo_levels_each_var
+    from umami.ancil_utils import regrid_ancil, read_ancil, get_levels_each_var, has_pseudo_levels_each_var, get_latitude, get_longitude
     from umami.netcdf_utils import get_dim_name
     from umami.ancil_utils.validation_tools import validate
     from umami.quieterrors import QValueError
 
-    # inputFilename,gridFilename,outputFilename,loncoord,latcoord,levcoord,fix = (
-    #     "/g/data3/tm70/dm5220/ancil/abhik/ancil-from-uk/smc_snow/gswp2_hwsd_vg/qrclim.smow",
-    #     "/g/data/tm70/dm5220/ancil/abhik/test_smow.nc",
-    #     "/g/data3/tm70/dm5220/ancil/abhik/newancil/smc_snow/gswp2_hwsd_vg/qrclim.smow",
-    #     None,None,None,True)
-
+    
+    # (inputFilename,gridFilename,outputFilename,loncoord,latcoord,levcoord,pseudocoord,method,fix)=(
+    #     "/g/data3/tm70/dm5220/ancil/abhik/ancil-from-uk_link/rivers_trip/sequence/etopo5/qrparm.rivseq",
+    #     "/g/data3/tm70/dm5220/ancil/abhik/shifted/MASK_shift",
+    #     "/g/data3/tm70/dm5220/ancil/abhik/test_regrid",
+    #     None,None,None,None,None,True,
+    # )
+    
     main(inputFilename,gridFilename,outputFilename,loncoord,latcoord,levcoord,pseudocoord,method,fix)

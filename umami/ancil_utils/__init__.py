@@ -15,21 +15,27 @@ UM_NANVAL=-1073741824.0 #(-2.0**30)
 def get_stash_each_var(ancilFile):
     return list(dict.fromkeys([f.lbuser4 for f in ancilFile.fields]))
 
-def get_levels_each_var(ancilFile,get_pseudo=False,get_lblev=False):
+def get_latitude(ancilFile):
+    f = ancilFile.fields[0].copy()
+    return np.linspace(f.bzy+f.bdy,
+                       f.bzy+f.bdy+f.bdy*(f.lbrow-1),
+                       f.lbrow)
+
+def get_longitude(ancilFile):
+    f = ancilFile.fields[0].copy()
+    return np.linspace(f.bzx+f.bdx,
+                       f.bzx+f.bdx+f.bdx*(f.lbnpt-1),
+                       f.lbnpt)
+
+def get_levels_each_var(ancilFile):
     '''Gets the vertical level or pseudo-level values for each variable in the ancillary file ancilFile.'''
     first_timestep_fields = ancilFile.fields[:(len(ancilFile.fields)//(ancilFile.integer_constants.num_times))].copy()
     # Get stash codes to group into different variables
     stash = [f.lbuser4 for f in first_timestep_fields]
     # Get levels
-    levs = [f.blev for f in first_timestep_fields]
-    if get_pseudo:
-        # Get pseudo-levels
-        pseudo = [f.lbuser5 for f in first_timestep_fields]
-        levs = np.vstack((levs,pseudo)).tolist()
-    if get_lblev:
-        # Get level codes (lblevs)
-        lblevs = [f.lblev for f in first_timestep_fields]
-        levs = np.vstack((levs,lblevs)).tolist()
+    levs=[[f.blev for f in first_timestep_fields],
+          [f.lbuser5 for f in first_timestep_fields],
+          [f.lblev for f in first_timestep_fields]]
     # Separate levels for each ancil file variable
     levels = dict()
     all_levels = []
@@ -99,13 +105,9 @@ def regrid_ancil(inputFile,lat_out=None,lon_out=None,lev_out_each_var=None,metho
         raise TypeError("'ancilFile' needs to be a mule.ancilFile object.")
     # Get the input coordinates from the first field of the ancilFile
     f=inputFile.fields[0].copy()
-    lat_in = np.linspace(f.bzy+f.bdy,
-                        f.bzy+f.bdy+f.bdy*(inputFile.integer_constants.num_rows-1),
-                        inputFile.integer_constants.num_rows)
-    lon_in = np.linspace(f.bzx+f.bdx,
-                        f.bzx+f.bdx+f.bdx*(inputFile.integer_constants.num_cols-1),
-                        inputFile.integer_constants.num_cols)
-    lev_in_each_var,pseudo_each_var,lblev_each_var = get_levels_each_var(inputFile,get_pseudo=True,get_lblev=True)
+    lat_in = get_latitude(inputFile)
+    lon_in = get_longitude(inputFile)
+    lev_in_each_var,pseudo_each_var,lblev_each_var = get_levels_each_var(inputFile)
     ntimes = inputFile.integer_constants.num_times
     lbegin = f.lbegin
     stash_each_var = get_stash_each_var(inputFile)

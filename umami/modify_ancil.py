@@ -76,7 +76,7 @@ def consistency_check(inputFile,ncFile,inputFilename,gridFilename,latcoord=None,
             f" Length of ancillary file's time: {inputFile.integer_constants.num_times}.")
     
     # Check level
-    nlev_input = len(get_levels_each_var(inputFile))
+    nlev_input = len(get_levels_each_var(inputFile)[0])
     if levcoord is None:
         if nlev_input == 1:
             lev_out, nlev_out = 1, 1
