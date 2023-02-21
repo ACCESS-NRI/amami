@@ -76,7 +76,7 @@ def consistency_check(inputFile,ncFile,inputFilename,gridFilename,latcoord=None,
             f" Length of ancillary file's time: {inputFile.integer_constants.num_times}.")
     
     # Check level
-    nlev_input = len(get_levels(inputFile))
+    nlev_input = len(get_levels_each_var(inputFile))
     if levcoord is None:
         if nlev_input == 1:
             lev_out, nlev_out = 1, 1
@@ -87,6 +87,7 @@ def consistency_check(inputFile,ncFile,inputFilename,gridFilename,latcoord=None,
                         "file use the '--level <name>' option.")
             lev_out = ncFile[levcoord].values
             nlev_out=len(lev_out)
+            dims.remove(levcoord)
         else:
             raise QValueError(f"Vertical levels found in the ancillary file, but no vertical level dimension found in the netCDF file.")
     elif levcoord not in ncFile.dims:
@@ -94,7 +95,7 @@ def consistency_check(inputFile,ncFile,inputFilename,gridFilename,latcoord=None,
     else:
         lev_out = ncFile[levcoord].values
         nlev_out=len(lev_out)
-    dims.remove(levcoord)
+        dims.remove(levcoord)
     # Check that level dimension is consistent
     if (not regrid) and (nlev_out != nlev_input):
         raise QValueError(f"Level dimension not consistent!\nLength of netCDF file's level: {nlev_out}."
@@ -208,7 +209,7 @@ import argparse
 import os
 
 # Parse arguments
-description = '''Script to modify a UM ancillary file using data from a netCDF file.'''
+description = '''Modify a UM ancillary file using data from a netCDF file. If regridding is necessary, use the '--regrid' option.'''
 parser = argparse.ArgumentParser(description=description, allow_abbrev=False)
 parser.add_argument('-i', '--input', dest='um_input_file', required=True, type=str,
                     help='UM ancillary input file. (Required)')
@@ -256,7 +257,7 @@ import numpy as np
 from umami.ancil_utils.validation_tools import validate
 import warnings
 warnings.filterwarnings("ignore")
-from umami.ancil_utils import UM_NANVAL, read_ancil, get_levels, regrid_ancil
+from umami.ancil_utils import UM_NANVAL, read_ancil, get_levels_each_var, regrid_ancil
 from umami.netcdf_utils import get_dim_name
 from umami.quieterrors import QValueError
 

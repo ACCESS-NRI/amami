@@ -49,10 +49,7 @@ def _fix_error(error,ancilFile):
     # Handle Error: 2
     elif errorString.startswith("Unsupported grid_staggering"):
         values=(3,6)
-        prompt = f"Please choose a grid staggering value in {values}." + end_prompt
-        grid_staggering = input(prompt)
-        while grid_staggering not in values:
-            grid_staggering = input("Invalid value inserted. " + prompt)
+        grid_staggering = _input(values,f"Please choose a grid staggering value in {values}."+end_prompt)
         newAncilFile.fixed_length_header.grid_staggering = grid_staggering
     # Handle Error: 3
     elif "Cannot validate field due to incompatible grid type:" in errorString:

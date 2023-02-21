@@ -6,4 +6,4 @@
 [![License: MIT](https://img.shields.io/badge/License-Apache%202.0-green.svg)](https://github.com/dougiesquire/morte/blob/master/LICENSE)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/python/black) -->
 
-Unified Model Ancillary Modification Instruments
+Unified Model Ancillary Manipulation Instruments

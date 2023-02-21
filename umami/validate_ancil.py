@@ -26,6 +26,7 @@ def main(ancilFilename,fix,inplace,outFilename):
 if __name__ == '__main__':
     import argparse
     import sys
+    from umami.quieterrors import QParseError
     # Parse arguments
     parser = argparse.ArgumentParser(description="Validate UM ancillary file.",allow_abbrev=False)
     parser.add_argument('-i', '--input', dest='ancilfile', type=str,
@@ -74,6 +75,5 @@ if __name__ == '__main__':
     warnings.filterwarnings("ignore")
     from umami.ancil_utils.validation_tools import validate
     from umami.ancil_utils import read_ancil
-    from umami.quieterrors import QParseError
 
     main(ancilFilename,fix,inplace,outFilename)
