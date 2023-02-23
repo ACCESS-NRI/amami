@@ -111,6 +111,9 @@ def regrid_ancil(inputFile,lat_out=None,lon_out=None,lev_out_each_var=None,metho
     ntimes = inputFile.integer_constants.num_times
     lbegin = f.lbegin
     stash_each_var = get_stash_each_var(inputFile)
+    has_pseudo_each_var = has_pseudo_levels_each_var(inputFile)
+    # Mix pseudo-levels and normal levels
+    levels_in_each_var = [pseudo_each_var[ivar] if ps else lev_in_each_var[ivar] for ivar,ps in enumerate(has_pseudo_each_var)]
     # Parse output coords 
     # Latitude
     if lat_out is None:
@@ -128,24 +131,15 @@ def regrid_ancil(inputFile,lat_out=None,lon_out=None,lev_out_each_var=None,metho
         raise TypeError("'lon_out' needs to be an iterable.")
     # Vertical levels
     if lev_out_each_var is None:
-        lev_out_each_var = lev_in_each_var.copy()
+        lev_out_each_var = levels_in_each_var.copy()
     elif not isinstance(lev_out_each_var,list) or not all([hasattr(l,'__iter__') for l in lev_out_each_var]):
         raise TypeError("'lev_out' needs to be a list of iterables.")
-    # Check that if var has pseudo-levels, the lev_out is consistent
-    has_pseudo = has_pseudo_levels_each_var(inputFile)
-    lev_outpoints = lev_out_each_var.copy()
-    for ivar,hp in enumerate(has_pseudo):
-        if hp:
-            if lev_out_each_var[ivar] != lev_in_each_var[ivar]:
-                raise ValueError(f"Pseudo-level regridding not supported. Pseudo-levels found in the variable n.{ivar+1} of "
-                                  "the ancillary file, but the output levels are not equal to the input ones.")
-            else:
-                lev_in_each_var[ivar] = pseudo_each_var[ivar]
-                lev_outpoints[ivar] = pseudo_each_var[ivar]
-    if all(has_pseudo):
+    
+    # Get num_levels
+    if all(has_pseudo_each_var):
         num_levels_out = inputFile.integer_constants.num_levels
     else:
-        for ivar,hp in enumerate(has_pseudo): 
+        for ivar,hp in enumerate(has_pseudo_each_var): 
             if not hp:
                 num_levels_out = len(lev_out_each_var[ivar])
                 break
@@ -163,13 +157,13 @@ def regrid_ancil(inputFile,lat_out=None,lon_out=None,lev_out_each_var=None,metho
         dlon_out = 360.
     
     # Define regridding output points
-    outpoints_each_var = [list(itertools.product(lat_out,lon_out,l)) for l in lev_outpoints]
+    outpoints_each_var = [list(itertools.product(lat_out,lon_out,l)) for l in lev_out_each_var]
 
     # Regrid and get new fields
     f = iter(inputFile.fields.copy())
     interp_data = []
     for _ in range(ntimes): # Loop for each timestep
-        for ivar,lvls in enumerate(lev_in_each_var): # Loop for each variable
+        for ivar,lvls in enumerate(levels_in_each_var): # Loop for each variable
             data = []
             for _ in lvls: # Loop for each level
                 data.append(next(f).get_data())

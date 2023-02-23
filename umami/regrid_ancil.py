@@ -15,7 +15,7 @@ def read_files(inputFilename,gridFilename):
         umgrid=True
     except QValueError:
         try:
-            gridFile = xr.open_dataset(gridFilename,decode_times=False,chunks=-1)
+            gridFile = read_netCDF(gridFilename)
             umgrid=False
         except ValueError:
             raise QValueError(f"GRIDFILE must be either a UM ancillary file or a netCDF file.")
@@ -50,7 +50,7 @@ def consistency_check(inputFile,gridFile,inputFilename,gridFilename,umgrid,latco
             raise QValueError(f"Number of data variables inconsistent. The input file '{inputFilename}' has {nvar_in} data variables, "
                 f"the grid file '{gridFilename}' has {nvar_out} data variables.")
     else: #If the grid is a netCDF file
-        nvar_out = len(lev_out_each_var)
+        nvar_out = len(gridFile.data_vars)
         # Check consistency with number of data variables
         if (nvar_out > nvar_in) or ((nvar_out < nvar_in) and (nvar_out != 1)):
             raise QValueError(f"Number of data variables inconsistent. The input file '{inputFilename}' has {nvar_in} data variables, "
@@ -137,10 +137,10 @@ def consistency_check(inputFile,gridFile,inputFilename,gridFilename,umgrid,latco
             pseudo_out_each_var = np.repeat(pseudo_out_each_var,nvar_in,axis=0).tolist()
 
     # Change lev out in case of pseudo-levels
-    lev_out = [pseudo_out_each_var[ivar] if has_pseudo_each_var[ivar] else lev_out_each_var[ivar] for ivar,_ in enumerate(has_pseudo_each_var)]
+    levels_out = [pseudo_out_each_var[ivar] if ps else lev_out_each_var[ivar] for ivar,ps in enumerate(has_pseudo_each_var)]
 
     print("====== Consistency check OK! ======")
-    return lat_out,lon_out,lev_out,inputFile
+    return lat_out,lon_out,levels_out,inputFile
 
 def regrid_and_write(inputFile,lat_out,lon_out,lev_out,method,outputFilename):
     if outputFilename is None:
@@ -152,6 +152,8 @@ def regrid_and_write(inputFile,lat_out,lon_out,lev_out,method,outputFilename):
     else:
         outputFilename = os.path.abspath(outputFilename)
     print(f"====== Regridding and writing '{outputFilename}'... ======")
+    # Create directories
+    os.makedirs(os.path.dirname(outputFilename),exist_ok=True)
     outputFile = regrid_ancil(inputFile,lat_out,lon_out,lev_out,method)
     outputFile.to_file(outputFilename)
     print(f"====== Regridding and writing '{outputFilename}' OK! ======")
@@ -201,21 +203,20 @@ if __name__ == '__main__':
 
     print(f"====== Reading ancillary files... ======")
     # Imports here to improve performance when running with '--help' option
-    import xarray as xr
     import warnings
     import numpy as np
     warnings.filterwarnings("ignore")
     from umami.ancil_utils import regrid_ancil, read_ancil, get_levels_each_var, has_pseudo_levels_each_var, get_latitude, get_longitude
-    from umami.netcdf_utils import get_dim_name
+    from umami.netcdf_utils import get_dim_name, read_netCDF
     from umami.ancil_utils.validation_tools import validate
     from umami.quieterrors import QValueError
 
     
-    # (inputFilename,gridFilename,outputFilename,loncoord,latcoord,levcoord,pseudocoord,method,fix)=(
-    #     "/g/data3/tm70/dm5220/ancil/abhik/ancil-from-uk_link/rivers_trip/sequence/etopo5/qrparm.rivseq",
-    #     "/g/data3/tm70/dm5220/ancil/abhik/shifted/MASK_shift",
-    #     "/g/data3/tm70/dm5220/ancil/abhik/test_regrid",
-    #     None,None,None,None,None,True,
-    # )
+    (inputFilename,gridFilename,outputFilename,loncoord,latcoord,levcoord,pseudocoord,method,fix)=(
+        "/g/data3/tm70/dm5220/ancil/abhik/ancil-from-uk_link/vegetation/fractions_igbp/qrparm.veg.frac",
+        "/g/data/access/TIDS/UM/ancil/atmos/n48e/orca1/vegetation/fractions_igbp/v1/qrparm.veg.frac",
+        "/g/data3/tm70/dm5220/ancil/abhik/ancil-from-uk_regridded/vegetation/fractions_igbp/qrparm.veg.frac",
+        None,None,None,None,'nearest',True,
+    )
     
     main(inputFilename,gridFilename,outputFilename,loncoord,latcoord,levcoord,pseudocoord,method,fix)
