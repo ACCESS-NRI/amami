@@ -29,7 +29,7 @@ def consistency_check(inputFile,gridFile,inputFilename,gridFilename,umgrid,latco
     inputFile = validate(inputFile,filename=inputFilename,fix=fix)
     nlat_input = len(get_latitude(inputFile))
     nlon_input = len(get_longitude(inputFile))
-    lev_input_each_var = get_levels_each_var(inputFile)[0]
+    lev_input_each_var,pseudo_input_each_var,_ = get_levels_each_var(inputFile)
     has_pseudo_each_var = has_pseudo_levels_each_var(inputFile)
     nvar_in = len(lev_input_each_var)
 
@@ -56,57 +56,16 @@ def consistency_check(inputFile,gridFile,inputFilename,gridFilename,umgrid,latco
             raise QValueError(f"Number of data variables inconsistent. The input file '{inputFilename}' has {nvar_in} data variables, "
                 f"the grid file '{gridFilename}' has {nvar_out} data variables.")
         # Check latitude
-        if latcoord is None: #If user has not defined any latitude name
-            latcoord = get_dim_name(gridFile,dim_names=('latitude','lat'),
-                errmsg="No latitude dimension found in the netCDF file.\n"
-                        "To specify the name of the latitude dimension in the netCDF "
-                        "file use the '--latitude <name>' option.")
-        elif latcoord not in gridFile.dims:
-            raise QValueError(f"Specified latitude dimension '{latcoord}' not found in netCDF file.")
-        lat_out = gridFile[latcoord].values
+        lat_out = check_latitude(gridFile,latcoord=latcoord)[0]
         nlat_out = len(lat_out)
-        
         # Check longitude
-        if loncoord is None: #If user has not defined any longitude name
-            loncoord = get_dim_name(gridFile,dim_names=('longitude','lon'),
-                errmsg="No longitude dimension found in the netCDF file.\n"
-                        "To specify the name of the longitude dimension in the netCDF "
-                        "file use the '--longitude <name>' option.")
-        elif loncoord not in gridFile.dims:
-            raise QValueError(f"Specified longitude dimension '{loncoord}' not found in netCDF file.")
-        lon_out = gridFile[loncoord].values
+        lon_out = check_longitude(gridFile,loncoord=loncoord)[0]
         nlon_out = len(lon_out)
-        
         # Check level
-        if levcoord is None: #If user has not defined any level name
-            if any([len(l)>1 for l in lev_input_each_var]):
-                levcoord = get_dim_name(gridFile,dim_names=("pressure","vertical_level"),
-                    errmsg="No vertical level dimension found in the netCDF file.\n"
-                            "To specify the name of the vertical level dimension in the netCDF "
-                            "file use the '--level <name>' option.")
-                lev_out_each_var = [np.linspace(lev_input_each_var[ivar][0],lev_input_each_var[ivar][-1],len(gridFile[var][levcoord])).tolist() if (levcoord in gridFile[var].dims) and (len(gridFile[var][levcoord]) != len(lev_input_each_var[ivar])) else lev_input_each_var[ivar] for ivar,var in enumerate(gridFile.data_vars)]
-            else:
-                lev_out_each_var = lev_input_each_var.copy()
-        elif levcoord not in gridFile.dims:
-            raise QValueError(f"Specified vertical level dimension '{levcoord}' not found in netCDF file.")
-        else:
-            lev_out_each_var = [np.linspace(lev_input_each_var[ivar][0],lev_input_each_var[ivar][-1],len(gridFile[var][levcoord])).tolist() if (levcoord in gridFile[var].dims) and (len(gridFile[var][levcoord]) != len(lev_input_each_var[ivar])) else lev_input_each_var[ivar] for ivar,var in enumerate(gridFile.data_vars)]
-
+        lev_out_each_var = check_levels(gridFile,has_pseudo_each_var,lev_input_each_var,levcoord=levcoord)[0]
         # Check pseudo-level
-        if any(has_pseudo_each_var): #If there are any pseudo-levels in the ancil file
-            if pseudocoord is None: #If user has not defined any pseudo-level name
-                pseudocoord = get_dim_name(gridFile,dim_names=("pseudo_level","pseudo"),
-                    errmsg="Pseudo-levels found in the ancillary file, but no pseudo-level dimension found in the netCDF file.\n"
-                            "To specify the name of the pseudo-level dimension in the netCDF "
-                            "file use the '--pseudo <name>' option.")
-                pseudo_out_each_var = [gridFile[var][pseudocoord].values if has_pseudo_each_var[ivar] else [0] for ivar,var in enumerate(gridFile.data_vars)]
-            elif pseudocoord not in gridFile.dims: #If user defiined pseudo-level name but no it doesn't exist in the netCDF file
-                raise QValueError(f"Specified pseudo-level dimension '{pseudocoord}' not found in netCDF file.")
-            else: #If user defined pseudo-level name and it exists in the netCDF file
-                pseudo_out_each_var = [gridFile[var][pseudocoord].values if has_pseudo_each_var[ivar] else [0] for ivar,var in enumerate(gridFile.data_vars)]
-        elif pseudocoord is not None: #If there are not pseudo-levels in the ancil file but user defined pseudo-level name
-            raise QValueError(f"Pseudo-level dimension '{pseudocoord}' specified, but no pseudo-level dimension found in the ancillary file.")
-    
+        pseudo_out_each_var = check_pseudo(gridFile,has_pseudo_each_var,pseudo_input_each_var,pseudocoord=pseudocoord)[0]
+
     # Check that both InputFile and gridFile are consistent in case latitude, longitude or levels are of length 1
     # Check Latitude
     if (nlat_input == 1 and nlat_out != 1):
@@ -142,7 +101,7 @@ def consistency_check(inputFile,gridFile,inputFilename,gridFilename,umgrid,latco
     print("====== Consistency check OK! ======")
     return lat_out,lon_out,levels_out,inputFile
 
-def regrid_and_write(inputFile,lat_out,lon_out,lev_out,method,outputFilename):
+def regrid_and_write(inputFile,inputFilename,lat_out,lon_out,lev_out,method,outputFilename):
     if outputFilename is None:
         outputFilename=inputFilename+"_regridded"
         k=0
@@ -161,15 +120,17 @@ def regrid_and_write(inputFile,lat_out,lon_out,lev_out,method,outputFilename):
 def main(inputFilename,gridFilename,outputFilename,loncoord,latcoord,levcoord,pseudocoord,method,fix):
     inputFile,gridFile,umgrid = read_files(inputFilename,gridFilename)
     lat_out,lon_out,lev_out,inputFile = consistency_check(inputFile,gridFile,inputFilename,gridFilename,umgrid,latcoord,loncoord,levcoord,pseudocoord,fix)
-    regrid_and_write(inputFile,lat_out,lon_out,lev_out,method,outputFilename)
+    regrid_and_write(inputFile,inputFilename,lat_out,lon_out,lev_out,method,outputFilename)
 
 if __name__ == '__main__':
-
     import argparse
-    import os
 
     # Parse arguments
-    description='''Regrid UM ancillary file onto another ancillary file or netCDF file grid.'''
+    description='''Regrid UM ancillary file onto another ancillary file or netCDF file grid.
+                   If using a netCDF file grid, any different number of vertical levels (including pseudo-levels) will be regridded based on 
+                   a linear interpolation of the input vertical levels. This might generate different vertical levels values than those of 
+                   the input file.
+                '''
     parser = argparse.ArgumentParser(description=description, allow_abbrev=False)
     parser.add_argument('-i', '--input', dest='um_input_file', required=True, type=str,
                         help='UM ancillary input file. (Required)')
@@ -191,6 +152,17 @@ if __name__ == '__main__':
                         help="Try to fix any validation error.")
 
     args = parser.parse_args()
+
+    # Imports here to improve performance when running with '--help' option
+    import warnings
+    import numpy as np
+    warnings.filterwarnings("ignore")
+    from umami.ancil_utils import regrid_ancil,read_ancil,get_levels_each_var,has_pseudo_levels_each_var,get_latitude,get_longitude
+    from umami.netcdf_utils import read_netCDF,check_latitude,check_longitude,check_levels,check_pseudo
+    from umami.ancil_utils.validation_tools import validate
+    from umami.quieterrors import QValueError
+    import os
+
     inputFilename=os.path.abspath(args.um_input_file)
     gridFilename=os.path.abspath(args.gridfile)
     outputFilename=args.um_output_file
@@ -202,21 +174,5 @@ if __name__ == '__main__':
     fix=args.fix
 
     print(f"====== Reading ancillary files... ======")
-    # Imports here to improve performance when running with '--help' option
-    import warnings
-    import numpy as np
-    warnings.filterwarnings("ignore")
-    from umami.ancil_utils import regrid_ancil, read_ancil, get_levels_each_var, has_pseudo_levels_each_var, get_latitude, get_longitude
-    from umami.netcdf_utils import get_dim_name, read_netCDF
-    from umami.ancil_utils.validation_tools import validate
-    from umami.quieterrors import QValueError
 
-    
-    (inputFilename,gridFilename,outputFilename,loncoord,latcoord,levcoord,pseudocoord,method,fix)=(
-        "/g/data3/tm70/dm5220/ancil/abhik/ancil-from-uk_link/vegetation/fractions_igbp/qrparm.veg.frac",
-        "/g/data/access/TIDS/UM/ancil/atmos/n48e/orca1/vegetation/fractions_igbp/v1/qrparm.veg.frac",
-        "/g/data3/tm70/dm5220/ancil/abhik/ancil-from-uk_regridded/vegetation/fractions_igbp/qrparm.veg.frac",
-        None,None,None,None,'nearest',True,
-    )
-    
     main(inputFilename,gridFilename,outputFilename,loncoord,latcoord,levcoord,pseudocoord,method,fix)

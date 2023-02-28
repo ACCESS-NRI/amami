@@ -21,18 +21,18 @@ def main(maskFilename):
 
 if __name__ == '__main__':
     import argparse
-    import os
     # Parse arguments
     parser = argparse.ArgumentParser(description="Count land points in land mask UM ancillary file")
     parser.add_argument('maskfile', type=str, help='UM mask file')
     args = parser.parse_args()
-    maskFilename=os.path.abspath(args.maskfile)
     
     # Imports here to improve performance when running with '--help' option
-    import sys
+    import os
     import warnings
     warnings.filterwarnings("ignore")
     from umami.ancil_utils import read_ancil
 
+    maskFilename=os.path.abspath(args.maskfile)
+    
     main(maskFilename)
 

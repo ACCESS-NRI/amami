@@ -25,8 +25,6 @@ def main(ancilFilename,fix,inplace,outFilename):
 
 if __name__ == '__main__':
     import argparse
-    import sys
-    from umami.quieterrors import QParseError
     # Parse arguments
     parser = argparse.ArgumentParser(description="Validate UM ancillary file.",allow_abbrev=False)
     parser.add_argument('-i', '--input', dest='ancilfile', type=str,
@@ -42,6 +40,15 @@ if __name__ == '__main__':
         help="If used with the '--fix' option active, write the file in place instead of creating a new one.")
     parser.add_argument('others', nargs=argparse.REMAINDER)
     args = parser.parse_args()
+
+    # Imports here to improve performance when running with '--help' option
+    import warnings
+    import os
+    warnings.filterwarnings("ignore")
+    from umami.ancil_utils.validation_tools import validate
+    from umami.ancil_utils import read_ancil
+    from umami.quieterrors import QParseError
+
     ancilFilename = args.ancilfile
     fix = args.fix
     inplace = args.inplace
@@ -68,12 +75,4 @@ if __name__ == '__main__':
     elif inplace and outFilename is not None:
         raise QParseError("The '-o/--output' and '--inplace' options are mutually exclusive.")
             
-
-    # Imports here to improve performance when running with '--help' option
-    import warnings
-    import os
-    warnings.filterwarnings("ignore")
-    from umami.ancil_utils.validation_tools import validate
-    from umami.ancil_utils import read_ancil
-
     main(ancilFilename,fix,inplace,outFilename)
