@@ -7,48 +7,62 @@
 
 # Modify a UM ancillary file using data from a netCDF file
 
-
 # READ FILES
 def read_files(inputFilename,ncFilename):        
     inputFile = read_ancil(inputFilename)
-    ncFile = xr.load_dataset(ncFilename, decode_times=False)
+    ncFile = read_netCDF(ncFilename)
     print(f"====== Reading '{inputFilename}' ancillary file OK! ======")
     return inputFile, ncFile
 
 # CONSISTENCY CHECK
-def consistency_check(inputFile,ncFile,inputFilename,latcoord=None,loncoord=None,levcoord=None,pseudocoord=None,tcoord=None,fix=False):
+def consistency_check(inputFile,ncFile,inputFilename,latcoord=None,loncoord=None,levcoord=None,tcoord=None,fix=False):
     print("====== Consistency check... ======")
     # Check that ancillary file is valid.
     inputFile = validate(inputFile,filename=inputFilename,fix=fix)
-    input_levels, input_pseudo_levels, _ = get_levels_each_var(inputFile)
-    has_pseudo = has_pseudo_levels_each_var(inputFile)
+    nlat_in_each_var = [len(l) for l in get_latitude_each_var(inputFile)]
+    nlon_in_each_var = [len(l) for l in get_longitude_each_var(inputFile)]
+    lev_in_each_var, pseudo_in_each_var = get_levels_each_var(inputFile)
+    has_pseudo_in_each_var = has_pseudo_each_var(inputFile)
+    levels_in_each_var = [pseudo_in_each_var[ivar] if ps else lev_in_each_var[ivar] for ivar,ps in enumerate(has_pseudo_in_each_var)]
     
     # Check that the number of variables is consistent
-    nvarnc = len(ncFile.data_vars)
-    nvarancil = len(input_levels)
-    if nvarnc != nvarancil:
+    nvar_nc = len(ncFile.data_vars)
+    nvar_ancil = len(lev_in_each_var)
+    if nvar_nc != nvar_ancil:
         raise QValueError(f"Number of data variables not consistent!\n"
-                f"Number of data variables in the ancillary file: {nvarancil}. "
-                f"Number of data variables in the netCDF file: {nvarnc}.")
+                f"Number of data variables in the ancillary file: {nvar_ancil}. "
+                f"Number of data variables in the netCDF file: {nvar_nc}.")
     
     # Check that longitude, latitude and time coords are present in the .nc file and they have consistent lenghts with the ancillary file
     # Check latitude
-    lat_out,latcoord = check_latitude(ncFile,latcoord=latcoord)
-    nlat_out=len(lat_out)
+    lat_out_each_var,latcoord = check_latitude(ncFile,latcoord=latcoord)
     # Check that latitude dimension is consistent
-    if (not regrid) and (nlat_out != inputFile.integer_constants.num_rows):
-        raise QValueError(f"Latitude dimension not consistent!\nLength of netCDF file's latitude: {nlat_out}."
-            f" Length of ancillary file's latitude: {inputFile.integer_constants.num_rows}."
-            "\nIf you want to regrid the ancillary file onto the netCDF grid, please use the '--regrid' option.")
+    if not regrid:
+        for i,l in enumerate(lat_out_each_var):
+            if len(l) != nlat_in_each_var[i]:
+                raise QValueError(f"Latitude dimension not consistent for variable {i+1}!\nNumber of latitude points "
+                    f"in netCDF file: {len(l)}. Number of latitude points in ancillary file: {nlat_in_each_var[i]}."
+                    "\nIf you want to regrid the ancillary file onto the netCDF grid, please use the '--regrid' option.")
 
     # Check longitude
-    lon_out,loncoord = check_longitude(ncFile,loncoord=loncoord)
-    nlon_out=len(lon_out)
+    lon_out_each_var,loncoord = check_longitude(ncFile,loncoord=loncoord)
     # Check that longitude dimension is consistent
-    if (not regrid) and (nlon_out != inputFile.integer_constants.num_cols):
-        raise QValueError(f"Longitude dimension not consistent!\nLength of netCDF file's longitude: {nlon_out}."
-            f" Length of ancillary file's longitude: {inputFile.integer_constants.num_cols}."
-            "\nIf you want to regrid the ancillary file onto the netCDF grid, please use the '--regrid' option.")
+    if not regrid:
+        for i,l in enumerate(lon_out_each_var):
+            if len(l) != nlon_in_each_var[i]:
+                raise QValueError(f"Longitude dimension not consistent for variable {i+1}!\nNumber of longitude points "
+                    f"in netCDF file: {len(l)}. Number of longitude points in ancillary file: {nlon_in_each_var[i]}."
+                    "\nIf you want to regrid the ancillary file onto the netCDF grid, please use the '--regrid' option.")
+
+    # Check levels
+    levels_out_each_var,levcoord = check_level(ncFile,levcoord=levcoord)
+    # Check that level dimension is consistent
+    if not regrid:
+        for i,l in enumerate(levels_out_each_var):
+            if len(l) != len(lev_in_each_var[i]):
+                raise QValueError(f"Level dimension not consistent for variable {i+1}!\nNumber of levels in netCDF file: {len(l)}."
+                    f" Number of levels in ancillary file: {len(lev_in_each_var[i])}."
+                    "\nIf you want to regrid the ancillary file onto the netCDF grid, please use the '--regrid' option.")
 
     # Check time
     t_out,tcoord = check_time(ncFile,tcoord=tcoord)
@@ -58,40 +72,19 @@ def consistency_check(inputFile,ncFile,inputFilename,latcoord=None,loncoord=None
         raise QValueError(f"Time dimension not consistent!\nLength of netCDF file's time: {ntime}."
             f" Length of ancillary file's time: {inputFile.integer_constants.num_times}.")
     
-    # Check levels
-    lev_out_each_var,levcoord = check_level(inputFile,has_pseudo,input_levels,levcoord=levcoord)
-    # Check that level dimension is consistent
-    if not regrid:
-        for i,l in enumerate(lev_out_each_var):
-            if len(l) != len(input_levels[i]):
-                raise QValueError(f"Level dimension not consistent for variable {i+1}!\nNumber of levels in netCDF file: {len(l)}."
-                    f" Number of levels in ancillary file: {len(input_levels[i])}."
-                    "\nIf you want to regrid the ancillary file onto the netCDF grid, please use the '--regrid' option.")
-
-    # Check Pseudo-levels
-    pseudo_out_each_var,pseudocoord = check_pseudo(inputFile,has_pseudo,input_pseudo_levels,pseudocoord=pseudocoord)
-    # Check that pseudo-levels are consistent
-    if not regrid:
-        for i,ps in enumerate(pseudo_out_each_var):
-            if len(ps) != len(input_pseudo_levels[i]):
-                raise QValueError(f"Psuedo-level dimension not consistent for variable {i+1}!\nNumber of pseudo-levels in netCDF file: {len(ps)}."
-                    f" Number of pseudo-levels in ancillary file: {len(input_pseudo_levels[i])}."
-                    "\nIf you want to regrid the ancillary file onto the netCDF grid, please use the '--regrid' option.")
-
-    levels_out = [pseudo_out_each_var[ivar] if ps else lev_out_each_var[ivar] for ivar,ps in enumerate(has_pseudo)]
-    levelcoord = [levcoord,pseudocoord]
-    
     # Check that NC File doesn't have any additional variables
-    dims=[tcoord,latcoord,loncoord]
-    for var,ps in zip(ncFile.data_vars,has_pseudo):
-        for d in ncFile[var].dims:
-            if d not in (dims+[levelcoord[int(ps)]]) and len(ncFile[var][d])>1:
-                raise QValueError(f"There is an extra dimension '{d}' in the netCDF variable '{var}'.")
+    for ivar,var in enumerate(ncFile.data_vars):
+         ncdims = set(ncFile[var].dims)
+         dims = set(filter(None,[tcoord,latcoord[ivar],loncoord[ivar],levcoord[ivar]]))
+         if not ncdims == dims:
+                raise QValueError("Different dimensions between the netCDF and ancillary file for "
+                                  f"variable '{ncFile[var].name}'. NetCDF file dimensions: {ncdims}. "
+                                  f"Ancillary file dimensions: {dims}.")
 
     print("====== Consistency check OK! ======")
-    return lat_out, latcoord, lon_out, loncoord, levels_out, levelcoord, ntime, tcoord, inputFile
+    return lat_out_each_var, latcoord, lon_out_each_var, loncoord, levels_out_each_var, levcoord, ntime, tcoord, inputFile
 
-def modify_and_write(inputFile,inputFilename,outputFilename,ncFile,regrid,lat_out,latcoord,lon_out,loncoord,lev_out,levcoord,ntime,tcoord,nanval):
+def modify_and_write(inputFile,inputFilename,outputFilename,ncFile,regrid,lat_out_each_var,latcoord,lon_out_each_var,loncoord,lev_out,levcoord,ntime,tcoord,nanval):
     # WRITE FILE
     if outputFilename is None:
         outputFilename=inputFilename+"_modified"
@@ -102,25 +95,24 @@ def modify_and_write(inputFile,inputFilename,outputFilename,ncFile,regrid,lat_ou
     else:
         outputFilename = os.path.abspath(outputFilename)
     
-    def substitute_nanval(data):
+    def _substitute_nanval(data,latc,lonc):
         if nanval is None:
-            return data.where(data.notnull(),UM_NANVAL).transpose(latcoord,loncoord).values
+            return data.where(data.notnull(),UM_NANVAL).transpose(latc,lonc).values
         else:
-            return data.where(data != nanval, UM_NANVAL).transpose(latcoord,loncoord).values
+            return data.where(data != nanval, UM_NANVAL).transpose(latc,lonc).values
 
-    def select_time_level(data,tind=None,lvind=None):
-        if tcoord is not None:
-            data = data.isel({tcoord:tind}, drop=True)
+    def _select_time_level(data,levc,tc,lvind,tind):
+        data = data.isel({tc:tind}, drop=True)
         if levcoord is not None:
-            data = data.isel({levcoord:lvind}, drop=True)
+            data = data.isel({levc:lvind}, drop=True)
         return data
 
-    def get_2d_data(data,tind,lvind):
-        return substitute_nanval(select_time_level(data,tind,lvind)).squeeze()
+    def _get_2d_data(data,latc,lonc,levc,tc,lvind,tind):
+        return _substitute_nanval(_select_time_level(data,levc,tc,lvind,tind),latc,lonc).squeeze()
 
     if regrid:
         print(f"====== Regridding '{outputFilename}'... ======")
-        newAncilFile = regrid_ancil(inputFile,lat_out,lon_out,lev_out)
+        newAncilFile = regrid_ancil(inputFile,lat_out_each_var,lon_out_each_var,lev_out)
         print(f"====== Regridding '{outputFilename}' OK! ======")
     else:
         # Create a copy of the ancillary file to modify
@@ -130,19 +122,20 @@ def modify_and_write(inputFile,inputFilename,outputFilename,ncFile,regrid,lat_ou
 
     fldind = iter(newAncilFile.fields)
     for t in range(ntime):
-        f=next(fldind)
-        for var in ncFile.data_vars:
-            for lv,_ in enumerate(lev_out):
-                data_2d = get_2d_data(ncFile[var],t,lv)
-                f.set_data_provider(mule.ArrayDataProvider(data_2d))
+        for ivar,var in enumerate(ncFile.data_vars):
+            for lv,_ in enumerate(lev_out[ivar]):
+                data_2d = _get_2d_data(ncFile[var],latcoord[ivar],
+                                       loncoord[ivar],levcoord[ivar],
+                                       tcoord,lv,t)
+                next(fldind).set_data_provider(mule.ArrayDataProvider(data_2d))
 
     newAncilFile.to_file(outputFilename)
     print(f"====== Writing '{outputFilename}' ancillary file OK! ======")
 
-def main(inputFilename,ncFilename,outputFilename,latcoord,loncoord,tcoord,levcoord,pseudocoord,nanval,regrid,fix):
+def main(inputFilename,ncFilename,outputFilename,latcoord,loncoord,levcoord,tcoord,nanval,regrid,fix):
         inputFile,ncFile = read_files(inputFilename,ncFilename)
-        lat_out, latcoord, lon_out, loncoord, levels_out, levelcoord, ntime, tcoord, inputFile = consistency_check(inputFile,ncFile,inputFilename,latcoord,loncoord,levcoord,pseudocoord,tcoord,fix)
-        modify_and_write(inputFile,inputFilename,outputFilename,ncFile,regrid,lat_out,latcoord,lon_out,loncoord,levels_out,levelcoord,ntime,tcoord,nanval)
+        lat_out, latcoord, lon_out, loncoord, lev_out, levcoord, ntime, tcoord, inputFile = consistency_check(inputFile,ncFile,inputFilename,latcoord,loncoord,levcoord,tcoord,fix)
+        modify_and_write(inputFile,inputFilename,outputFilename,ncFile,regrid,lat_out,latcoord,lon_out,loncoord,lev_out,levcoord,ntime,tcoord,nanval)
 
 if __name__ == '__main__':
     import argparse
@@ -155,17 +148,20 @@ if __name__ == '__main__':
     parser.add_argument('--nc', '--ncfile', dest='ncfile', required=True, type=str,
                         help='NetCDF file to turn into UM ancillary file. (Required)')
     parser.add_argument('-o', '--output', dest='um_output_file', required=False, type=str,
-                        help='UM ancillary output file.')                    
+                        help='UM ancillary output file.')
     parser.add_argument('--lat', '--latitude', dest='latitude_name', required=False, type=str,
-                        help='Name of the latitude dimension in the netCDF file.')
+                        help="Name of the netCDF variables' latitude dimension. If the netCDF has different latitude "
+                            "names for different variables, list of the latitude dimension names for every netCDF variable.")
     parser.add_argument('--lon', '--longitude', dest='longitude_name', required=False, type=str,
-                        help='Name of the longitude dimension in the netCDF file.')
+                        help="Name of the netCDF variables' longitude dimension. If the netCDF has different longitude "
+                            "names for different variables, list of the longitude dimension names for every netCDF variable.")
+    parser.add_argument('--lev', '--level', dest='level_name', required=False, type=str,
+                        help="Name of the netCDF variables' vertical level (or pseudo-level) dimension. "
+                            "If the netCDF has different level names for different variables, list of the level "
+                            "dimension names for every netCDF variable. If a variable does not have any vertical "
+                            "dimension, use 'None' as a level name for that variable.")
     parser.add_argument('-t', '--time', dest='time_name', required=False, type=str,
                         help='Name of the time dimension in the netCDF file.')
-    parser.add_argument('--lev', '--level', dest='level_name', required=False, type=str,
-                        help='Name of the level dimension in the netCDF file.') 
-    parser.add_argument('--ps', '--pseudo', dest='pseudo_level_name', required=False, type=str,
-                        help='Name of the pseudo-level dimension in the netCDF file.')
     parser.add_argument('--nan', dest='nanval', required=False, type=float,
                         help='Value for NaNs in the netCDF file.')
     parser.add_argument('--regrid', dest='regrid', action="store_true",
@@ -179,43 +175,44 @@ if __name__ == '__main__':
     import os
     import mule
     import xarray as xr
-    from umami.ancil_utils.validation_tools import validate
     import warnings
     warnings.filterwarnings("ignore")
-    from umami.ancil_utils import UM_NANVAL, read_ancil, get_levels_each_var, has_pseudo_levels_each_var, regrid_ancil
-    from umami.netcdf_utils import check_latitude, check_longitude, check_level, check_pseudo, check_time
+    from umami.ancil_utils import (UM_NANVAL, read_ancil,get_latitude_each_var,get_longitude_each_var,
+                                   get_levels_each_var,has_pseudo_each_var,regrid_ancil)
+    from umami.netcdf_utils import (split_coord_names,read_netCDF,check_latitude, check_longitude,
+                                    check_level,check_time)
+    from umami.ancil_utils.validation_tools import validate
     from umami.quieterrors import QValueError
 
+    # (inputFilename,ncFilename,outputFilename,latcoord,loncoord,
+    #     levcoord,tcoord,nanval,regrid,fix) = (
+    #     "/g/data/w40/dxd565/um-reosc-slab/ancil/vavqa.reosc.ancil",
+    #     "/g/data/w40/sza565/ancil_data/vavqa.reosc.ancil.shiftANZ.nc",
+    #     "/g/data3/tm70/dm5220/ancil/abhik/shifted/vavqa.reosc.ancil.shiftANZ",
+    #     None,
+    #     ['longitude','longitude','longitude','longitude_1','longitude','longitude'],
+    #     ['surface'],
+    #     None,
+    #     None,
+    #     False,
+    #     True,
+    #     )
+    
     inputFilename=os.path.abspath(args.um_input_file)
     ncFilename=os.path.abspath(args.ncfile)
     outputFilename=args.um_output_file
-    latcoord=args.latitude_name
-    loncoord=args.longitude_name
+    latcoord=split_coord_names(args.latitude_name)
+    loncoord=split_coord_names(args.longitude_name)
+    levcoord=split_coord_names(args.level_name)
     tcoord=args.time_name
-    levcoord=args.level_name
-    pseudocoord=args.pseudo_level_name
     nanval=args.nanval
     regrid=args.regrid
     fix=args.fix
 
-    (inputFilename,ncFilename,outputFilename,latcoord,loncoord,tcoord,
-        levcoord,pseudocoord,nanval,regrid,fix) = (
-        "/g/data/w40/dxd565/um-reosc-slab/ancil/vavqa.reosc.ancil",
-        "/g/data/w40/sza565/ancil_data/vavqa.reosc.ancil.shiftANZ.nc",
-        "/g/data3/tm70/dm5220/ancil/abhik/shifted/vavqa.reosc.ancil.shiftANZ",
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        False,
-        True,
-        )
     print(f"====== Reading '{inputFilename}' ancillary file... ======")
 
-    main(inputFilename,ncFilename,outputFilename,latcoord,loncoord,tcoord,
-        levcoord,pseudocoord,nanval,regrid,fix)
+    main(inputFilename,ncFilename,outputFilename,latcoord,loncoord,levcoord,
+         tcoord,nanval,regrid,fix)
 
 
 

@@ -3,11 +3,9 @@
 # Copyright 2022 ACCESS-NRI and contributors. See the top-level COPYRIGHT file for details.
 # SPDX-License-Identifier: Apache-2.0
 
-# Created by Davide Marchegiani at ACCESS-NRI - davide.marchegiani@anu.edu.au
+# Script created by Davide Marchegiani at ACCESS-NRI - davide.marchegiani@anu.edu.au
 
 # Count land points in land_mask UM ancil file
-
-from umami.quieterrors import QValueError
 
 def main(maskFilename):
     STASH_CODE = 30
@@ -31,6 +29,7 @@ if __name__ == '__main__':
     import warnings
     warnings.filterwarnings("ignore")
     from umami.ancil_utils import read_ancil
+    from umami.quieterrors import QValueError
 
     maskFilename=os.path.abspath(args.maskfile)
     

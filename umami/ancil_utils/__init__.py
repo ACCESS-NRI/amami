@@ -15,60 +15,72 @@ UM_NANVAL=-1073741824.0 #(-2.0**30)
 def get_stash_each_var(ancilFile):
     return list(dict.fromkeys([f.lbuser4 for f in ancilFile.fields]))
 
-def get_latitude(ancilFile):
-    f = ancilFile.fields[0].copy()
-    return np.linspace(f.bzy+f.bdy,
-                       f.bzy+f.bdy+f.bdy*(f.lbrow-1),
-                       f.lbrow)
+def _first_timestep_fields(ancilFile):
+    return ancilFile.fields[:(len(ancilFile.fields)//(ancilFile.integer_constants.num_times))].copy()
 
-def get_longitude(ancilFile):
-    f = ancilFile.fields[0].copy()
-    return np.linspace(f.bzx+f.bdx,
-                       f.bzx+f.bdx+f.bdx*(f.lbnpt-1),
-                       f.lbnpt)
+def get_latitude_each_var(ancilFile):
+    '''Gets the latitude for each variable in the ancillary file ancilFile.'''
+    first_timestep_fields = _first_timestep_fields(ancilFile)
+    # Get stash codes to group into different variables
+    stash = [f.lbuser4 for f in first_timestep_fields]
+    func=lambda f: np.linspace(f.bzy+f.bdy,
+                    f.bzy+f.bdy+f.bdy*(f.lbrow-1),
+                    f.lbrow).tolist()
+    lat = (func(f) if (i==0 or stash[i]!=stash[i-1]) else None for i,f in enumerate(first_timestep_fields))
+    return list(filter(None,lat))
+
+def get_longitude_each_var(ancilFile):
+    '''Gets the longitude for each variable in the ancillary file ancilFile.'''
+    first_timestep_fields = _first_timestep_fields(ancilFile)
+    # Get stash codes to group into different variables
+    stash = [f.lbuser4 for f in first_timestep_fields]
+    func=lambda f: np.linspace(f.bzx+f.bdx,
+                    f.bzx+f.bdx+f.bdx*(f.lbnpt-1),
+                    f.lbnpt).tolist()
+    lon = (func(f) if (i==0 or stash[i]!=stash[i-1]) else None for i,f in enumerate(first_timestep_fields))
+    return list(filter(None,lon))
 
 def get_levels_each_var(ancilFile):
-    '''Gets the vertical level or pseudo-level values for each variable in the ancillary file ancilFile.'''
-    first_timestep_fields = ancilFile.fields[:(len(ancilFile.fields)//(ancilFile.integer_constants.num_times))].copy()
+    '''Gets the vertical levels and pseudo-levels for each variable in the ancillary file ancilFile.'''
+    first_timestep_fields = _first_timestep_fields(ancilFile)
     # Get stash codes to group into different variables
     stash = [f.lbuser4 for f in first_timestep_fields]
     # Get levels
-    levs=[[f.blev for f in first_timestep_fields],
-          [f.lbuser5 for f in first_timestep_fields],
-          [f.lblev for f in first_timestep_fields]]
-    # Separate levels for each ancil file variable
-    levels = dict()
-    all_levels = []
-    for lv in levs:
-        for st,lvl in zip(stash,lv):
-            if st in levels:
-                levels[st].append(lvl)
+    levs=[f.blev for f in first_timestep_fields]
+    pseudo=[f.lbuser5 for f in first_timestep_fields]
+    levels=[]
+    for lvl in (levs,pseudo):
+        levels.append([])
+        for i,l in enumerate(lvl):
+            if i==0 or stash[i]!=stash[i-1]:
+                levels[-1].append([l])
             else:
-                levels[st] = [lvl]
-        all_levels.append(list(levels.values()))
-        levels=dict()
-    return all_levels
+                levels[-1][-1].append(l)
+    return levels
 
-def has_pseudo_levels_each_var(ancilFile):
-    '''Returns a list of bool, with each one being True if the variable has pseudo-levels, False otherwise, for every variable in the ancillary file ancilFile.'''
-    first_timestep_fields = ancilFile.fields[:(len(ancilFile.fields)//(ancilFile.integer_constants.num_times))].copy()
+def _get_lblev_each_var(ancilFile):
+    '''Gets the vertical level codes (lblev) for each variable in the ancillary file ancilFile.'''
+    first_timestep_fields = _first_timestep_fields(ancilFile)
     # Get stash codes to group into different variables
     stash = [f.lbuser4 for f in first_timestep_fields]
-    # Get pseudo-levels
-    pslevs = [f.lbuser5 for f in first_timestep_fields]
-    # Separate levels for each ancil file variable
-    levels=dict()
-    for st,lv in zip(stash,pslevs):
-        if st in levels:
-            levels[st].append(lv)
-        else:
-            levels[st] = [lv]
-    return [sum(l)!=0 for l in levels.values()]
+    # Get lblevs
+    lblev = [f.lblev for f in first_timestep_fields]
+    levels=[]
+    for i,l in enumerate(lblev):
+            if i==0 or stash[i]!=stash[i-1]:
+                levels[-1].append([l])
+            else:
+                levels[-1][-1].append(l)
+    return levels
+
+def has_pseudo_each_var(ancilFile):
+    '''Returns a list of bool, with each one being True if the variable has pseudo-levels, False otherwise, for every variable in the ancillary file ancilFile.'''
+    return [sum(l)!=0 for l in get_levels_each_var(ancilFile)[1]]
 
 def read_ancil(ancilFilename):
     ancilFilename = os.path.abspath(ancilFilename)
     if not os.path.isfile(ancilFilename):
-        raise QFileExistsError(f"Ancillary file '{ancilFilename}' does not exist.")
+        raise QFileExistsError(f"'{ancilFilename}' does not exist.")
     try:
         file = mule.load_umfile(ancilFilename)
     except ValueError:
@@ -78,57 +90,54 @@ def read_ancil(ancilFilename):
             raise QValueError(f"'{ancilFilename}' does not appear to be a valid UM ancillary file.")
     return file
 
-def regrid_ancil(inputFile,lat_out=None,lon_out=None,lev_out_each_var=None,method=None):
+def regrid_ancil(inputFile,lat_out_each_var=None,lon_out_each_var=None,lev_out_each_var=None,method=None):
     '''
     Regrids a UM ancilFile over latitude, longitude and UM vertical levels, using scipy.interpolate.interpn function.
 
     PARAMETERS
     -   ancilFile is a mule.ancilFile
-    -   lat_out is an array-like variable with the output latitude coordinate. If set to None, no regridding will
+    -   lat_out is a list of array-like variables with the output latitude coordinate. If set to None, no regridding will
         be performed over latitude.
-    -   lon_out is an array-like variable with the output longitude coordinate. If set to None, no regridding will
+    -   lon_out is a list of array-like variables with the output longitude coordinate. If set to None, no regridding will
         be performed over longitude.
-    -   lev_out is a list of array-like variables with the output vertical level coordinate fpr each variable in ancilFile. 
+    -   lev_out is a list of array-like variables with the output vertical level coordinate for each variable in ancilFile. 
         If set to None, no regridding will be performed over vertical levels.
     -   method is a string defining the interpolation method. Methods supported are 'linear', 'nearest', 'cubic', 'quintic' and 'pchip'.
-        If set to None, 'linear' interpolation is used.
+        If set to None, 'nearest' interpolation is used.
     '''
     # Check method
     avail_methods=('linear', 'nearest', 'cubic', 'quintic', 'pchip')
     if method is None:
-        method = 'linear'
+        method = 'nearest'
     elif method not in avail_methods:
-        raise QValueError(f"'method' needs to be one in {avail_methods}. You provided {method}.")
+        raise QValueError(f"'{method}' method not recognized. method needs to be one in {avail_methods}.")
 
     # Parse input file
     if not isinstance(inputFile,mule.AncilFile):
         raise TypeError("'ancilFile' needs to be a mule.ancilFile object.")
     # Get the input coordinates from the first field of the ancilFile
     f=inputFile.fields[0].copy()
-    lat_in = get_latitude(inputFile)
-    lon_in = get_longitude(inputFile)
-    lev_in_each_var,pseudo_each_var,lblev_each_var = get_levels_each_var(inputFile)
+    lat_in_each_var = get_latitude_each_var(inputFile)
+    lon_in_each_var = get_longitude_each_var(inputFile)
+    lev_in_each_var,pseudo_in_each_var = get_levels_each_var(inputFile)
+    lblev_in_each_var = _get_lblev_each_var(inputFile)
     ntimes = inputFile.integer_constants.num_times
     lbegin = f.lbegin
     stash_each_var = get_stash_each_var(inputFile)
-    has_pseudo_each_var = has_pseudo_levels_each_var(inputFile)
+    has_pseudo_in_each_var = has_pseudo_each_var(inputFile)
     # Mix pseudo-levels and normal levels
-    levels_in_each_var = [pseudo_each_var[ivar] if ps else lev_in_each_var[ivar] for ivar,ps in enumerate(has_pseudo_each_var)]
+    levels_in_each_var = [pseudo_in_each_var[ivar] if ps else lev_in_each_var[ivar] for ivar,ps in enumerate(has_pseudo_in_each_var)]
     # Parse output coords 
     # Latitude
-    if lat_out is None:
-        lat_out = lat_in
-    elif isinstance(lat_out,(int, float)) and not isinstance(lat_out, bool):
-        lat_out = [lat_out]
-    elif not hasattr(lat_out,'__iter__'):
-        raise TypeError("'lat_out' needs to be an iterable.")
+    if lat_out_each_var is None:
+        lat_out_each_var = lat_in_each_var
+    elif not isinstance(lat_out_each_var,list) or not all([hasattr(l,'__iter__') for l in lat_out_each_var]):
+        raise TypeError("'lat_out_each_var' needs to be a list of iterables.")
     # Longitude
-    if lon_out is None:
-        lon_out = lon_in
-    elif isinstance(lon_out,(int, float)) and not isinstance(lon_out, bool):
-        lon_out = [lon_out]
-    elif not hasattr(lon_out,'__iter__'):
-        raise TypeError("'lon_out' needs to be an iterable.")
+    if lon_out_each_var is None:
+        lon_out_each_var = lon_in_each_var
+    elif not isinstance(lon_out_each_var,list) or not all([hasattr(l,'__iter__') for l in lon_out_each_var]):
+        raise TypeError("'lon_out_each_var' needs to be a list of iterables.")
     # Vertical levels
     if lev_out_each_var is None:
         lev_out_each_var = levels_in_each_var.copy()
@@ -136,28 +145,23 @@ def regrid_ancil(inputFile,lat_out=None,lon_out=None,lev_out_each_var=None,metho
         raise TypeError("'lev_out' needs to be a list of iterables.")
     
     # Get num_levels
-    if all(has_pseudo_each_var):
+    if all(has_pseudo_in_each_var):
         num_levels_out = inputFile.integer_constants.num_levels
     else:
-        for ivar,hp in enumerate(has_pseudo_each_var): 
+        for ivar,hp in enumerate(has_pseudo_in_each_var): 
             if not hp:
                 num_levels_out = len(lev_out_each_var[ivar])
                 break
 
-    nlat_out = len(lat_out)
-    nlon_out = len(lon_out)
-    nlev_out_each_var = list(map(len,lev_out_each_var))
-    if len(lat_out) > 1:
-        dlat_out = lat_out[1] - lat_out[0]
-    else:
-        dlat_out = 180.
-    if len(lon_out) > 1:
-        dlon_out = lon_out[1] - lon_out[0]
-    else:
-        dlon_out = 360.
+    nlat_out_each_var = [len(l) for l in lat_out_each_var]
+    nlon_out_each_var = [len(l) for l in lon_out_each_var]
+    nlev_out_each_var = [len(l) for l in lev_out_each_var]
+    
+    dlat_out_each_var = [l[1]-l[0] if len(l)> 1 else 180. for l in lat_out_each_var]
+    dlon_out_each_var = [l[1]-l[0] if len(l)> 1 else 180. for l in lon_out_each_var]
     
     # Define regridding output points
-    outpoints_each_var = [list(itertools.product(lat_out,lon_out,l)) for l in lev_out_each_var]
+    outpoints_each_var = [list(itertools.product(lat,lon,lev)) for lat,lon,lev in zip(lat_out_each_var,lon_out_each_var,lev_out_each_var)]
 
     # Regrid and get new fields
     f = iter(inputFile.fields.copy())
@@ -169,30 +173,31 @@ def regrid_ancil(inputFile,lat_out=None,lon_out=None,lev_out_each_var=None,metho
                 data.append(next(f).get_data())
             data = np.stack(data, axis=-1)
             data = np.where(data == UM_NANVAL,np.nan,data)
-            interp_data.append(interpn((lat_in,lon_in,lvls), data, outpoints_each_var[ivar], 
-                bounds_error=False, fill_value=None, method=method).reshape(nlat_out,nlon_out,nlev_out_each_var[ivar]))
+            interp_data.append(interpn((lat_in_each_var[ivar],lon_in_each_var[ivar],lvls), data, outpoints_each_var[ivar], 
+                bounds_error=False, fill_value=None, method=method).reshape(nlat_out_each_var[ivar],nlon_out_each_var[ivar],nlev_out_each_var[ivar]))
     newfields = np.concatenate(interp_data,axis=-1)
     newfields = np.where(np.isnan(newfields),UM_NANVAL,newfields)
+
+    # If the grid is a global one, force polar values to be the zonal means
+    if (inputFile.fixed_length_header.horiz_grid_type == 0 and 
+        np.allclose(lat_out_each_var[0][0], -90) and
+        np.allclose(lon_out_each_var[0][0], 0)):
+        newfields[0,...]=newfields[0,...].mean(axis=0)
+        newfields[-1,...]=newfields[-1,...].mean(axis=0)
 
     # Create new ancil file 
     regriddedFile = inputFile.copy(include_fields=False)
     # Change regridded file header
-    regriddedFile.integer_constants.num_rows = nlat_out
-    regriddedFile.integer_constants.num_cols = nlon_out
+    regriddedFile.integer_constants.num_rows = nlat_out_each_var[0]
+    regriddedFile.integer_constants.num_cols = nlon_out_each_var[0]
     regriddedFile.integer_constants.num_levels = num_levels_out
-    regriddedFile.real_constants.start_lat = lat_out[0]
-    regriddedFile.real_constants.start_lon = lon_out[0]
-    regriddedFile.real_constants.north_pole_lat = lat_out[-1]
-    regriddedFile.real_constants.north_pole_lon = lon_out[-1]
-    regriddedFile.real_constants.row_spacing = dlat_out
-    regriddedFile.real_constants.col_spacing = dlon_out
-    # If the grid is a global one, force polar values to be the zonal means
-    if (inputFile.fixed_length_header.horiz_grid_type == 0 and 
-        np.allclose(lat_out[0], -90) and
-        np.allclose(lon_out[0], 0)):
-        newfields[0,...]=newfields[0,...].mean(axis=0)
-        newfields[-1,...]=newfields[-1,...].mean(axis=0)
-
+    regriddedFile.real_constants.start_lat = lat_out_each_var[0][0]
+    regriddedFile.real_constants.start_lon = lon_out_each_var[0][0]
+    regriddedFile.real_constants.north_pole_lat = lat_out_each_var[0][-1]
+    regriddedFile.real_constants.north_pole_lon = lon_out_each_var[0][-1]
+    regriddedFile.real_constants.row_spacing = dlat_out_each_var[0]
+    regriddedFile.real_constants.col_spacing = dlon_out_each_var[0]
+    
     # Assign new fields to new ancil file
     fit=iter(newfields.transpose(2,0,1))
     for _ in range(ntimes): # Loop for each timestep
@@ -201,18 +206,21 @@ def regrid_ancil(inputFile,lat_out=None,lon_out=None,lev_out_each_var=None,metho
                 regriddedFile.fields.append(inputFile.fields[0].copy())
                 f = regriddedFile.fields[-1]
                 # Change field headers
-                f.lblrec = nlat_out*nlon_out
-                f.lbrow = nlat_out
-                f.lbnpt = nlon_out
+                f.lblrec = nlat_out_each_var[ivar]*nlon_out_each_var[ivar]
+                f.lbrow = nlat_out_each_var[ivar]
+                f.lbnpt = nlon_out_each_var[ivar]
                 f.lbegin = lbegin + f.lbnrec*(len(regriddedFile.fields)-1)
-                f.lblev = lblev_each_var[ivar][ilvl]
+                f.lblev = 7777 if all(lbl == 7777 for lbl in lblev_in_each_var[ivar]) else \
+                    8888 if all(lbl == 8888 for lbl in lblev_in_each_var[ivar]) else \
+                    9999 if all(lbl == 9999 for lbl in lblev_in_each_var[ivar]) else \
+                    ilvl+1
                 f.lbuser2 = 1+f.lblrec*(len(regriddedFile.fields)-1)
                 f.lbuser4 = stash_each_var[ivar]
-                f.lbuser5 = pseudo_each_var[ivar][ilvl]
-                f.blev = lev    
-                f.bzy = lat_out[0] - dlat_out
-                f.bdy = dlat_out
-                f.bzx = lon_out[0] - dlon_out
-                f.bdx = dlon_out
+                f.lbuser5 = lev if has_pseudo_in_each_var[ivar] else 0
+                f.blev = lev if not has_pseudo_in_each_var[ivar] else 0
+                f.bzy = lat_out_each_var[ivar][0] - dlat_out_each_var[ivar]
+                f.bdy = dlat_out_each_var[ivar]
+                f.bzx = lon_out_each_var[ivar][0] - dlon_out_each_var[ivar]
+                f.bdx = dlon_out_each_var[ivar]
                 f.set_data_provider(mule.ArrayDataProvider(next(fit)))
     return regriddedFile

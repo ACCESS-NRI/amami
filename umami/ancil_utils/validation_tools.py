@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # Copyright 2022 ACCESS-NRI and contributors. See the top-level COPYRIGHT file for details.
 # SPDX-License-Identifier: Apache-2.0
 
@@ -21,13 +19,13 @@ def validate(ancilFile,fix=False,filename=None):
         else:
             text = f"for '{filename}' "
         print(f"Validation failed {text}with the following error message:\n"+\
-                "'{}'\n".format('\n'.join(str(e).split('\n')[1:])))
+                "'{}'.".format('\n'.join(str(e).split('\n')[1:])))
         if not fix:
             sys.exit()
         else:
             print("Fixing validation error...")
             ancilFile = _fix_error(e,ancilFile)
-            print("Validation error fixed!")
+            print("Validation error fixed!\n")
     return ancilFile
 
 def _input(values,prompt):
