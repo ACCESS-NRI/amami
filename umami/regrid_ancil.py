@@ -74,26 +74,6 @@ def consistency_check(inputFile,gridFile,inputFilename,gridFilename,umgrid,latco
             lon_out_each_var = np.repeat(lon_out_each_var,nvar_in,axis=0).tolist()
             levels_out_each_var = np.repeat(levels_out_each_var,nvar_in,axis=0).tolist()
     
-    # Check that both InputFile and gridFile are consistent in case latitude, longitude or levels are of length 1
-    # Check Latitude
-    for ivar,nlo in enumerate(nlat_out_each_var):
-        if ((nlat_in_each_var[ivar] == 1) and (nlo != 1)) or ((nlat_in_each_var[ivar] != 1) and (nlo == 1)):
-            raise QValueError(f"Impossible to perform the interpolation from multiple points into one single point or vice-versa.\n"
-                              f"Variable {ivar+1} of the ancillary file '{inputFilename}' has {nlat_in_each_var[ivar]} "
-                              f"latitude point(s). Variable {ivar+1} of the grid file '{gridFilename}' has {nlo} latitude point(s).")
-    # Check Longitude
-    for ivar,nlo in enumerate(nlon_out_each_var):
-        if ((nlon_in_each_var[ivar] == 1) and (nlo != 1)) or ((nlon_in_each_var[ivar] != 1) and (len(nlo) == 1)):
-            raise QValueError(f"Impossible to perform the interpolation from multiple points into one single point or vice-versa.\n"
-                              f"Variable {ivar+1} of the ancillary file '{inputFilename}' has {nlon_in_each_var[ivar]} "
-                              f"longitude point(s). Variable {ivar+1} of the grid file '{gridFilename}' has {nlo} longitude point(s).")
-    # Check Level
-    for ivar,olev in enumerate(levels_out_each_var):
-        if ((len(levels_in_each_var[ivar]) == 1) and (len(olev) != 1)) or (((len(levels_in_each_var[ivar]) != 1) and (len(olev) == 1))):
-            raise QValueError(f"Impossible to perform the interpolation from multiple points into one single point or vice-versa.\n"
-                              f"Variable {ivar+1} of the ancillary file '{inputFilename}' has {len(levels_in_each_var[ivar])} "
-                              f"level(s). Variable {ivar+1} of the grid file '{gridFilename}' has {len(olev)} level(s).")
-
     print("====== Consistency check OK! ======")
     return lat_out_each_var,lon_out_each_var,levels_out_each_var,inputFile
 

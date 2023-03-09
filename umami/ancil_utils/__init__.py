@@ -157,6 +157,26 @@ def regrid_ancil(inputFile,lat_out_each_var=None,lon_out_each_var=None,lev_out_e
     nlon_out_each_var = [len(l) for l in lon_out_each_var]
     nlev_out_each_var = [len(l) for l in lev_out_each_var]
     
+    # Check that both InputFile and gridFile are consistent in case latitude, longitude or levels are of length 1
+    # Check Latitude
+    for ivar,nlo in enumerate(nlat_out_each_var):
+        if ((len(lat_in_each_var[ivar]) == 1) and (nlo != 1)) or ((len(lat_in_each_var[ivar]) != 1) and (nlo == 1)):
+            raise QValueError(f"Impossible to perform the interpolation from multiple points into one single point or vice-versa.\n"
+                              f"Variable {ivar+1} of the input file has {len(lat_in_each_var[ivar])} latitude point(s). "
+                              f"Variable {ivar+1} of the grid file has {nlo} latitude point(s).")
+    # Check Longitude
+    for ivar,nlo in enumerate(nlon_out_each_var):
+        if ((len(lon_in_each_var[ivar]) == 1) and (nlo != 1)) or ((len(lon_in_each_var[ivar]) != 1) and (nlo == 1)):
+            raise QValueError(f"Impossible to perform the interpolation from multiple points into one single point or vice-versa.\n"
+                              f"Variable {ivar+1} of the input file has {len(lon_in_each_var[ivar])} longitude point(s). "
+                              f"Variable {ivar+1} of the grid file has {nlo} longitude point(s).")
+    # Check Level
+    for ivar,olev in enumerate(nlev_out_each_var):
+        if ((len(levels_in_each_var[ivar]) == 1) and (olev != 1)) or (((len(levels_in_each_var[ivar]) != 1) and (olev == 1))):
+            raise QValueError(f"Impossible to perform the interpolation from multiple points into one single point or vice-versa.\n"
+                              f"Variable {ivar+1} of the input file has {len(levels_in_each_var[ivar])} level(s). "
+                              f"Variable {ivar+1} of the grid file has {olev} level(s).")
+
     dlat_out_each_var = [l[1]-l[0] if len(l)> 1 else 180. for l in lat_out_each_var]
     dlon_out_each_var = [l[1]-l[0] if len(l)> 1 else 180. for l in lon_out_each_var]
     

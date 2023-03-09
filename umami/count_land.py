@@ -5,7 +5,7 @@
 
 # Script created by Davide Marchegiani at ACCESS-NRI - davide.marchegiani@anu.edu.au
 
-# Count land points in land_mask UM ancil file
+# Count land points in a land_mask UM ancil file
 
 def main(maskFilename):
     STASH_CODE = 30

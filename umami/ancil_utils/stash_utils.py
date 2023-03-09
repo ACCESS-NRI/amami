@@ -3,20 +3,18 @@
 
 # Script created by Davide Marchegiani (davide.marchegiani@anu.edu.au) at ACCESS-NRI.
 
-# /g/data3/hh5/public/apps/miniconda3/envs/analysis3-22.07/lib/python3.9/site-packages/mule/validators.py
-
 from umami.quieterrors import QValueError
 import re
-def get_stash_name(itemcode):
+def get_stash_name(code):
     '''Get the name of the variable in the STASH code, based on the MetOffice STASH codes register
     (https://reference.metoffice.gov.uk/um/stash)
     '''
-    def int2str(code):
+    def itemcode2strcode(code):
         return f"m01s{code//1000:02d}i{code%1000:03d}"
     # Check the formatting of code
-    if isinstance(itemcode,int):
-        itemcode = int2code(itemcode)
-    elif isinstance(itemcode,str) and not re.match(r"^m\d{2}s\d{2}i\d{3}$",itemcode):
+    if isinstance(code,int):
+        code = itemcode2strcode(code)
+    elif isinstance(code,str) and not re.match(r"^m\d{2}s\d{2}i\d{3}$",code):
         raise QValueError("Code string needs to be in the format 'mXXsXXiXXX', with X being "
                             "an integer between 0-9.")
     else:
@@ -28,8 +26,8 @@ def get_stash_name(itemcode):
     with open("data/metoffice_stash_page",'r') as file:
         html = file.read()
     
-    itemcode = "m01s02i204"
-    a=re.findall(f"(?<=,)[^,]+(?=,{itemcode})",html)
+    code = "m01s02i204"
+    a=re.findall(f"(?<=,)[^,]+(?=,{code})",html)
 
 # if len(a) == 0:
 # elif len(a) > 1:
