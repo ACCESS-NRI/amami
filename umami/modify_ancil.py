@@ -174,8 +174,8 @@ if __name__ == '__main__':
     # Imports here to improve performance when running with '--help' option
     import os
     import mule
-    import xarray as xr
     import warnings
+    import numpy as np
     warnings.filterwarnings("ignore")
     from umami.ancil_utils import (UM_NANVAL, read_ancil,get_latitude_each_var,get_longitude_each_var,
                                    get_levels_each_var,has_pseudo_each_var,regrid_ancil)
