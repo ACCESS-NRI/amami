@@ -68,9 +68,9 @@ def _get_lblev_each_var(ancilFile):
     levels=[]
     for i,l in enumerate(lblev):
             if i==0 or stash[i]!=stash[i-1]:
-                levels[-1].append([l])
+                levels.append([l])
             else:
-                levels[-1][-1].append(l)
+                levels[-1].append(l)
     return levels
 
 def has_pseudo_each_var(ancilFile):
@@ -122,7 +122,6 @@ def regrid_ancil(inputFile,lat_out_each_var=None,lon_out_each_var=None,lev_out_e
     lev_in_each_var,pseudo_in_each_var = get_levels_each_var(inputFile)
     lblev_in_each_var = _get_lblev_each_var(inputFile)
     ntimes = inputFile.integer_constants.num_times
-    lbegin = f.lbegin
     stash_each_var = get_stash_each_var(inputFile)
     has_pseudo_in_each_var = has_pseudo_each_var(inputFile)
     # Mix pseudo-levels and normal levels
@@ -217,30 +216,33 @@ def regrid_ancil(inputFile,lat_out_each_var=None,lon_out_each_var=None,lev_out_e
     regriddedFile.real_constants.north_pole_lon = lon_out_each_var[0][-1]
     regriddedFile.real_constants.row_spacing = dlat_out_each_var[0]
     regriddedFile.real_constants.col_spacing = dlon_out_each_var[0]
-    
+    regriddedFile.fixed_length_header.data_start = np.int64(2049)
+
     # Assign new fields to new ancil file
-    fit=iter(newfields.transpose(2,0,1))
+    count = itertools.count()
     for _ in range(ntimes): # Loop for each timestep
         for ivar,lvls in enumerate(lev_out_each_var): # Loop for each variable
             for ilvl,lev in enumerate(lvls): # Loop for each level
+                c = next(count)
                 regriddedFile.fields.append(inputFile.fields[0].copy())
                 f = regriddedFile.fields[-1]
                 # Change field headers
-                f.lblrec = nlat_out_each_var[ivar]*nlon_out_each_var[ivar]
-                f.lbrow = nlat_out_each_var[ivar]
-                f.lbnpt = nlon_out_each_var[ivar]
-                f.lbegin = lbegin + f.lbnrec*(len(regriddedFile.fields)-1)
-                f.lblev = 7777 if all(lbl == 7777 for lbl in lblev_in_each_var[ivar]) else \
-                    8888 if all(lbl == 8888 for lbl in lblev_in_each_var[ivar]) else \
-                    9999 if all(lbl == 9999 for lbl in lblev_in_each_var[ivar]) else \
-                    ilvl+1
-                f.lbuser2 = 1+f.lblrec*(len(regriddedFile.fields)-1)
-                f.lbuser4 = stash_each_var[ivar]
-                f.lbuser5 = lev if has_pseudo_in_each_var[ivar] else 0
-                f.blev = lev if not has_pseudo_in_each_var[ivar] else 0
-                f.bzy = lat_out_each_var[ivar][0] - dlat_out_each_var[ivar]
-                f.bdy = dlat_out_each_var[ivar]
-                f.bzx = lon_out_each_var[ivar][0] - dlon_out_each_var[ivar]
-                f.bdx = dlon_out_each_var[ivar]
-                f.set_data_provider(mule.ArrayDataProvider(next(fit)))
+                f.lbpack = np.int64(0)
+                f.lblrec = np.int64(nlat_out_each_var[ivar]*nlon_out_each_var[ivar])
+                f.lbrow = np.int64(nlat_out_each_var[ivar])
+                f.lbnpt = np.int64(nlon_out_each_var[ivar])
+                f.lbegin = np.int64(2048 + f.lbnrec*c)
+                f.lblev = np.int64(7777) if all(lbl == 7777 for lbl in lblev_in_each_var[ivar]) else \
+                    np.int64(8888) if all(lbl == 8888 for lbl in lblev_in_each_var[ivar]) else \
+                    np.int64(9999) if all(lbl == 9999 for lbl in lblev_in_each_var[ivar]) else \
+                    np.int64(ilvl+1)
+                f.lbuser2 = np.int64(1+f.lblrec*c)
+                f.lbuser4 = np.int64(stash_each_var[ivar])
+                f.lbuser5 = np.int64(lev if has_pseudo_in_each_var[ivar] else 0)
+                f.blev = np.int64(lev if not has_pseudo_in_each_var[ivar] else 0)
+                f.bzy = np.int64(lat_out_each_var[ivar][0] - dlat_out_each_var[ivar])
+                f.bdy = np.int64(dlat_out_each_var[ivar])
+                f.bzx = np.int64(lon_out_each_var[ivar][0] - dlon_out_each_var[ivar])
+                f.bdx = np.int64(dlon_out_each_var[ivar])
+                f.set_data_provider(mule.ArrayDataProvider(newfields[...,c].astype(np.float64)))
     return regriddedFile

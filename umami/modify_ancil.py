@@ -108,7 +108,7 @@ def modify_and_write(inputFile,inputFilename,outputFilename,ncFile,regrid,lat_ou
         return data
 
     def _get_2d_data(data,latc,lonc,levc,tc,lvind,tind):
-        return _substitute_nanval(_select_time_level(data,levc,tc,lvind,tind),latc,lonc).squeeze()
+        return _substitute_nanval(_select_time_level(data,levc,tc,lvind,tind),latc,lonc).squeeze().astype(np.float64)
 
     if regrid:
         print(f"====== Regridding '{outputFilename}'... ======")

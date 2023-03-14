@@ -14,7 +14,7 @@ def main(maskFilename):
     stash = mask.fields[0].lbuser4
     if stash != STASH_CODE:
         raise QValueError(f"{maskFilename} does not appear to be a valid UM mask file.\n"+\
-                "Stash code should be {STASH_CODE}, but it is {stash}.")
+                f"Stash code should be {STASH_CODE}, but it is {stash}.")
     print(mask.fields[0].get_data().sum())
 
 if __name__ == '__main__':
