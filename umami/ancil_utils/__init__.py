@@ -8,7 +8,7 @@ import itertools
 import numpy as np
 from scipy.interpolate import interpn
 import os
-from umami.quieterrors import QValueError, QFileExistsError
+from umami.quieterrors import QValueError, QFileNotFoundError
 
 UM_NANVAL=-1073741824.0 #(-2.0**30)
 
@@ -80,14 +80,14 @@ def has_pseudo_each_var(ancilFile):
 def read_ancil(ancilFilename):
     ancilFilename = os.path.abspath(ancilFilename)
     if not os.path.isfile(ancilFilename):
-        raise QFileExistsError(f"'{ancilFilename}' does not exist.")
+        raise QFileNotFoundError(f"'{ancilFilename}' does not exist.")
     try:
         file = mule.load_umfile(ancilFilename)
     except ValueError:
-        raise QValueError(f"'{ancilFilename}' does not appear to be a valid UM ancillary file.")
+        raise QValueError(f"'{ancilFilename}' does not appear to be a UM ancillary file.")
     else:
         if not isinstance(file,mule.ancil.AncilFile):
-            raise QValueError(f"'{ancilFilename}' does not appear to be a valid UM ancillary file.")
+            raise QValueError(f"'{ancilFilename}' does not appear to be a UM ancillary file.")
     return file
 
 def regrid_ancil(inputFile,lat_out_each_var=None,lon_out_each_var=None,lev_out_each_var=None,method=None):

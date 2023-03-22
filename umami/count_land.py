@@ -20,7 +20,9 @@ def main(maskFilename):
 if __name__ == '__main__':
     import argparse
     # Parse arguments
-    parser = argparse.ArgumentParser(description="Count land points in land mask UM ancillary file")
+    description="Count land points in land mask UM ancillary file"
+    parser = argparse.ArgumentParser(description=description,
+                                    allow_abbrev=False)
     parser.add_argument('maskfile', type=str, help='UM mask file')
     args = parser.parse_args()
     
