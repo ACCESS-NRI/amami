@@ -46,7 +46,7 @@ def convert_proleptic(time):
     time.units = newunits
 
 def fix_latlon_coord(cube, grid_type):
-    def _add_coord_bounds(coord,cube=None):
+    def _add_coord_bounds(coord):
         if len(coord.points) > 1:
             if not coord.has_bounds():
                 coord.guess_bounds()
