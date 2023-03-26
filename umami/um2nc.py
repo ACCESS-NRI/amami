@@ -45,8 +45,8 @@ def convert_proleptic(time):
         time.bounds = tbnds
     time.units = newunits
 
-def fix_latlon_coord(cube, grid_type, dlat, dlon):
-    def _add_coord_bounds(coord):
+def fix_latlon_coord(cube, grid_type):
+    def _add_coord_bounds(coord,cube=None):
         if len(coord.points) > 1:
             if not coord.has_bounds():
                 coord.guess_bounds()
@@ -62,7 +62,7 @@ def fix_latlon_coord(cube, grid_type, dlat, dlon):
     lat = cube.coord('latitude')
     # Force to double for consistency with CMOR
     lat.points = lat.points.astype(np.float64)
-    _add_coord_bounds(lat)
+    _add_coord_bounds(lat,cube)
     lon = cube.coord('longitude')
     lon.points = lon.points.astype(np.float64)
     _add_coord_bounds(lon)
@@ -71,7 +71,7 @@ def fix_latlon_coord(cube, grid_type, dlat, dlon):
     if len(lat.points) == 180:
         lat.var_name = 'lat_river'
     elif (lat.points[0] == -90 and grid_type == 'EG') or \
-         (np.allclose(-90.+0.5*dlat, lat.points[0]) and grid_type == 'ND'):
+         (np.allclose(-90.+np.abs(0.5*(lat.points[1]-lat.points[0])), lat.points[0]) and grid_type == 'ND'):
         lat.var_name = 'lat_v'
     else:
         lat.var_name = 'lat'
@@ -80,7 +80,7 @@ def fix_latlon_coord(cube, grid_type, dlat, dlon):
     if len(lon.points) == 360:
         lon.var_name = 'lon_river'
     elif (lon.points[0] == 0 and grid_type == 'EG') or \
-         (np.allclose(0.5*dlon, lon.points[0]) and grid_type == 'ND'):
+         (np.allclose(np.abs(0.5*(lon.points[1]-lon.points[0])), lon.points[0]) and grid_type == 'ND'):
         lon.var_name = 'lon_u'
     else:
         lon.var_name = 'lon'
@@ -229,7 +229,7 @@ def process(infile, outfile, args):
 
     # Use mule to get the model levels to help with dimension naming
     # mule 2020.01.1 doesn't handle pathlib Paths properly
-    ff = mule.load_umfile(str(infile))
+    ff = read_fieldsfile(infile,check_ancil=False)
     if ff.fixed_length_header.grid_staggering == 6:
         grid_type = 'EG'
     elif ff.fixed_length_header.grid_staggering == 3:
@@ -237,8 +237,6 @@ def process(infile, outfile, args):
     else:
         raise Exception("Unable to determine grid staggering from header %d" %
                         ff.fixed_length_header.grid_staggering)
-    dlat = ff.real_constants.row_spacing
-    dlon = ff.real_constants.col_spacing
     z_rho = ff.level_dependent_constants.zsea_at_rho
     z_theta = ff.level_dependent_constants.zsea_at_theta
     cubes = iris.load(infile)
@@ -339,7 +337,7 @@ def process(infile, outfile, args):
             # Interval in cell methods isn't reliable so better to remove it.
             c.cell_methods = fix_cell_methods(c.cell_methods)
             try:
-                fix_latlon_coord(c, grid_type, dlat, dlon)
+                fix_latlon_coord(c, grid_type)
             except iris.exceptions.CoordinateNotFoundError:
                 print('\nMissing lat/lon coordinates for variable (possible timeseries?)\n')
                 print(c)
@@ -367,7 +365,7 @@ def process(infile, outfile, args):
 if __name__ == '__main__':
     import argparse
     import os
-    from umami.quieterrors import QParseError, QFileExistsError
+    from umami.quieterrors import QParseError
     description="Convert UM fieldsfile to netcdf."
     usage="um2nc [-h] INFILE [OUTFILE] [-k {1,2,3,4}] [-c COMPRESSION] "\
           "[--64] [-v] [--include INCLUDE_LIST [INCLUDE_LIST ...] | --exclude EXCLUDE_LIST [EXCLUDE_LIST ...]] "\
@@ -406,7 +404,21 @@ if __name__ == '__main__':
     parser.add_argument('--hcrit', dest='hcrit', type=float,
                         default=0.5, help="Critical value of heavyside fn for pressure level masking (default=0.5)")
 
+    # # for VSCODE
+    # parser.add_argument('--ip')
+    # parser.add_argument('--stdin')
+    # parser.add_argument('--control')
+    # parser.add_argument('--hb')
+    # parser.add_argument('--Session.signature_scheme')
+    # parser.add_argument('--Session.key')
+    # parser.add_argument('--shell')
+    # parser.add_argument('--transport')
+    # parser.add_argument('--iopub')
+    # parser.add_argument('--f')
+
     args = parser.parse_args()
+    # infile="/g/data/tm70/dm5220/ancil/david/access_sample/aiihca.daa1210"
+    # outfile=infile+'.nc'
 
     # Check optional and positional inputs to determine input and output files.
     if args.infile is not None:
@@ -430,16 +442,13 @@ if __name__ == '__main__':
             outfile = args.outfile_
         else:
             outfile = infile+".nc"
-            if os.path.isfile(outfile):
-                raise QFileExistsError(f"Output file '{outfile}' already exists.")
-    
     # Imports here to improve performance when running with '--help' option
     from umami.stash_utils import StashVar as stashvar
+    from umami.um_utils import read_fieldsfile
     import warnings 
     if args.verbose == 0:
         warnings.filterwarnings("ignore")
     import iris
-    
     from iris.coords import CellMethod
     from iris.fileformats.pp import PPField
     PPField.calendar = pg_calendar

@@ -5,29 +5,29 @@
 
 # Script created by Davide Marchegiani (davide.marchegiani@anu.edu.au) at ACCESS-NRI.
 
-# Validate a UM ancillary file
+# Validate a UM file
 
-def main(ancilFilename,fix,inplace,outFilename):
-    ancilFilename = os.path.abspath(ancilFilename)
-    ancilFile = read_ancil(ancilFilename)
-    outFile = validate(ancilFile,fix=fix)
+def main(inputFilename,fix,inplace,outFilename):
+    inputFilename = os.path.abspath(inputFilename)
+    inputFile = read_fieldsfile(inputFilename,check_ancil=False)
+    outFile = validate(inputFile,fix=fix)
     if outFile is not None:
         if inplace:
-            outFilename = ancilFilename
+            outFilename = inputFilename
         elif outFilename is None:
-            outFilename = ancilFilename + '_fixed'
+            outFilename = inputFilename + '_fixed'
         else:
             outFilename = os.path.abspath(outFilename)
         outFile.to_file(outFilename)
         print(f"Fixing completed! Written '{outFilename}' to disk.")
     else:
-        print(f"'{ancilFilename}' is a valid ancillary file!")
+        print(f"'{inputFilename}' is a valid UM file!")
 
 if __name__ == '__main__':
     import argparse
     # Parse arguments
     parser = argparse.ArgumentParser(description="Validate UM ancillary file.",allow_abbrev=False)
-    parser.add_argument('-i', '--input', dest='ancilfile', type=str,
+    parser.add_argument('-i', '--input', dest='inputfile', type=str,
                         help='UM ancillary input file.')
     parser.add_argument('-o', '--output', dest='outputfile', type=str,
                         help="If used with the '--fix' option active, specify the output file name.")
@@ -45,20 +45,20 @@ if __name__ == '__main__':
     import warnings
     import os
     warnings.filterwarnings("ignore")
-    from umami.ancil_utils.validation_tools import validate
-    from umami.ancil_utils import read_ancil
+    from umami.um_utils.validation_tools import validate
+    from umami.um_utils import read_fieldsfile
     from umami.quieterrors import QParseError
 
-    ancilFilename = args.ancilfile
+    inputFilename = args.inputfile
     fix = args.fix
     inplace = args.inplace
     others=args.others
     outFilename = args.outputfile
 
-    if ancilFilename is None:
+    if inputFilename is None:
         if others is not None:
             if len(others)==1:
-                ancilFilename = others[0]
+                inputFilename = others[0]
             elif len(others)>1:
                 for opt in ('--fix','--inplace','-o','--output'):
                     if opt in others:
@@ -75,4 +75,4 @@ if __name__ == '__main__':
     elif inplace and outFilename is not None:
         raise QParseError("The '-o/--output' and '--inplace' options are mutually exclusive.")
             
-    main(ancilFilename,fix,inplace,outFilename)
+    main(inputFilename,fix,inplace,outFilename)

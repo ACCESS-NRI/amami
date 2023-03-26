@@ -12,15 +12,15 @@ from umami.quieterrors import QValueError, QFileNotFoundError
 
 UM_NANVAL=-1073741824.0 #(-2.0**30)
 
-def get_stash_each_var(ancilFile):
-    return list(dict.fromkeys([f.lbuser4 for f in ancilFile.fields]))
+def get_stash_each_var(umFile):
+    return list(dict.fromkeys([f.lbuser4 for f in umFile.fields]))
 
-def _first_timestep_fields(ancilFile):
-    return ancilFile.fields[:(len(ancilFile.fields)//(ancilFile.integer_constants.num_times))].copy()
+def _first_timestep_fields(umFile):
+    return umFile.fields[:(len(umFile.fields)//(umFile.integer_constants.num_times))].copy()
 
-def get_latitude_each_var(ancilFile):
-    '''Gets the latitude for each variable in the ancillary file ancilFile.'''
-    first_timestep_fields = _first_timestep_fields(ancilFile)
+def get_latitude_each_var(umFile):
+    '''Gets the latitude for each variable in the UM file umFile.'''
+    first_timestep_fields = _first_timestep_fields(umFile)
     # Get stash codes to group into different variables
     stash = [f.lbuser4 for f in first_timestep_fields]
     func=lambda f: np.linspace(f.bzy+f.bdy,
@@ -29,9 +29,9 @@ def get_latitude_each_var(ancilFile):
     lat = (func(f) if (i==0 or stash[i]!=stash[i-1]) else None for i,f in enumerate(first_timestep_fields))
     return list(filter(None,lat))
 
-def get_longitude_each_var(ancilFile):
-    '''Gets the longitude for each variable in the ancillary file ancilFile.'''
-    first_timestep_fields = _first_timestep_fields(ancilFile)
+def get_longitude_each_var(umFile):
+    '''Gets the longitude for each variable in the UM file umFile.'''
+    first_timestep_fields = _first_timestep_fields(umFile)
     # Get stash codes to group into different variables
     stash = [f.lbuser4 for f in first_timestep_fields]
     func=lambda f: np.linspace(f.bzx+f.bdx,
@@ -40,9 +40,9 @@ def get_longitude_each_var(ancilFile):
     lon = (func(f) if (i==0 or stash[i]!=stash[i-1]) else None for i,f in enumerate(first_timestep_fields))
     return list(filter(None,lon))
 
-def get_levels_each_var(ancilFile):
-    '''Gets the vertical levels and pseudo-levels for each variable in the ancillary file ancilFile.'''
-    first_timestep_fields = _first_timestep_fields(ancilFile)
+def get_levels_each_var(umFile):
+    '''Gets the vertical levels and pseudo-levels for each variable in the UM file umFile.'''
+    first_timestep_fields = _first_timestep_fields(umFile)
     # Get stash codes to group into different variables
     stash = [f.lbuser4 for f in first_timestep_fields]
     # Get levels
@@ -58,9 +58,9 @@ def get_levels_each_var(ancilFile):
                 levels[-1][-1].append(l)
     return levels
 
-def _get_lblev_each_var(ancilFile):
-    '''Gets the vertical level codes (lblev) for each variable in the ancillary file ancilFile.'''
-    first_timestep_fields = _first_timestep_fields(ancilFile)
+def _get_lblev_each_var(umFile):
+    '''Gets the vertical level codes (lblev) for each variable in the UM file umFile.'''
+    first_timestep_fields = _first_timestep_fields(umFile)
     # Get stash codes to group into different variables
     stash = [f.lbuser4 for f in first_timestep_fields]
     # Get lblevs
@@ -73,29 +73,29 @@ def _get_lblev_each_var(ancilFile):
                 levels[-1].append(l)
     return levels
 
-def has_pseudo_each_var(ancilFile):
-    '''Returns a list of bool, with each one being True if the variable has pseudo-levels, False otherwise, for every variable in the ancillary file ancilFile.'''
-    return [sum(l)!=0 for l in get_levels_each_var(ancilFile)[1]]
+def has_pseudo_each_var(umFile):
+    '''Returns a list of bool, with each one being True if the variable has pseudo-levels, False otherwise, for every variable in the UM file umFile.'''
+    return [sum(l)!=0 for l in get_levels_each_var(umFile)[1]]
 
-def read_ancil(ancilFilename):
-    ancilFilename = os.path.abspath(ancilFilename)
-    if not os.path.isfile(ancilFilename):
-        raise QFileNotFoundError(f"'{ancilFilename}' does not exist.")
+def read_fieldsfile(umFilename,check_ancil=True):
+    umFilename = os.path.abspath(umFilename)
+    if not os.path.isfile(umFilename):
+        raise QFileNotFoundError(f"'{umFilename}' does not exist.")
     try:
-        file = mule.load_umfile(ancilFilename)
+        file = mule.load_umfile(umFilename)
     except ValueError:
-        raise QValueError(f"'{ancilFilename}' does not appear to be a UM ancillary file.")
+        raise QValueError(f"'{umFilename}' does not appear to be a UM file.")
     else:
-        if not isinstance(file,mule.ancil.AncilFile):
-            raise QValueError(f"'{ancilFilename}' does not appear to be a UM ancillary file.")
+        if (check_ancil) and (not isinstance(file,mule.ancil.AncilFile)):
+            raise QValueError(f"'{umFilename}' does not appear to be a UM ancillary file.")
     return file
 
-def regrid_ancil(inputFile,lat_out_each_var=None,lon_out_each_var=None,lev_out_each_var=None,method=None):
+def regrid_fieldsfile(umFile,lat_out_each_var=None,lon_out_each_var=None,lev_out_each_var=None,method=None):
     '''
-    Regrids a UM ancilFile over latitude, longitude and UM vertical levels, using scipy.interpolate.interpn function.
+    Regrids a UM file over latitude, longitude and UM vertical levels, using scipy.interpolate.interpn function.
 
     PARAMETERS
-    -   ancilFile is a mule.ancilFile
+    -   umFile is a mule.FieldsFile
     -   lat_out is a list of array-like variables with the output latitude coordinate. If set to None, no regridding will
         be performed over latitude.
     -   lon_out is a list of array-like variables with the output longitude coordinate. If set to None, no regridding will
@@ -113,17 +113,17 @@ def regrid_ancil(inputFile,lat_out_each_var=None,lon_out_each_var=None,lev_out_e
         raise QValueError(f"'{method}' method not recognized. method needs to be one in {avail_methods}.")
 
     # Parse input file
-    if not isinstance(inputFile,mule.AncilFile):
+    if not isinstance(umFile,mule.AncilFile):
         raise TypeError("'ancilFile' needs to be a mule.ancilFile object.")
     # Get the input coordinates from the first field of the ancilFile
-    f=inputFile.fields[0].copy()
-    lat_in_each_var = get_latitude_each_var(inputFile)
-    lon_in_each_var = get_longitude_each_var(inputFile)
-    lev_in_each_var,pseudo_in_each_var = get_levels_each_var(inputFile)
-    lblev_in_each_var = _get_lblev_each_var(inputFile)
-    ntimes = inputFile.integer_constants.num_times
-    stash_each_var = get_stash_each_var(inputFile)
-    has_pseudo_in_each_var = has_pseudo_each_var(inputFile)
+    f=umFile.fields[0].copy()
+    lat_in_each_var = get_latitude_each_var(umFile)
+    lon_in_each_var = get_longitude_each_var(umFile)
+    lev_in_each_var,pseudo_in_each_var = get_levels_each_var(umFile)
+    lblev_in_each_var = _get_lblev_each_var(umFile)
+    ntimes = umFile.integer_constants.num_times
+    stash_each_var = get_stash_each_var(umFile)
+    has_pseudo_in_each_var = has_pseudo_each_var(umFile)
     # Mix pseudo-levels and normal levels
     levels_in_each_var = [pseudo_in_each_var[ivar] if ps else lev_in_each_var[ivar] for ivar,ps in enumerate(has_pseudo_in_each_var)]
     # Parse output coords 
@@ -145,7 +145,7 @@ def regrid_ancil(inputFile,lat_out_each_var=None,lon_out_each_var=None,lev_out_e
     
     # Get num_levels
     if all(has_pseudo_in_each_var):
-        num_levels_out = inputFile.integer_constants.num_levels
+        num_levels_out = umFile.integer_constants.num_levels
     else:
         for ivar,hp in enumerate(has_pseudo_in_each_var): 
             if not hp:
@@ -183,7 +183,7 @@ def regrid_ancil(inputFile,lat_out_each_var=None,lon_out_each_var=None,lev_out_e
     outpoints_each_var = [list(itertools.product(lat,lon,lev)) for lat,lon,lev in zip(lat_out_each_var,lon_out_each_var,lev_out_each_var)]
 
     # Regrid and get new fields
-    f = iter(inputFile.fields.copy())
+    f = iter(umFile.fields.copy())
     interp_data = []
     for _ in range(ntimes): # Loop for each timestep
         for ivar,lvls in enumerate(levels_in_each_var): # Loop for each variable
@@ -198,14 +198,14 @@ def regrid_ancil(inputFile,lat_out_each_var=None,lon_out_each_var=None,lev_out_e
     newfields = np.where(np.isnan(newfields),UM_NANVAL,newfields)
 
     # If the grid is a global one, force polar values to be the zonal means
-    if (inputFile.fixed_length_header.horiz_grid_type == 0 and 
+    if (umFile.fixed_length_header.horiz_grid_type == 0 and 
         np.allclose(lat_out_each_var[0][0], -90) and
         np.allclose(lon_out_each_var[0][0], 0)):
         newfields[0,...]=newfields[0,...].mean(axis=0)
         newfields[-1,...]=newfields[-1,...].mean(axis=0)
 
     # Create new ancil file 
-    regriddedFile = inputFile.copy(include_fields=False)
+    regriddedFile = umFile.copy(include_fields=False)
     # Change regridded file header
     regriddedFile.integer_constants.num_rows = nlat_out_each_var[0]
     regriddedFile.integer_constants.num_cols = nlon_out_each_var[0]
@@ -224,7 +224,7 @@ def regrid_ancil(inputFile,lat_out_each_var=None,lon_out_each_var=None,lev_out_e
         for ivar,lvls in enumerate(lev_out_each_var): # Loop for each variable
             for ilvl,lev in enumerate(lvls): # Loop for each level
                 c = next(count)
-                regriddedFile.fields.append(inputFile.fields[0].copy())
+                regriddedFile.fields.append(umFile.fields[0].copy())
                 f = regriddedFile.fields[-1]
                 # Change field headers
                 f.lbpack = np.int64(0)

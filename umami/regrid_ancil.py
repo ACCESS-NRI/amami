@@ -9,9 +9,9 @@
 
 def read_files(inputFilename,gridFilename):
     # READ FILES
-    inputFile = read_ancil(inputFilename)
+    inputFile = read_fieldsfile(inputFilename)
     try:
-        gridFile = read_ancil(gridFilename)
+        gridFile = read_fieldsfile(gridFilename)
         umgrid=True
     except QValueError:
         try:
@@ -89,7 +89,7 @@ def regrid_and_write(inputFile,inputFilename,lat_out,lon_out,lev_out,method,outp
     print(f"====== Regridding and writing '{outputFilename}'... ======")
     # Create directories
     os.makedirs(os.path.dirname(outputFilename),exist_ok=True)
-    outputFile = regrid_ancil(inputFile,lat_out,lon_out,lev_out,method)
+    outputFile = regrid_fieldsfile(inputFile,lat_out,lon_out,lev_out,method)
     outputFile.to_file(outputFilename)
     print(f"====== Regridding and writing '{outputFilename}' OK! ======")
 
@@ -139,11 +139,11 @@ if __name__ == '__main__':
     import warnings
     warnings.filterwarnings("ignore")
     import numpy as np
-    from umami.ancil_utils import (UM_NANVAL, read_ancil,get_latitude_each_var,get_longitude_each_var,
-                                   get_levels_each_var,has_pseudo_each_var,regrid_ancil)
+    from umami.um_utils import (UM_NANVAL, read_fieldsfile,get_latitude_each_var,get_longitude_each_var,
+                                   get_levels_each_var,has_pseudo_each_var,regrid_fieldsfile)
     from umami.netcdf_utils import (split_coord_names,read_netCDF,check_latitude, check_longitude,
                                     check_level)
-    from umami.ancil_utils.validation_tools import validate
+    from umami.um_utils.validation_tools import validate
     from umami.quieterrors import QValueError
     import os
 

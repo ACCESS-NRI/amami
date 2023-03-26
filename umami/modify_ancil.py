@@ -9,7 +9,7 @@
 
 # READ FILES
 def read_files(inputFilename,ncFilename):        
-    inputFile = read_ancil(inputFilename)
+    inputFile = read_fieldsfile(inputFilename)
     ncFile = read_netCDF(ncFilename)
     print(f"====== Reading '{inputFilename}' ancillary file OK! ======")
     return inputFile, ncFile
@@ -112,7 +112,7 @@ def modify_and_write(inputFile,inputFilename,outputFilename,ncFile,regrid,lat_ou
 
     if regrid:
         print(f"====== Regridding '{outputFilename}'... ======")
-        newAncilFile = regrid_ancil(inputFile,lat_out_each_var,lon_out_each_var,lev_out)
+        newAncilFile = regrid_fieldsfile(inputFile,lat_out_each_var,lon_out_each_var,lev_out)
         print(f"====== Regridding '{outputFilename}' OK! ======")
     else:
         # Create a copy of the ancillary file to modify
@@ -177,11 +177,11 @@ if __name__ == '__main__':
     import warnings
     import numpy as np
     warnings.filterwarnings("ignore")
-    from umami.ancil_utils import (UM_NANVAL, read_ancil,get_latitude_each_var,get_longitude_each_var,
-                                   get_levels_each_var,has_pseudo_each_var,regrid_ancil)
+    from umami.um_utils import (UM_NANVAL, read_fieldsfile,get_latitude_each_var,get_longitude_each_var,
+                                   get_levels_each_var,has_pseudo_each_var,regrid_fieldsfile)
     from umami.netcdf_utils import (split_coord_names,read_netCDF,check_latitude, check_longitude,
                                     check_level,check_time)
-    from umami.ancil_utils.validation_tools import validate
+    from umami.um_utils.validation_tools import validate
     from umami.quieterrors import QValueError
 
     # (inputFilename,ncFilename,outputFilename,latcoord,loncoord,

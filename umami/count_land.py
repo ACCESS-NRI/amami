@@ -9,7 +9,7 @@
 
 def main(maskFilename):
     STASH_CODE = 30
-    mask = read_ancil(maskFilename)
+    mask = read_fieldsfile(maskFilename)
     # Verify that the ancilfile has the correct stash code.
     stash = mask.fields[0].lbuser4
     if stash != STASH_CODE:
@@ -30,7 +30,7 @@ if __name__ == '__main__':
     import os
     import warnings
     warnings.filterwarnings("ignore")
-    from umami.ancil_utils import read_ancil
+    from umami.um_utils import read_fieldsfile
     from umami.quieterrors import QValueError
 
     maskFilename=os.path.abspath(args.maskfile)
