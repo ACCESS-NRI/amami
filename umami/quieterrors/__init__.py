@@ -30,6 +30,10 @@ class QFileNotFoundError(QuietError):
     # Failed to parse data
     pass
 
+class QNotSupportedError(QuietError):
+    # Failed to parse data
+    pass
+
 def quiet_hook(kind, message, traceback):
     if QuietError in kind.__bases__:
         print(message)

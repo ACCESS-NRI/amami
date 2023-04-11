@@ -1,0 +1,36 @@
+#!/bin/bash
+# 
+# File to test um2nc.py tool with different files and options. 
+
+um2nc=/g/data/tm70/dm5220/scripts/umami/umami/um2nc.py
+PYTHON=/scratch/tm70/dm5220/conda/envs/umami/bin/python
+
+# TEST 1 
+# Ancillary file
+((n=n+1))
+echo "================== TEST $n: Ancillary file =================="
+umfile=/g/data/access/projects/access/data/ancil/n48_hadgem1/qrparm.orog
+$PYTHON $um2nc $umfile test${n}.nc
+
+# TEST 2
+# Ancillary file with dlat/dlon of one field different from file dlat/dlon
+((n=n+1))
+echo "=== TEST $n: Ancillary file with different field dlat/dlon ==="
+umfile=/g/data/access/projects/access/data/ancil/n48_hadgem1/qrparm.orog
+$PYTHON $um2nc $umfile test${n}.nc
+
+# TEST 3
+# UM output file without timeseries
+((n=n+1))
+echo "========= TEST $n: UM output file without timeseries ========="
+umfile=/g/data/tm70/dm5220/ancil/david/access_sample/aiihca.paa1apr
+$PYTHON $um2nc $umfile test${n}.nc
+
+# TEST 4
+# UM output file with timeseries
+((n=n+1))
+echo "========== TEST $n: UM output file with timeseries =========="
+umfile=/g/data/tm70/dm5220/ancil/david/access_sample/aiihca.daa1210
+$PYTHON $um2nc $umfile test${n}.nc
+
+

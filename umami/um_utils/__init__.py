@@ -83,6 +83,7 @@ def read_fieldsfile(umFilename,check_ancil=True):
         raise QFileNotFoundError(f"'{umFilename}' does not exist.")
     try:
         file = mule.load_umfile(umFilename)
+        file.remove_empty_lookups()
     except ValueError:
         raise QValueError(f"'{umFilename}' does not appear to be a UM file.")
     else:

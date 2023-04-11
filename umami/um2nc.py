@@ -62,7 +62,7 @@ def fix_latlon_coord(cube, grid_type):
     lat = cube.coord('latitude')
     # Force to double for consistency with CMOR
     lat.points = lat.points.astype(np.float64)
-    _add_coord_bounds(lat,cube)
+    _add_coord_bounds(lat)
     lon = cube.coord('longitude')
     lon.points = lon.points.astype(np.float64)
     _add_coord_bounds(lon)
@@ -219,27 +219,43 @@ def apply_mask(c, heaviside, hcrit):
             h_tmp = heaviside.extract(constraint)
             # Double check they're aactually the same after extraction
             if not np.all(c_p.points == h_tmp.coord('pressure').points):
-                raise Exception('Unexpected mismatch in levels of extracted heaviside function')
+                raise QValueError('Unexpected mismatch in levels of extracted heaviside function')
             with np.errstate(divide='ignore',invalid='ignore'):
                 c.data = np.ma.masked_array(c.data/h_tmp.data, h_tmp.data <= hcrit).astype(np.float32)
         else:
-            raise Exception('Unable to match levels of heaviside function to variable %s' % c.name())
+            raise QValueError('Unable to match levels of heaviside function to variable %s' % c.name())
+
+def get_nc_format(format_arg):
+        nc_formats = {1: 'NETCDF4', 2: 'NETCDF4_CLASSIC',
+                3: 'NETCDF3_CLASSIC', 4: 'NETCDF3_64BIT'}
+        try:
+            fmt=int(format_arg)
+            return nc_formats[fmt]
+        except ValueError:
+            return format_arg
 
 def process(infile, outfile, args):
-
     # Use mule to get the model levels to help with dimension naming
-    # mule 2020.01.1 doesn't handle pathlib Paths properly
     ff = read_fieldsfile(infile,check_ancil=False)
     if ff.fixed_length_header.grid_staggering == 6:
         grid_type = 'EG'
     elif ff.fixed_length_header.grid_staggering == 3:
         grid_type = 'ND'
     else:
-        raise Exception("Unable to determine grid staggering from header %d" %
-                        ff.fixed_length_header.grid_staggering)
-    z_rho = ff.level_dependent_constants.zsea_at_rho
-    z_theta = ff.level_dependent_constants.zsea_at_theta
-    cubes = iris.load(infile)
+        raise QValueError(f"Unable to determine grid staggering from header. Grid staggering '{ff.fixed_length_header.grid_staggering}' not supported.")
+    try:
+        z_rho = ff.level_dependent_constants.zsea_at_rho
+    except AttributeError:
+        z_rho = 0
+    try:
+        z_theta = ff.level_dependent_constants.zsea_at_theta
+    except AttributeError:
+        z_theta = 0
+    try:
+        cubes = iris.load(infile)
+    except iris.exceptions.CannotAddError:
+        raise SystemExit("File can not be processed. UM files with time series currently not supported.\n"
+                         "Please convert using convsh (https://ncas-cms.github.io/xconv-doc/html/example1.html).")
 
     # Sort the list by stashcode
     def keyfunc(c):
@@ -272,102 +288,95 @@ def process(infile, outfile, args):
         print("""Warning - heaviside_t field needed for masking pressure level data is not present.
     These fields will be skipped""")
 
-    nc_formats = {1: 'NETCDF3_CLASSIC', 2: 'NETCDF3_64BIT',
-                  3: 'NETCDF4', 4: 'NETCDF4_CLASSIC'}
-    with iris.fileformats.netcdf.Saver(outfile, nc_formats[args.nckind]) as sman:
+    try:
+        with iris.fileformats.netcdf.Saver(outfile, get_nc_format(args.format)) as sman:
+            # Add global attributes
+            if not args.nohist:
+                history = "File %s converted with um2netcdf_iris.py v2.1 at %s" % \
+                        (infile, datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+                sman.update_global_attributes({'history':history})
+            sman.update_global_attributes({'Conventions':'CF-1.6'})
 
-        # Add global attributes
-        if not args.nohist:
-            history = "File %s converted with um2netcdf_iris.py v2.1 at %s" % \
-                      (infile, datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-            sman.update_global_attributes({'history':history})
-        sman.update_global_attributes({'Conventions':'CF-1.6'})
-
-        for c in cubes:
-            stashcode = c.attributes['STASH']
-            itemcode = 1000*stashcode.section + stashcode.item
-            if args.include_list and itemcode not in args.include_list:
-                continue
-            if args.exclude_list and itemcode in args.exclude_list:
-                continue
-            umvar = stashvar(itemcode)
-            if args.simple:
-                c.var_name = 'fld_s%2.2di%3.3d' % (stashcode.section, stashcode.item)
-            elif umvar.uniquename:
-                c.var_name = umvar.uniquename
-            # Could there be cases with both max and min?
-            if c.var_name:
-                if any([m.method == 'maximum' for m in c.cell_methods]):
-                    c.var_name += "_max"
-                if any([m.method == 'minimum' for m in c.cell_methods]):
-                    c.var_name += "_min"
-            # The iris name mapping seems wrong for these - perhaps assuming rotated grids?
-            if c.standard_name == 'x_wind':
-                c.standard_name = 'eastward_wind'
-            if c.standard_name == 'y_wind':
-                c.standard_name = 'northward_wind'
-            if c.standard_name and umvar.standard_name:
-                if c.standard_name != umvar.standard_name:
-                    if args.verbose:
-                        sys.stderr.write("Standard name mismatch %d %d %s %s\n" % \
-                           (stashcode.section, stashcode.item, c.standard_name, umvar.standard_name) )
-                    c.standard_name = umvar.standard_name
-            if c.units and umvar.units:
-                # Simple testing c.units == umvar.units doesn't
-                # catch format differences because Unit type
-                # works around them. repr isn't reliable either
-                ustr = '%s' % c.units
-                if ustr != umvar.units:
-                    if args.verbose:
-                        sys.stderr.write("Units mismatch %d %d %s %s\n" % \
-                             (stashcode.section, stashcode.item, c.units, umvar.units) )
+            for c in cubes:
+                stashcode = c.attributes['STASH']
+                itemcode = 1000*stashcode.section + stashcode.item
+                if args.include_list and itemcode not in args.include_list:
+                    continue
+                if args.exclude_list and itemcode in args.exclude_list:
+                    continue
+                umvar = stashvar(itemcode)
+                if args.simple:
+                    c.var_name = 'fld_s%2.2di%3.3d' % (stashcode.section, stashcode.item)
+                elif umvar.uniquename:
+                    c.var_name = umvar.uniquename
+                # Could there be cases with both max and min?
+                if c.var_name:
+                    if any([m.method == 'maximum' for m in c.cell_methods]):
+                        c.var_name += "_max"
+                    if any([m.method == 'minimum' for m in c.cell_methods]):
+                        c.var_name += "_min"
+                # The iris name mapping seems wrong for these - perhaps assuming rotated grids?
+                if c.standard_name == 'x_wind':
+                    c.standard_name = 'eastward_wind'
+                if c.standard_name == 'y_wind':
+                    c.standard_name = 'northward_wind'
+                if c.standard_name and umvar.standard_name:
+                    if c.standard_name != umvar.standard_name:
+                        warnings.warn(f"Standard name mismatch {stashcode.section} {stashcode.item} {c.standard_name} {umvar.standard_name}\n")
+                        c.standard_name = umvar.standard_name
+                if str(c.units) != umvar.units:
+                    warnings.warn(f"Units mismatch {stashcode.section} {stashcode.item} {c.units} {umvar.units}\n")
                     c.units = umvar.units
-            # Temporary work around for xconv
-            if c.long_name and len(c.long_name) > 110:
-                c.long_name = c.long_name[:110]
-            # If there's no standard_name or long_name from iris
-            # use one from STASH
-            if not c.standard_name:
-                if umvar.standard_name:
-                    c.standard_name = umvar.standard_name
-            if not c.long_name:
-                if umvar.long_name:
-                    c.long_name = umvar.long_name
+                # # Temporary work around for xconv
+                # if c.long_name and len(c.long_name) > 110:
+                #     c.long_name = c.long_name[:110]
+                # If there's no standard_name or long_name from iris
+                # use one from STASH
+                if not c.standard_name:
+                    if umvar.standard_name:
+                        c.standard_name = umvar.standard_name
+                if not c.long_name:
+                    if umvar.long_name:
+                        c.long_name = umvar.long_name
 
-            # Interval in cell methods isn't reliable so better to remove it.
-            c.cell_methods = fix_cell_methods(c.cell_methods)
-            try:
-                fix_latlon_coord(c, grid_type)
-            except iris.exceptions.CoordinateNotFoundError:
-                print('\nMissing lat/lon coordinates for variable (possible timeseries?)\n')
-                print(c)
-                raise Exception("Variable can not be processed")
-            fix_level_coord(c, z_rho, z_theta)
+                # Interval in cell methods isn't reliable so better to remove it.
+                c.cell_methods = fix_cell_methods(c.cell_methods)
+                try:
+                    fix_latlon_coord(c, grid_type)
+                except iris.exceptions.CoordinateNotFoundError:
+                    if args.verbose:
+                        print(c)
+                    raise SystemExit("File can not be processed. UM files with time series currently not supported.\n"
+                                     "Please convert using convsh (https://ncas-cms.github.io/xconv-doc/html/example1.html).")
+                fix_level_coord(c, z_rho, z_theta)
 
-            if not args.nomask and stashcode.section == 30 and \
-             (201 <= stashcode.item <= 288  or 302 <= stashcode.item <= 303):
-                # Pressure level data should be masked
-                if have_heaviside_uv:
-                    apply_mask(c, heaviside_uv, args.hcrit)
-                else:
-                    continue
-            if not args.nomask and stashcode.section == 30 and \
-             (293 <= stashcode.item <= 298):
-                # Pressure level data should be masked
-                if have_heaviside_t:
-                    apply_mask(c, heaviside_t, args.hcrit)
-                else:
-                    continue
-            if args.verbose:
-                print(c.name(), itemcode)
-            cubewrite(c, sman, args.compression, args.use64bit, args.verbose)
+                if not args.nomask and stashcode.section == 30 and \
+                (201 <= stashcode.item <= 288  or 302 <= stashcode.item <= 303):
+                    # Pressure level data should be masked
+                    if have_heaviside_uv:
+                        apply_mask(c, heaviside_uv, args.hcrit)
+                    else:
+                        continue
+                if not args.nomask and stashcode.section == 30 and \
+                (293 <= stashcode.item <= 298):
+                    # Pressure level data should be masked
+                    if have_heaviside_t:
+                        apply_mask(c, heaviside_t, args.hcrit)
+                    else:
+                        continue
+                if args.verbose:
+                    print(c.name(), itemcode)
+                cubewrite(c, sman, args.compression, args.use64bit, args.verbose)
+    except Exception: #If there is an error, remove the netCDF file created  
+        import traceback
+        outfile.unlink(missing_ok=True) 
+        traceback.print_exc()
+
 
 if __name__ == '__main__':
     import argparse
-    import os
-    from umami.quieterrors import QParseError
     description="Convert UM fieldsfile to netcdf."
-    usage="um2nc [-h] INFILE [OUTFILE] [-k {1,2,3,4}] [-c COMPRESSION] "\
+    usage="um2nc [-h] INFILE [OUTFILE] [--format {NETCDF4,NETCDF4_CLASSIC,NETCDF3_CLASSIC,NETCDF3_64BIT,1,2,3,4}] [-c COMPRESSION] "\
           "[--64] [-v] [--include INCLUDE_LIST [INCLUDE_LIST ...] | --exclude EXCLUDE_LIST [EXCLUDE_LIST ...]] "\
           "[--nomask] [--nohist] [--simple] [--hcrit HCRIT]"
     parser = argparse.ArgumentParser(prog="um2nc",
@@ -382,8 +391,9 @@ if __name__ == '__main__':
                         metavar="OUTFILE",help="Converted netCDF file output path. If not provided, the output will be generated by appending '.nc' to the input file.")
     parser.add_argument('-o', '--output', dest='outfile', type=str,
                         help="Converted netCDF file output path. If not provided, the output will be generated by appending '.nc' to the input file.")
-    parser.add_argument('-k', dest='nckind', required=False, type=int,
-                        default=3, help='Specify kind of netCDF format for output file: 1 classic, 2 64-bit offset, 3 netCDF-4, 4 netCDF-4 classic model. Default 3', choices=[1,2,3,4])
+    parser.add_argument('--format', '-f', dest='format', required=False, type=str, default='NETCDF4',
+                        choices=['NETCDF4', 'NETCDF4_CLASSIC', 'NETCDF3_CLASSIC', 'NETCDF3_64BIT', '1','2','3','4'],
+                        help="Specify netCDF format among 1:'NETCDF4', 2:'NETCDF4_CLASSIC', 3:'NETCDF3_CLASSIC' or 4:'NETCDF3_64BIT'. Either numbers or strings are accepted. Default 1:'NETCDF4'.")
     parser.add_argument('-c', dest='compression', required=False, type=int,
                         default=4, help='Compression level (0=none, 9=max). Default 4')
     parser.add_argument('--64', dest='use64bit', action='store_true',
@@ -404,22 +414,11 @@ if __name__ == '__main__':
     parser.add_argument('--hcrit', dest='hcrit', type=float,
                         default=0.5, help="Critical value of heavyside fn for pressure level masking (default=0.5)")
 
-    # # for VSCODE
-    # parser.add_argument('--ip')
-    # parser.add_argument('--stdin')
-    # parser.add_argument('--control')
-    # parser.add_argument('--hb')
-    # parser.add_argument('--Session.signature_scheme')
-    # parser.add_argument('--Session.key')
-    # parser.add_argument('--shell')
-    # parser.add_argument('--transport')
-    # parser.add_argument('--iopub')
-    # parser.add_argument('--f')
-
     args = parser.parse_args()
-    # infile="/g/data/tm70/dm5220/ancil/david/access_sample/aiihca.daa1210"
-    # outfile=infile+'.nc'
-
+    
+    from pathlib import Path
+    from umami.quieterrors import QParseError, QValueError, QFileNotFoundError
+    
     # Check optional and positional inputs to determine input and output files.
     if args.infile is not None:
         if args.infile_ is not None:
@@ -442,7 +441,13 @@ if __name__ == '__main__':
             outfile = args.outfile_
         else:
             outfile = infile+".nc"
-    # Imports here to improve performance when running with '--help' option
+
+    infile=Path(infile)
+    outfile=Path(outfile)
+    if not infile.exists():
+        raise QFileNotFoundError(f"'{infile.resolve()}' does not exist.")
+    
+    # All other imports here to improve performance when running with '--help' option
     from umami.stash_utils import StashVar as stashvar
     from umami.um_utils import read_fieldsfile
     import warnings 
@@ -454,10 +459,8 @@ if __name__ == '__main__':
     PPField.calendar = pg_calendar
     import numpy as np
     import datetime
-    import sys
     import cf_units
     import cftime
-    import mule
     from netCDF4 import default_fillvals
     
     process(infile, outfile, args)
