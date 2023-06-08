@@ -14,7 +14,7 @@
 def pg_calendar(self):
     """Return the calendar of the field."""
     # TODO #577 What calendar to return when ibtim.ic in [0, 3]
-    calendar = cf_units.CALENDAR_PROLEPTIC_GREGORIAN
+    calendar = cf_units.CALENDAR_STANDARD
     if self.lbtim.ic == 2:
         calendar = cf_units.CALENDAR_360_DAY
     elif self.lbtim.ic == 4:
@@ -406,13 +406,13 @@ if __name__ == '__main__':
     group.add_argument('--exclude', dest='exclude_list', type=int,
                         nargs = '+', help = 'List of stash codes to exclude')
     parser.add_argument('--nomask', dest='nomask', action='store_true',
-                        default=False, help="Don't apply heaviside function mask to pressure level fields")
+                        default=False, help="Don't apply heavyside function mask to pressure level fields")
     parser.add_argument('--nohist', dest='nohist', action='store_true',
                         default=False, help="Don't update history attribute")
     parser.add_argument('--simple', dest='simple', action='store_true',
-                        default=False, help="Use a simple variable names of form fld_s01i123.")
+                        default=False, help="Use simple variable names of form 'fld_s01i123'.")
     parser.add_argument('--hcrit', dest='hcrit', type=float,
-                        default=0.5, help="Critical value of heavyside fn for pressure level masking (default=0.5)")
+                        default=0.5, help="Critical value of heavyside function for pressure level masking (default=0.5)")
 
     args = parser.parse_args()
     
