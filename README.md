@@ -9,7 +9,7 @@
 Unified Model Ancillary Manipulation Instruments (UMAMI)
 
 This is a set of tools to handle UM ancillary files.
-It is still in a pre-release status, but the functions should still work fine for most files.
+It is still under development and in a pre-release status, but the functions should still work fine for most files.
 
 The main functions are in the `umami` diretory:
 -  `count_land_points.py` --> Counts land points in a UM land/sea mask file
