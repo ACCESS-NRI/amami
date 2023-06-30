@@ -7,3 +7,12 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/python/black) -->
 
 Unified Model Ancillary Manipulation Instruments
+
+This is a set of tools to handle UM ancillary files. 
+
+It is still under development, but some of the functions should still work fine for most files.
+
+You are welcome to start using it. 
+
+The main functions are inside the `umami` folder.
+For help on how to use a specific function, type '<function> --help'.
