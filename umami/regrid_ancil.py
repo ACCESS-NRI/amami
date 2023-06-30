@@ -147,17 +147,6 @@ if __name__ == '__main__':
     from umami.quieterrors import QValueError
     import os
 
-    # inputFilename,gridFilename,outputFilename,loncoord,latcoord,levcoord,method,fix = (
-    #     "/g/data/n69/sza565/ancil-from-uk/ozone/sparc/1994-2005/qrclim.ozone_L85_O85",
-    #     "/g/data/tm70/dm5220/ancil/abhik/ozone.nc",
-    #     "/g/data3/tm70/dm5220/ancil/abhik/test",
-    #     None,
-    #     None,
-    #     ["hybrid_ht"],
-    #     None,
-    #     True,
-    # )
-
     inputFilename=os.path.abspath(args.um_input_file)
     gridFilename=os.path.abspath(args.gridfile)
     outputFilename=args.um_output_file
