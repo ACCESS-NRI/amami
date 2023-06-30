@@ -6,13 +6,18 @@
 [![License: MIT](https://img.shields.io/badge/License-Apache%202.0-green.svg)](https://github.com/dougiesquire/morte/blob/master/LICENSE)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/python/black) -->
 
-Unified Model Ancillary Manipulation Instruments
+Unified Model Ancillary Manipulation Instruments (UMAMI)
 
-This is a set of tools to handle UM ancillary files. 
+This is a set of tools to handle UM ancillary files.
+It is still in a pre-release status, but the functions should still work fine for most files.
 
-It is still under development, but some of the functions should still work fine for most files.
+The main functions are in the `umami/umami` diretory:
+-  count_land_points.py --> Counts land points in a UM land/sea mask file
+-  modify.py --> Modifies an existing UM ancillary file with data from a NetCDF file and creates a new one
+-  regrid.py --> Regrids a UM ancillary file
+-  um2nc.py --> Converts a UM file to NetCDF
+-  validate.py --> Validates a UM ancillary file using Mule
 
-You are welcome to start using it. 
+For help on how to use a specific function, run the function with the '--help' flag:
+`path/to/modify.py --help`
 
-The main functions are inside the `umami` folder.
-For help on how to use a specific function, type '<function> --help'.
