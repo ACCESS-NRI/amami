@@ -293,7 +293,3 @@ requirements:
         - zipp
         - zlib
         - zstd
-        pip:
-            - um-packing
-            - um-spiral-search
-            - um-utils
