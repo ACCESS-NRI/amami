@@ -1,9 +1,5 @@
 # Required for 'Build and upload conda packages' workflow
 channels:
+  - coecms
   - conda-forge
   - default
-  - coecms
-
-dependencies:
-  - anaconda-client
-  - conda-build
