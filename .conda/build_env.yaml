@@ -7,4 +7,3 @@ channels:
 dependencies:
   - anaconda-client
   - conda-build
-  - python>=3.9
