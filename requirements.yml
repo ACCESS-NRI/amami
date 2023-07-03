@@ -1,8 +1,10 @@
 channels:
   - conda-forge
-  - coecms
+  - coecms # For mule. Maybe in the future could be useful for NRI to manage it directly.
 dependencies:
   - xarray
+  # - mule
   - python=3.9.15
+  - pip
 
 
