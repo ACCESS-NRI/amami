@@ -183,20 +183,6 @@ if __name__ == '__main__':
                                     check_level,check_time)
     from umami.um_utils.validation_tools import validate
     from umami.quieterrors import QValueError
-
-    # (inputFilename,ncFilename,outputFilename,latcoord,loncoord,
-    #     levcoord,tcoord,nanval,regrid,fix) = (
-    #     "/g/data/w40/dxd565/um-reosc-slab/ancil/vavqa.reosc.ancil",
-    #     "/g/data/w40/sza565/ancil_data/vavqa.reosc.ancil.shiftANZ.nc",
-    #     "/g/data3/tm70/dm5220/ancil/abhik/shifted/vavqa.reosc.ancil.shiftANZ",
-    #     None,
-    #     ['longitude','longitude','longitude','longitude_1','longitude','longitude'],
-    #     ['surface'],
-    #     None,
-    #     None,
-    #     False,
-    #     True,
-    #     )
     
     inputFilename=os.path.abspath(args.um_input_file)
     ncFilename=os.path.abspath(args.ncfile)
