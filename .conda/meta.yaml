@@ -27,7 +27,6 @@ requirements:
         - numpy
         - xarray
         - iris
-        - datetime
         - cf_units
         - cftime
         - netCDF4
