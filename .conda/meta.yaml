@@ -24,7 +24,7 @@ requirements:
         - setuptools
         - argparse
         - mule
-        - numpy
+        - numpy >=1.17 # >=1.17 Needed for a bug of conda build system with mpi packages
         - xarray
         - iris
         - cf_units
