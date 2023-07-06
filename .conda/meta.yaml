@@ -1,6 +1,9 @@
+# {% set data = load_setup_py_data() %}
+{% set version = load_setup_py_data().get('version')  %}
+
 package:
   name: umami
-  version: {{ GIT_DESCRIBE_TAG }}
+  version: {{ environ.get('GIT_DESCRIBE_VERSION', version) }}
 
 source:
     path: ..
@@ -9,7 +12,7 @@ source:
 build:
     script: "{{ PYTHON }} -m pip install . --no-deps"
     noarch: python
-    number: {{ GIT_DESCRIBE_NUMBER }}
+    number: {{ environ.get('GIT_DESCRIBE_NUMBER', 0) }}
 
 
 requirements:
@@ -19,8 +22,8 @@ requirements:
         - pbr
     run:
         - setuptools
-        - mule
         - numpy >=1.17 # >=1.17 Needed for a bug of conda build system with mpi packages
+        - mule
         - xarray
         - iris
         - cf_units
