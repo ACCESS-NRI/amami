@@ -30,8 +30,8 @@ if __name__ == '__main__':
     import os
     import warnings
     warnings.filterwarnings("ignore")
-    from umami.um_utils import read_fieldsfile
-    from umami.quieterrors import QValueError
+    from amami.um_utils import read_fieldsfile
+    from amami.quieterrors import QValueError
 
     maskFilename=os.path.abspath(args.maskfile)
     

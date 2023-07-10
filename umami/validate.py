@@ -45,9 +45,9 @@ if __name__ == '__main__':
     import warnings
     import os
     warnings.filterwarnings("ignore")
-    from umami.um_utils.validation_tools import validate
-    from umami.um_utils import read_fieldsfile
-    from umami.quieterrors import QParseError
+    from amami.um_utils.validation_tools import validate
+    from amami.um_utils import read_fieldsfile
+    from amami.quieterrors import QParseError
 
     inputFilename = args.inputfile
     fix = args.fix

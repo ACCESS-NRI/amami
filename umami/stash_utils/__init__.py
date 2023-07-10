@@ -9,7 +9,7 @@
 # Fifth field is a unique name suitable for filenames or creating multiple 
 # variables in a single file
 
-from umami.quieterrors import QValueError
+from amami.quieterrors import QValueError
 import re
 
 atm_stashvar = {}

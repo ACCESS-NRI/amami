@@ -417,7 +417,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     from pathlib import Path
-    from umami.quieterrors import QParseError, QValueError, QFileNotFoundError
+    from amami.quieterrors import QParseError, QValueError, QFileNotFoundError
     
     # Check optional and positional inputs to determine input and output files.
     if args.infile is not None:
@@ -448,8 +448,8 @@ if __name__ == '__main__':
         raise QFileNotFoundError(f"'{infile.resolve()}' does not exist.")
     
     # All other imports here to improve performance when running with '--help' option
-    from umami.stash_utils import StashVar as stashvar
-    from umami.um_utils import read_fieldsfile
+    from amami.stash_utils import StashVar as stashvar
+    from amami.um_utils import read_fieldsfile
     import warnings 
     if args.verbose == 0:
         warnings.filterwarnings("ignore")

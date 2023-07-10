@@ -6,7 +6,7 @@
 # /g/data3/hh5/public/apps/miniconda3/envs/analysis3-22.07/lib/python3.9/site-packages/mule/validators.py
 
 from mule.validators import ValidateError
-from umami.quieterrors import QFixError
+from amami.quieterrors import QFixError
 import sys
 
 def validate(ancilFile,fix=False,filename=None):

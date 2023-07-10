@@ -177,12 +177,12 @@ if __name__ == '__main__':
     import warnings
     import numpy as np
     warnings.filterwarnings("ignore")
-    from umami.um_utils import (UM_NANVAL, read_fieldsfile,get_latitude_each_var,get_longitude_each_var,
+    from amami.um_utils import (UM_NANVAL, read_fieldsfile,get_latitude_each_var,get_longitude_each_var,
                                    get_levels_each_var,has_pseudo_each_var,regrid_fieldsfile)
-    from umami.netcdf_utils import (split_coord_names,read_netCDF,check_latitude, check_longitude,
+    from amami.netcdf_utils import (split_coord_names,read_netCDF,check_latitude, check_longitude,
                                     check_level,check_time)
-    from umami.um_utils.validation_tools import validate
-    from umami.quieterrors import QValueError
+    from amami.um_utils.validation_tools import validate
+    from amami.quieterrors import QValueError
     
     inputFilename=os.path.abspath(args.um_input_file)
     ncFilename=os.path.abspath(args.ncfile)

@@ -2,8 +2,8 @@
 # 
 # File to test um2nc.py tool with different files and options. 
 
-um2nc=/g/data/tm70/dm5220/scripts/umami/umami/um2nc.py
-PYTHON=/scratch/tm70/dm5220/conda/envs/umami/bin/python
+um2nc=/g/data/tm70/dm5220/scripts/amami/amami/um2nc.py
+PYTHON=/scratch/tm70/dm5220/conda/envs/amami/bin/python
 
 # TEST 1 
 # Ancillary file

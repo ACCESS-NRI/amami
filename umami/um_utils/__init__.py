@@ -8,7 +8,7 @@ import itertools
 import numpy as np
 from scipy.interpolate import interpn
 import os
-from umami.quieterrors import QValueError, QFileNotFoundError
+from amami.quieterrors import QValueError, QFileNotFoundError
 
 UM_NANVAL=-1073741824.0 #(-2.0**30)
 

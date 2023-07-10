@@ -5,7 +5,7 @@
 
 # Script created by Davide Marchegiani (davide.marchegiani@anu.edu.au) at ACCESS-NRI.
 
-from umami.quieterrors import QValueError, QParseError
+from amami.quieterrors import QValueError, QParseError
 import xarray as xr
 import numpy as np
 
