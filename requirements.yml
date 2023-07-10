@@ -5,12 +5,11 @@ channels:
 
 dependencies:
   - setuptools
-  - argparse
   - mule
   - numpy
   - xarray
   - iris
-  - cf_units
+  - cf-units
   - cftime
   - netCDF4
   - scipy
