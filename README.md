@@ -1,4 +1,4 @@
-ACCESS Models Ancillary Manipulation Instruments (UMAMI)
+ACCESS Models Ancillary Manipulation Instruments (AMAMI)
 
 This is a set of tools to handle UM ancillary files.
 It is still under development and in a pre-release status, but the functions should still work fine for most files.
