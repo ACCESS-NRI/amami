@@ -376,7 +376,7 @@ def process(infile, outfile, args):
 if __name__ == '__main__':
     import argparse
     description="Convert UM fieldsfile to netcdf."
-    usage="um2nc [-h] INFILE [OUTFILE] [--format {NETCDF4,NETCDF4_CLASSIC,NETCDF3_CLASSIC,NETCDF3_64BIT,1,2,3,4}] [-c COMPRESSION] "\
+    usage="um2nc [-h] [i] INFILE [[-o] OUTFILE] [--format {NETCDF4,NETCDF4_CLASSIC,NETCDF3_CLASSIC,NETCDF3_64BIT,1,2,3,4}] [-c COMPRESSION] "\
           "[--64] [-v] [--include INCLUDE_LIST [INCLUDE_LIST ...] | --exclude EXCLUDE_LIST [EXCLUDE_LIST ...]] "\
           "[--nomask] [--nohist] [--simple] [--hcrit HCRIT]"
     parser = argparse.ArgumentParser(prog="um2nc",
