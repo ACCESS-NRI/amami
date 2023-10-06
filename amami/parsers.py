@@ -13,7 +13,7 @@ def parse() -> Union[argparse.Namespace, None]:
         add_help=False,
         allow_abbrev=False,
         )
-    
+
     args_help.add_argument(
         "-h",
         "--help",
