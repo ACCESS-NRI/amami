@@ -1,0 +1,60 @@
+CHANGES
+=======
+
+* Minor edit in the 'um2nc' function usage string
+* Minor fixes to README.md
+
+0.0.1
+-----
+
+* minor fix
+* Changed package name to AMAMI (ACCESS Models Ancillary Manipulation Instruments), to diversify it from the existing umami package in conda-forge
+* Fixed cf-units
+* fix shebang main functions
+* minor changes
+* Fix numpy>=1.17
+* Fix package build
+* Fix package build
+* Fix package build
+* Fix packate build
+* fix conda build
+* fix conda build
+* fixes conda build
+* fix
+* conda build identical to v.0.0.1
+* fixes
+* Fixes
+* Fixed conda build
+* Fixes in conda build
+* Fixes in conda build
+* Fixes in conda build
+* Fixes in conda build
+* Fixes in conda build
+* Fixes to package requirements
+* Minor fixes
+* Update README.md
+* Update README.md
+* Update README.md
+* Updated readme
+* Added settings for conda packaging
+* Update README.md
+* Fixed an issue with propleptic calendar in iris
+* minor fixes
+* Minor fixes
+* - Updated um2nc.py script, to take dlat and dlon from fields rather than file. - Various updates to um\_utils folder
+* - Created stash\_utils folder - Updated argument parser for um2nc.py - Other minor improvements
+* Fixed minor bugs
+* Minor fixes
+* Added check for consistency of interpolation to the ancil\_utils.regrid\_ancil function
+* Added possibility to handle variables with different lat/lon coordinates within the same file
+* Restructured functions to be clearer. Fixed some issues
+* Fix the regridding for pseudo-levels
+* Added proper read of latitude/longitude from ancil file
+* Handled case in which number of variables in input file and grid file are different
+* Added 'method' keyword to regrid\_ancil.py to allow the choice of the interpolation method
+* Updated regrid\_ancil.py and ancil\_utils.regrid\_ancil to take into account different levels for each variable, as well as pseudo-levels
+* - Created umami.quieterrors to raise exceptions without printing any traceback and error type. - Replaced all 'sys.exit(...)' lines with 'raise <QuietError>(...)', with <QuietError> being a specific QuietError Children Class in umami.quieterrors. - Updated regrid\_ancil.py to allow the correct regridding of levels. - Updated modify\_ancil.py to allow the correct regridding
+* Updated 'regrid\_ancil' function to allow the proper regridding of levels with the actual level values in input
+* Restructure of umami and general updates
+* Updated regrid\_ancil.py
+* First commit. Created base for a library to manipulate UM Ancillary files, to be installed as a gadi module

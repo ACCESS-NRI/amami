@@ -67,10 +67,10 @@ def _get_lblev_each_var(umFile):
     lblev = [f.lblev for f in first_timestep_fields]
     levels=[]
     for i,l in enumerate(lblev):
-            if i==0 or stash[i]!=stash[i-1]:
-                levels.append([l])
-            else:
-                levels[-1].append(l)
+        if i==0 or stash[i]!=stash[i-1]:
+            levels.append([l])
+        else:
+            levels[-1].append(l)
     return levels
 
 def has_pseudo_each_var(umFile):
@@ -86,9 +86,8 @@ def read_fieldsfile(umFilename,check_ancil=True):
         file.remove_empty_lookups()
     except ValueError:
         raise QValueError(f"'{umFilename}' does not appear to be a UM file.")
-    else:
-        if (check_ancil) and (not isinstance(file,mule.ancil.AncilFile)):
-            raise QValueError(f"'{umFilename}' does not appear to be a UM ancillary file.")
+    if (check_ancil) and (not isinstance(file,mule.ancil.AncilFile)):
+        raise QValueError(f"'{umFilename}' does not appear to be a UM ancillary file.")
     return file
 
 def regrid_fieldsfile(umFile,lat_out_each_var=None,lon_out_each_var=None,lev_out_each_var=None,method=None):

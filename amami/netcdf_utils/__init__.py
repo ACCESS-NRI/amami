@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # Copyright 2022 ACCESS-NRI and contributors. See the top-level COPYRIGHT file for details.
 # SPDX-License-Identifier: Apache-2.0
 
@@ -24,10 +22,14 @@ def split_coord_names(coordname):
         coordname = coordname[1:-1]
     return [s.strip() for s in coordname.split(",")]
 
-def read_netCDF(inputNCFilename,**kwargs):
+def read_netCDF(inputNCFilename,remove_bnds=True,**kwargs):
     def_keys=dict(decode_times=False)
     def_keys.update(kwargs)
-    return xr.open_dataset(inputNCFilename,**def_keys)
+    nc = xr.open_dataset(inputNCFilename,**def_keys)
+    if remove_bnds:
+        # Remove any boundary variables (such as lat_bnds, lon_bnds) as well as latitude_longitude.
+        nc = nc.drop([v for v in nc if (v=="latitude_longitude") or (v.endswith('_bnds'))])
+    return nc
     
 def _get_dim_name(inputNCFile,dim_name):
     for var in inputNCFile.data_vars:

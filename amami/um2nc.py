@@ -236,7 +236,7 @@ def get_nc_format(format_arg):
 
 def process(infile, outfile, args):
     # Use mule to get the model levels to help with dimension naming
-    ff = read_fieldsfile(infile,check_ancil=False)
+    ff = read_fieldsfile(infile, check_ancil=False)
     if ff.fixed_length_header.grid_staggering == 6:
         grid_type = 'EG'
     elif ff.fixed_length_header.grid_staggering == 3:
@@ -251,16 +251,17 @@ def process(infile, outfile, args):
         z_theta = ff.level_dependent_constants.zsea_at_theta
     except AttributeError:
         z_theta = 0
+    # Get order of fields (from stash codes)
+    stash_order = list(dict.fromkeys([f.lbuser4 for f in ff.fields]))
     try:
         cubes = iris.load(infile)
     except iris.exceptions.CannotAddError:
         raise SystemExit("File can not be processed. UM files with time series currently not supported.\n"
                          "Please convert using convsh (https://ncas-cms.github.io/xconv-doc/html/example1.html).")
 
-    # Sort the list by stashcode
-    def keyfunc(c):
-        return c.attributes['STASH']
-    cubes.sort(key=keyfunc)
+    # Order the cubelist based on input order
+    # cubes.sort(key = lambda c: c.attributes['STASH'])
+    cubes.sort(key = lambda c: stash_order.index(c.attributes['STASH'].section*1000 + c.attributes['STASH'].item))
 
     # Check whether there are any pressure level fields that should be
     # masked. Can use temperature to mask instantaneous fields, so really

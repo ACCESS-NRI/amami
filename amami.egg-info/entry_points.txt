@@ -1,0 +1,2 @@
+[console_scripts]
+amami = amami.cli:main
