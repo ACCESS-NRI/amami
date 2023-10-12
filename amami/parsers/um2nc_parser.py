@@ -34,7 +34,7 @@ amami um2nc [-h] [i] INPUT_FILE [[-o] OUTPUT_FILE] [-v]
 [--include INCLUDE_LIST [INCLUDE_LIST ...] | --exclude EXCLUDE_LIST [EXCLUDE_LIST ...]] 
 """
 
-def preprocess(
+def check_input_output(
         known_args: argparse.Namespace,
         unknown_args: List[str]
     ) -> argparse.Namespace:
@@ -72,13 +72,14 @@ def preprocess(
         else:
             args['outfile'] = f"{args['infile']}.nc"
     return argparse.Namespace(**args)
-
+#===== pylint: disable = no-value-for-parameter
 # Create parser
 PARSER=SubcommandParser(
     usage=USAGE,
     description=DESCRIPTION,
-    preprocess_fun=preprocess,
+    callback=check_input_output,
 )
+#===== pylint: enable = no-value-for-parameter
 # Add arguments
 PARSER.add_argument(
     '-i', '--input',

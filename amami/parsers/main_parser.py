@@ -3,12 +3,17 @@
 
 # Script created by Davide Marchegiani (davide.marchegiani@anu.edu.au) at ACCESS-NRI.
 
+# pylint: disable = no-member
 """Module to define main parser class."""
 
 import argparse
 import amami
-from amami.parsers.core import ParseFormatter
+from amami.parsers.core import ParseFormatter, SubcommandParser
 from amami.parsers.um2nc_parser import PARSER as um2nc_parser
+
+SUBPARSERS = {
+    "um2nc": um2nc_parser,
+}
 
 class MainParser(argparse.ArgumentParser):
     """
@@ -21,7 +26,7 @@ class MainParser(argparse.ArgumentParser):
         # Generate common parser
         self.common_parser = self._generate_common_parser()
         kwargs = {
-            "prog":"amami",
+            "prog":amami.__name__,
             "description":amami.__doc__,
             "parents":[self.help_parser],
             'allow_abbrev':False,
@@ -42,21 +47,9 @@ class MainParser(argparse.ArgumentParser):
         self.subparsers = self.add_subparsers(
             dest="subcommand",
             metavar="command",
+            parser_class=SubcommandParser
         )
-        self.subparsers._parser_class = argparse.ArgumentParser
-        # Parser for 'amami um2nc'
-        self.subparsers.add_parser(
-            "um2nc",
-            parents=[
-                self.help_parser,
-                self.common_parser,
-                um2nc_parser,
-            ],
-            usage=" ".join(um2nc_parser.usage.split()),
-            description=um2nc_parser.description,
-            formatter_class=ParseFormatter,
-            add_help=False,
-        )
+        self.generate_subparsers()
 
     def _generate_help_parser(self) -> argparse.ArgumentParser:
         # help argument parser
@@ -90,29 +83,29 @@ class MainParser(argparse.ArgumentParser):
         )
         return common_parser
 
-    def parse_and_preprocess(self,*args,**kwargs) -> argparse.Namespace:
+    def parse_and_process(self,*args,**kwargs) -> argparse.Namespace:
         """
         Parse arguments and preprocess according to the specified command.
         """
-        return self.parse_known_args(*args,**kwargs)
-        # known_args, unknown_args = self.parse_known_args(*args,**kwargs)
-        # if known_args.subcommand == 'um2nc':
-        #     self.
-        # return (known_args, unknown_args)
+        known_args, unknown_args = self.parse_known_args(*args,**kwargs)
+        callback = self.subparsers.choices[known_args.subcommand].callback
+        if callback:
+            return callback(known_args, unknown_args)
+        self.parse_args(*args,**kwargs)
 
-    # def generate_subparsers(self) -> list[argparse.ArgumentParser]:
-    #     """Function to generate the subparsers for different subcommands"""
-    #     self.subparsers = dict()
-    #     for subcmd in SUBCOMMANDS:
-    #         self.subparsers[subcmd] = self.add_parser(
-    #             command,
-    #             parents=[
-    #                 _help_parser,
-    #                 _common_parser,
-    #                 Um2ncParser.PARSER,
-    #             ],
-    #             usage=" ".join(Um2ncParser.USAGE.split()),
-    #             description=Um2ncParser.DESCRIPTION,
-    #             formatter_class=ParseFormatter,
-    #             add_help=False,
-    #         )
+    def generate_subparsers(self) -> None:
+        """Function to generate the subparsers for different subcommands"""
+        for subcmd,subparser in SUBPARSERS.items():
+            self.subparsers.add_parser(
+                subcmd,
+                parents=[
+                    self.help_parser,
+                    self.common_parser,
+                    subparser,
+                ],
+                usage=" ".join(subparser.usage.split()),
+                description=subparser.description,
+                formatter_class=ParseFormatter,
+                add_help=False,
+                callback=subparser.callback,
+            )

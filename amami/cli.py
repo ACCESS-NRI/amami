@@ -10,7 +10,7 @@ from amami.parsers.main_parser import MainParser
 
 def main() -> None:
     """Entry point for CLI usage of 'amami'"""
-    args = MainParser().parse_and_preprocess(
+    args = MainParser().parse_and_process(
         sys.argv[1:] if sys.argv[1:] else ["-h"]
     )
     print(args)

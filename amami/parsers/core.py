@@ -6,23 +6,17 @@
 """Module to define main parser classes."""
 
 import argparse
-# from amami.parsers.um2nc_parser import PARSER as um2nc_parser
-
-# SUBPARSERS = {
-#     "um2nc": um2nc_parser,
-# }
 
 class ParseFormatter(argparse.RawTextHelpFormatter, argparse.RawDescriptionHelpFormatter):
     """Class to combine argparse Help and Description formatters"""
 
 class SubcommandParser(argparse.ArgumentParser):
     """
-    Class to create a parser for the subcommands
+    Class to create a parser for the subcommands to have a callback for pre-processing
     """
     def __init__(
             self,
-            *args,
-            preprocess_fun = None,
+            callback: callable = None,
             **argparse_kwargs
         ) -> argparse.ArgumentParser:
         default_kwargs = {
@@ -30,5 +24,5 @@ class SubcommandParser(argparse.ArgumentParser):
             'add_help':False,
         }
         default_kwargs.update(**argparse_kwargs)
-        super().__init__(*args,**default_kwargs)
-        self.preprocess_fun = preprocess_fun
+        super().__init__(**default_kwargs)
+        self.callback = callback
