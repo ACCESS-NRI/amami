@@ -4,6 +4,7 @@ COPYRIGHT
 ChangeLog
 LICENSE
 README.md
+py.typed
 requirements.txt
 requirements.yml
 setup.cfg
@@ -15,8 +16,8 @@ amami/__init__.py
 amami/cli.py
 amami/count_land_points.py
 amami/modify_ancil.py
-amami/parsers.py
 amami/regrid_ancil.py
+amami/test.py
 amami/um2nc.py
 amami/validate.py
 amami.egg-info/PKG-INFO
@@ -28,6 +29,9 @@ amami.egg-info/pbr.json
 amami.egg-info/top_level.txt
 amami/data/metoffice_stash_page
 amami/netcdf_utils/__init__.py
+amami/parsers/__init__.py
+amami/parsers/core.py
+amami/parsers/um2nc_parser.py
 amami/quieterrors/__init__.py
 amami/stash_utils/__init__.py
 amami/um_utils/__init__.py
