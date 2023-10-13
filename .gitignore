@@ -1,2 +1,3 @@
-test.py
+tests/test.py
+tests/__init__.py
 **/__pycache__/

@@ -31,11 +31,13 @@ amami/data/metoffice_stash_page
 amami/netcdf_utils/__init__.py
 amami/parsers/__init__.py
 amami/parsers/core.py
+amami/parsers/main_parser.py
 amami/parsers/um2nc_parser.py
 amami/quieterrors/__init__.py
 amami/stash_utils/__init__.py
 amami/um_utils/__init__.py
 amami/um_utils/validation_tools.py
+tests/test.py
 tests/test_modify
 tests/tests_um2nc
 tests/test_um2nc/tests_um2nc

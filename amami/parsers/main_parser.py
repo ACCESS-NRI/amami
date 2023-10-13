@@ -3,13 +3,14 @@
 
 # Script created by Davide Marchegiani (davide.marchegiani@anu.edu.au) at ACCESS-NRI.
 
-# pylint: disable = no-member
+# pylint: disable = no-member, no-name-in-module
 """Module to define main parser class."""
 
 import argparse
 import amami
 from amami.parsers.core import ParseFormatter, SubcommandParser
 from amami.parsers.um2nc_parser import PARSER as um2nc_parser
+from amami.loggers import LOGGER
 
 SUBPARSERS = {
     "um2nc": um2nc_parser,
@@ -88,10 +89,14 @@ class MainParser(argparse.ArgumentParser):
         Parse arguments and preprocess according to the specified command.
         """
         known_args, unknown_args = self.parse_known_args(*args,**kwargs)
-        callback = self.subparsers.choices[known_args.subcommand].callback
-        if callback:
-            return callback(known_args, unknown_args)
-        self.parse_args(*args,**kwargs)
+        if known_args.subcommand is not None:
+            callback = self.subparsers.choices[known_args.subcommand].callback
+            if callback:
+                return callback(known_args, unknown_args)
+            self.parse_args(*args,**kwargs)
+        else:
+            LOGGER.error(f"Command '{unknown_args[0]}' not supported."\
+                f" Choose one among {tuple(SUBPARSERS.keys())}")
 
     def generate_subparsers(self) -> None:
         """Function to generate the subparsers for different subcommands"""
