@@ -8,6 +8,7 @@
 from typing import List
 import argparse
 from amami.parsers.core import SubcommandParser
+from amami.loggers import LOGGER
 
 DESCRIPTION="""
 Convert UM fieldsfile to netCDF.
@@ -28,7 +29,7 @@ Converts INPUT_FILE to a NETCDF3 CLASSIC netCDF, using "simple" variable names""
 """
 
 USAGE="""
-amami um2nc [-h] [i] INPUT_FILE [[-o] OUTPUT_FILE] [-v]
+amami um2nc [-h] [i] INPUT_FILE [[-o] OUTPUT_FILE] [-v | -s]
 [--format {NETCDF4,NETCDF4_CLASSIC,NETCDF3_CLASSIC,NETCDF3_64BIT,1,2,3,4}] 
 [-c COMPRESSION] [--64] [--nomask] [--nohist] [--simple] [--hcrit HCRIT]
 [--include INCLUDE_LIST [INCLUDE_LIST ...] | --exclude EXCLUDE_LIST [EXCLUDE_LIST ...]] 
@@ -54,11 +55,11 @@ def check_input_output(
         ) or (
         ((args['infile'] is None) ^ (args['infile'] is None)) and (len(unknown_args) > 1)
         ):
-        print("Too many arguments.")
+        LOGGER.error("Too many arguments.")
     elif (
         (args['infile'] is None) and (len(unknown_args) == 0)
         ):
-        print("No input file provided.")
+        LOGGER.error("No input file provided.")
     elif args['infile'] is None:
         args['infile'] = unknown_args[0]
         if args['outfile'] is None:

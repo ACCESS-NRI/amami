@@ -11,6 +11,12 @@ from amami import lazy_import
 logging = lazy_import("logging")
 sys = lazy_import("sys")
 
+_C_DEBUG = '\033[1;38;2;130;70;160m'
+_C_WARNING = '\033[1;38;2;200;120;50m'
+_C_ERROR = '\033[1;38;2;230;50;50m'
+_C_CRITICAL = '\033[1;38;2;255;10;10m'
+_C_END = '\033[0m'
+
 def new_error(self, msg, *args, **kwargs):
     """
     Extend logging.error method to exit automatically
@@ -85,7 +91,11 @@ def generate_logger():
     # Set handler (console) and custom formatter
     handler = logging.StreamHandler()
     formatter = CustomConsoleFormatter(
+        fmt_debug=f"{_C_DEBUG}%(levelname)s{_C_END} %(message)s",
         fmt_info="%(message)s",
+        fmt_warning=f"{_C_WARNING}%(levelname)s{_C_END} %(message)s",
+        fmt_error=f"{_C_ERROR}%(levelname)s{_C_END} %(message)s",
+        fmt_critical=f"{_C_CRITICAL}%(levelname)s{_C_END} %(message)s",
     )
     handler.setFormatter(formatter)
     # Add handler to logger

@@ -5,6 +5,37 @@
 # pylint: disable = no-name-in-module
 """Module to define main parser classes."""
 import argparse
+from amami.loggers import LOGGER
+
+class VerboseAction(argparse.Action):
+    """Class to enable verbose option '-v/--verbose' to be run as an argparse action"""
+    def __init__(self, option_strings, dest, nargs=0, **kwargs):
+        if nargs > 0:
+            raise ValueError("Arguments not allowed for '-v/--verbose' option.")
+        super().__init__(option_strings, dest, nargs=nargs, **kwargs)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        LOGGER.setLevel(20) #logging.INFO
+
+class SilentAction(argparse.Action):
+    """Class to enable silent option '-s/--silent' to be run as an argparse action"""
+    def __init__(self, option_strings, dest, nargs=0, **kwargs):
+        if nargs > 0:
+            raise ValueError("Arguments not allowed for '-s/--silent' option.")
+        super().__init__(option_strings, dest, nargs=nargs, **kwargs)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        LOGGER.setLevel(40) #logging.ERROR
+
+class DebugAction(argparse.Action):
+    """Class to enable debug option '--debug' to be run as an argparse action"""
+    def __init__(self, option_strings, dest, nargs=0, **kwargs):
+        if nargs > 0:
+            raise ValueError("Arguments not allowed for '--debug' option.")
+        super().__init__(option_strings, dest, nargs=nargs, **kwargs)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        LOGGER.setLevel(10) #logging.DEBUG
 
 class ParseFormatter(argparse.RawTextHelpFormatter, argparse.RawDescriptionHelpFormatter):
     """Class to combine argparse Help and Description formatters"""

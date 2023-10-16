@@ -6,11 +6,19 @@
 # pylint: disable = no-member, no-name-in-module
 """Module to define main parser class."""
 
+from typing import Union, Callable
 import argparse
 import amami
-from amami.parsers.core import ParseFormatter, SubcommandParser
+from amami import lazy_import
+from amami.parsers.core import (
+    ParseFormatter,
+    SubcommandParser,
+    VerboseAction,
+    SilentAction,
+    DebugAction,
+)
 from amami.parsers.um2nc_parser import PARSER as um2nc_parser
-from amami.loggers import LOGGER
+sys = lazy_import("sys")
 
 SUBPARSERS = {
     "um2nc": um2nc_parser,
@@ -74,29 +82,48 @@ class MainParser(argparse.ArgumentParser):
             add_help=False,
             allow_abbrev=False,
         )
-
-        common_parser.add_argument(
+        _mutual = common_parser.add_mutually_exclusive_group()
+        _mutual.add_argument(
             "-v",
             "--verbose",
-            action="count",
-            default=0,
-            help="Enable verbose output (-vv for more detailed verbosity).",
+            dest="verbose",
+            action=VerboseAction,
+            help="""Enable verbose output.
+Cannot be used together with '-s/--silent' nor '--debug'.""",
+        )
+        _mutual.add_argument(
+            "-s",
+            "--silent",
+            dest="silent",
+            action=SilentAction,
+            help="""Make output completely silent (do not show warnings).
+Cannot be used together with '-v/--verbose' nor '--debug'.""",
+        )
+        _mutual.add_argument(
+            "--debug",
+            dest="debug",
+            action=DebugAction,
+            help="""Enable debug mode.
+Cannot be used together with '-v/--verbose' nor '-s/--silent'.""",
         )
         return common_parser
 
-    def parse_and_process(self,*args,**kwargs) -> argparse.Namespace:
+    def parse_and_process(
+            self,
+            *args,
+            **kwargs
+        ) -> Union[Callable, None]:
         """
         Parse arguments and preprocess according to the specified command.
         """
         known_args, unknown_args = self.parse_known_args(*args,**kwargs)
         if known_args.subcommand is not None:
-            callback = self.subparsers.choices[known_args.subcommand].callback
-            if callback:
+            if (callback := self.subparsers.choices[known_args.subcommand].callback): # Assignment expression
                 return callback(known_args, unknown_args)
             self.parse_args(*args,**kwargs)
         else:
-            LOGGER.error(f"Command '{unknown_args[0]}' not supported."\
-                f" Choose one among {tuple(SUBPARSERS.keys())}")
+            self.print_usage()
+            sys.exit(f"Option '{unknown_args[0]}' not supported.")
 
     def generate_subparsers(self) -> None:
         """Function to generate the subparsers for different subcommands"""
