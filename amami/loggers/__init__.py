@@ -6,10 +6,9 @@
 Module to control logging for 'amami' package
 """
 
+import sys
+import logging
 from types import MethodType
-from amami import lazy_import
-logging = lazy_import("logging")
-sys = lazy_import("sys")
 
 _C_DEBUG = '\033[1;38;2;130;70;160m'
 _C_WARNING = '\033[1;38;2;200;120;50m'

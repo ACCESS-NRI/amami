@@ -1,21 +1,8 @@
 # Copyright 2022 ACCESS-NRI and contributors. See the top-level COPYRIGHT file for details.
 # SPDX-License-Identifier: Apache-2.0
-import importlib.metadata
-import importlib.util
-import sys
 
-# Lazy imports function
-def lazy_import(name):
-    """Function to implement lazy imports and speed up code in some cases"""
-    spec = importlib.util.find_spec(name)
-    if spec:
-        loader = importlib.util.LazyLoader(spec.loader)
-        spec.loader = loader
-        module = importlib.util.module_from_spec(spec)
-        sys.modules[name] = module
-        loader.exec_module(module)
-        return module
-    raise ModuleNotFoundError(f"No module named '{name}'")
+# pylint: disable = missing-module-docstring
+import importlib.metadata
 
 # Set version
 try:
@@ -25,15 +12,23 @@ except importlib.metadata.PackageNotFoundError:
     __version__ = ""
     warnings.warn("Unable to interrogate version string from installed distribution.")
 
+__author__ = "Davide Marchegiani (davide.marchegiani@anu.edu.au)"
+
 _C_END = '\033[0m'
 _C_CMD = '\033[1;38;2;10;150;200m'
 _C_DESC = '\033[0;38;2;150;100;30m'
 
 __doc__ = """
-AMAMI (ACCESS Models Ancillary Manipulation Instruments) is a multi-tool package"""\
-""" to facilitate the manipulation of input and output files associated with ACCESS"""\
-""" models and some of their components. For more information about ACCESS models"""\
-f""" and components, please refer to https://access-hive.org.au/models/.
+AMAMI (ACCESS Models Ancillary Manipulation Instruments) is a multi-tool package """\
+"""to facilitate the manipulation of input and output files associated with ACCESS """\
+"""models and some of their components. For more information about ACCESS models """\
+f"""and components, please refer to https://access-hive.org.au/models/.
+
+Created by {__author__} at ACCESS-NRI.
+If you want to report any bugs, issues, or would like to request any functionality to be """\
+"""added to the AMAMI package, please refer to the issue page of the GitHub repository: """\
+f"""https://github.com/ACCESS-NRI/amami/issues.
+
 
 List of supported commands:
 ----------------------------------------------------

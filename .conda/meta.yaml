@@ -30,3 +30,5 @@ requirements:
         - cftime
         - netCDF4
         - scipy
+        - psutil
+        - lazy_loader

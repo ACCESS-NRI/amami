@@ -3,49 +3,25 @@
 # Copyright 2022 ACCESS-NRI and contributors. See the top-level COPYRIGHT file for details.
 # SPDX-License-Identifier: Apache-2.0
 
-# Original script (/g/data/access/projects/access/apps/pythonlib/um2netcdf4/2.1/um2netcdf4.py) created by Martin Dix
-# Modified by Davide Marchegiani ar ACCESS-NRI - davide.marchegiani@anu.edu.au
+"""
+Original script (/g/data/access/projects/access/apps/pythonlib/um2netcdf4/2.1/um2netcdf4.py) created by Martin Dix
+Modified by Davide Marchegiani at ACCESS-NRI - davide.marchegiani@anu.edu.au
 
-# Convert a UM fieldsfile to netCDF
+Convert a UM fieldsfile to netCDF
+"""
 
-# Override the PP file calendar function to use Proleptic Gregorian rather than Gregorian.
-# This matters for control runs with model years < 1600.
-
-    args = parser.parse_args()
-
-    if not infile.exists():
-        raise QFileNotFoundError(f"'{infile.resolve()}' does not exist.")
-    
-    # All other imports here to improve performance when running with '--help' option
-    from pathlib import Path
-    from amami.quieterrors import QParseError, QValueError, QFileNotFoundError
-    from amami.stash_utils import StashVar as stashvar
-    from amami.um_utils import read_fieldsfile
-    import warnings 
-    if args.verbose == 0:
-        warnings.filterwarnings("ignore")
-    import iris
-    from iris.coords import CellMethod
-    from iris.fileformats.pp import PPField
-    PPField.calendar = pg_calendar
-    import numpy as np
-    import datetime
-    import cf_units
-    import cftime
-    from netCDF4 import default_fillvals
-    
-    process(infile, outfile, args)
-
-@property
-def pg_calendar(self):
-    """Return the calendar of the field."""
-    # TODO #577 What calendar to return when ibtim.ic in [0, 3]
-    calendar = cf_units.CALENDAR_STANDARD
-    if self.lbtim.ic == 2:
-        calendar = cf_units.CALENDAR_360_DAY
-    elif self.lbtim.ic == 4:
-        calendar = cf_units.CALENDAR_365_DAY
-    return calendar
+# All other imports here to improve performance when running with '--help' option
+from pathlib import Path
+from amami.quieterrors import QParseError, QValueError, QFileNotFoundError
+from amami.stash_utils import StashVar as stashvar
+from amami.um_utils import read_fieldsfile
+import iris
+from iris.coords import CellMethod
+import numpy as np
+import datetime
+import cf_units
+import cftime
+from netCDF4 import default_fillvals
 
 def convert_proleptic(time):
     # Convert units from hours to days and shift origin from 1970 to 0001
@@ -260,7 +236,13 @@ def get_nc_format(format_arg):
         except ValueError:
             return format_arg
 
-def process(infile, outfile, args):
+def process(args):
+    infile = Path(getattr(args,'infile'))
+    outfile = Path(getattr(args,'outfile'))
+    
+    if not infile.exists():
+        raise QFileNotFoundError(f"'{infile.resolve()}' does not exist.")
+
     # Use mule to get the model levels to help with dimension naming
     ff = read_fieldsfile(infile, check_ancil=False)
     if ff.fixed_length_header.grid_staggering == 6:
@@ -398,3 +380,4 @@ def process(infile, outfile, args):
         import traceback
         outfile.unlink(missing_ok=True)
         traceback.print_exc()
+print("um2nc imported!")

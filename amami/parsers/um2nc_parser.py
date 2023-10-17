@@ -1,11 +1,14 @@
 # Copyright 2022 ACCESS-NRI and contributors. See the top-level COPYRIGHT file for details.
 # SPDX-License-Identifier: Apache-2.0
 
-# Script created by Davide Marchegiani (davide.marchegiani@anu.edu.au) at ACCESS-NRI.
+"""
+Module to define the parser for the `um2nc` subcommand.
 
-"""Module to define the parser for the `um2nc` subcommand."""
+Script created by Davide Marchegiani (davide.marchegiani@anu.edu.au) at ACCESS-NRI.
+"""
 
 from typing import List
+import sys
 import argparse
 from amami.parsers.core import SubcommandParser
 from amami.loggers import LOGGER
@@ -16,7 +19,7 @@ For more information about UM fieldsfiles, please refer to"""\
 """ https://code.metoffice.gov.uk/doc/um/latest/papers/umdp_F03.pdf"""\
 """ (MOSRS account needed).
 
-Example:
+Examples
 `um2nc [-i] INPUT_FILE`
 Converts INPUT_FILE to netCDF and saves the output as INPUT_FILE.nc
 
@@ -46,33 +49,33 @@ def check_input_output(
     """
 
     # Convert known_args to dict to be able to modify them
-    args = vars(known_args)
+    known_args_dict = vars(known_args)
     # Check optional and positional parameters to determine input and output paths.
     if (
         len(unknown_args) > 2
         ) or (
-        (None not in [args['infile'],args['outfile']]) and (len(unknown_args) > 0)
+        (None not in [known_args_dict['infile'],known_args_dict['outfile']]) and (len(unknown_args) > 0)
         ) or (
-        ((args['infile'] is None) ^ (args['infile'] is None)) and (len(unknown_args) > 1)
+        ((known_args_dict['infile'] is None) ^ (known_args_dict['outfile'] is None)) and (len(unknown_args) > 1)
         ):
-        LOGGER.error("Too many arguments.")
+        LOGGER.error(f"Too many arguments.\n\nusage: {' '.join(USAGE.split())}")
     elif (
-        (args['infile'] is None) and (len(unknown_args) == 0)
+        (known_args_dict['infile'] is None) and (len(unknown_args) == 0)
         ):
-        LOGGER.error("No input file provided.")
-    elif args['infile'] is None:
-        args['infile'] = unknown_args[0]
-        if args['outfile'] is None:
+        LOGGER.error(f"No input file provided.\n\nusage: {' '.join(USAGE.split())}")
+    elif known_args_dict['infile'] is None:
+        known_args_dict['infile'] = unknown_args[0]
+        if known_args_dict['outfile'] is None:
             if len(unknown_args) == 2:
-                args['outfile'] = unknown_args[1]
+                known_args_dict['outfile'] = unknown_args[1]
             else:
-                args['outfile'] = f"{args['infile']}.nc"
-    elif args['outfile'] is None:
+                known_args_dict['outfile'] = f"{known_args_dict['infile']}.nc"
+    elif known_args_dict['outfile'] is None:
         if len(unknown_args) == 1:
-            args['outfile'] = unknown_args[0]
+            known_args_dict['outfile'] = unknown_args[0]
         else:
-            args['outfile'] = f"{args['infile']}.nc"
-    return argparse.Namespace(**args)
+            known_args_dict['outfile'] = f"{known_args_dict['infile']}.nc"
+    return argparse.Namespace(**known_args_dict)
 #===== pylint: disable = no-value-for-parameter
 # Create parser
 PARSER=SubcommandParser(

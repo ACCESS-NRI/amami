@@ -6,6 +6,7 @@
 """Module to define main parser classes."""
 import argparse
 from amami.loggers import LOGGER
+import warnings
 
 class VerboseAction(argparse.Action):
     """Class to enable verbose option '-v/--verbose' to be run as an argparse action"""
@@ -16,6 +17,7 @@ class VerboseAction(argparse.Action):
 
     def __call__(self, parser, namespace, values, option_string=None):
         LOGGER.setLevel(20) #logging.INFO
+        setattr(namespace, self.dest, True)
 
 class SilentAction(argparse.Action):
     """Class to enable silent option '-s/--silent' to be run as an argparse action"""
@@ -25,7 +27,9 @@ class SilentAction(argparse.Action):
         super().__init__(option_strings, dest, nargs=nargs, **kwargs)
 
     def __call__(self, parser, namespace, values, option_string=None):
+        warnings.filterwarnings("ignore")
         LOGGER.setLevel(40) #logging.ERROR
+        setattr(namespace, self.dest, True)
 
 class DebugAction(argparse.Action):
     """Class to enable debug option '--debug' to be run as an argparse action"""
@@ -36,6 +40,7 @@ class DebugAction(argparse.Action):
 
     def __call__(self, parser, namespace, values, option_string=None):
         LOGGER.setLevel(10) #logging.DEBUG
+        setattr(namespace, self.dest, True)
 
 class ParseFormatter(argparse.RawTextHelpFormatter, argparse.RawDescriptionHelpFormatter):
     """Class to combine argparse Help and Description formatters"""

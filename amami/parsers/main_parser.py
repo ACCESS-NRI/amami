@@ -9,7 +9,7 @@
 from typing import Union, Callable
 import argparse
 import amami
-from amami import lazy_import
+import sys
 from amami.parsers.core import (
     ParseFormatter,
     SubcommandParser,
@@ -18,7 +18,6 @@ from amami.parsers.core import (
     DebugAction,
 )
 from amami.parsers.um2nc_parser import PARSER as um2nc_parser
-sys = lazy_import("sys")
 
 SUBPARSERS = {
     "um2nc": um2nc_parser,
@@ -118,7 +117,8 @@ Cannot be used together with '-v/--verbose' nor '-s/--silent'.""",
         """
         known_args, unknown_args = self.parse_known_args(*args,**kwargs)
         if known_args.subcommand is not None:
-            if (callback := self.subparsers.choices[known_args.subcommand].callback): # Assignment expression
+            if (callback := self.subparsers
+                .choices[known_args.subcommand].callback): # Assignment expression
                 return callback(known_args, unknown_args)
             self.parse_args(*args,**kwargs)
         else:

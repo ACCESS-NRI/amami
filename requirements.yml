@@ -4,6 +4,7 @@ channels:
   - default
 
 dependencies:
+  - psutil
   - setuptools
   - mule
   - numpy
@@ -13,6 +14,7 @@ dependencies:
   - cftime
   - netCDF4
   - scipy
+  - lazy_loader
   pip:
     - um-packing
     - um-spiral-search

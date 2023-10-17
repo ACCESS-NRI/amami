@@ -1,0 +1,6 @@
+psutil
+numpy>=1.17
+xarray
+mule@ git+https://github.com/metomi/mule@cce4b99c7046217b1ec1192118a786636e0d8e54#subdirectory=mule
+iris
+lazy_loader
