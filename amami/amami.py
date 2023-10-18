@@ -3,7 +3,7 @@
 
 # Script created by Davide Marchegiani (davide.marchegiani@anu.edu.au) at ACCESS-NRI.
 
-# pylint: disable = no-name-in-module
+
 """
 Module to define main class and entry point for CLI usage of `amami`.
 """
