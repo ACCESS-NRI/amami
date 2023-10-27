@@ -103,7 +103,7 @@ Cannot be used together with '-v/--verbose' nor '--debug'.""",
             dest="debug",
             action=DebugAction,
             help="""Enable debug mode.
-Cannot be used together with '-v/--verbose' nor '-s/--silent'.""",
+Cannot be used together with '-s/--silent' nor '-v/--verbose'.""",
         )
         return common_parser
 

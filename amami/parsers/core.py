@@ -2,11 +2,10 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Script created by Davide Marchegiani (davide.marchegiani@anu.edu.au) at ACCESS-NRI.
-# pylint: disable = no-name-in-module
+# pylint: disable = no-name-in-module,import-outside-toplevel
 """Module to define main parser classes."""
 import argparse
 from amami.loggers import LOGGER
-import warnings
 
 class VerboseAction(argparse.Action):
     """Class to enable verbose option '-v/--verbose' to be run as an argparse action"""
@@ -27,6 +26,7 @@ class SilentAction(argparse.Action):
         super().__init__(option_strings, dest, nargs=nargs, **kwargs)
 
     def __call__(self, parser, namespace, values, option_string=None):
+        import warnings
         warnings.filterwarnings("ignore")
         LOGGER.setLevel(40) #logging.ERROR
         setattr(namespace, self.dest, True)

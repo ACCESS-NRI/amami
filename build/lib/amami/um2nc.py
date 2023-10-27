@@ -449,7 +449,7 @@ if __name__ == '__main__':
         raise QFileNotFoundError(f"'{infile.resolve()}' does not exist.")
     
     # All other imports here to improve performance when running with '--help' option
-    from amami.stash_utils import StashVar as stashvar
+    from amami.stash_utils import Stash as stashvar
     from amami.um_utils import read_fieldsfile
     import warnings 
     if args.verbose == 0:

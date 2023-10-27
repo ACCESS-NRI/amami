@@ -8,7 +8,6 @@ Script created by Davide Marchegiani (davide.marchegiani@anu.edu.au) at ACCESS-N
 """
 
 from typing import List
-import sys
 import argparse
 from amami.parsers.core import SubcommandParser
 from amami.loggers import LOGGER
@@ -32,10 +31,10 @@ Converts INPUT_FILE to a NETCDF3 CLASSIC netCDF, using "simple" variable names""
 """
 
 USAGE="""
-amami um2nc [-h] [i] INPUT_FILE [[-o] OUTPUT_FILE] [-v | -s]
+amami um2nc [-h] [i] INPUT_FILE [[-o] OUTPUT_FILE] [-v|-s|--debug] 
 [--format {NETCDF4,NETCDF4_CLASSIC,NETCDF3_CLASSIC,NETCDF3_64BIT,1,2,3,4}] 
-[-c COMPRESSION] [--64] [--nomask] [--nohist] [--simple] [--hcrit HCRIT]
-[--include INCLUDE_LIST [INCLUDE_LIST ...] | --exclude EXCLUDE_LIST [EXCLUDE_LIST ...]] 
+[-c COMPRESSION] [--64] [--nomask|--hcrit HCRIT] [--nohist] [--simple] 
+[--include STASH_CODE1 [STASH_CODE2 ...]|--exclude STASH_CODE1 [STASH_CODE2 ...]]
 """
 
 def check_input_output(
@@ -54,9 +53,13 @@ def check_input_output(
     if (
         len(unknown_args) > 2
         ) or (
-        (None not in [known_args_dict['infile'],known_args_dict['outfile']]) and (len(unknown_args) > 0)
+        (None not in [known_args_dict['infile'],known_args_dict['outfile']])
+        and
+        (len(unknown_args) > 0)
         ) or (
-        ((known_args_dict['infile'] is None) ^ (known_args_dict['outfile'] is None)) and (len(unknown_args) > 1)
+        ((known_args_dict['infile'] is None) ^ (known_args_dict['outfile'] is None))
+        and
+        (len(unknown_args) > 1)
         ):
         LOGGER.error(f"Too many arguments.\n\nusage: {' '.join(USAGE.split())}")
     elif (
@@ -108,7 +111,7 @@ PARSER.add_argument(
     '-f', '--format',
     dest='format',
     required=False,
-    type=str,
+    type=str.upper,
     default='NETCDF4',
     choices=['NETCDF4', 'NETCDF4_CLASSIC', 'NETCDF3_CLASSIC', 'NETCDF3_64BIT', '1','2','3','4'],
     help="""Specify netCDF format among 1 ('NETCDF4'), 2 ('NETCDF4_CLASSIC'),"""\
@@ -132,12 +135,6 @@ PARSER.add_argument(
     help='Use 64 bit netCDF for 64 bit input.'
 )
 PARSER.add_argument(
-    '--nomask',
-    dest='nomask',
-    action='store_true',
-    help="Don't apply heavyside function mask to pressure level fields."
-)
-PARSER.add_argument(
     '--nohist',
     dest='nohist',
     action='store_true',
@@ -149,16 +146,25 @@ PARSER.add_argument(
     action='store_true',
     help="Use 'simple' variable names of form 'fld_s01i123'."
 )
-PARSER.add_argument(
+mutual1 = PARSER.add_mutually_exclusive_group()
+mutual1.add_argument(
+    '--nomask',
+    dest='nomask',
+    action='store_true',
+    help="""Don't apply heavyside function mask to pressure level fields.
+Cannot be used together with '--hcrit'."""
+)
+mutual1.add_argument(
     '--hcrit',
     dest='hcrit',
     type=float,
     default=0.5,
     help="""Critical value of heavyside function for pressure level masking.
-Default: 0.5."""
+Default: 0.5.
+Cannot be used together with '--nomask'."""
 )
-mutual = PARSER.add_mutually_exclusive_group()
-mutual.add_argument(
+mutual2 = PARSER.add_mutually_exclusive_group()
+mutual2.add_argument(
     '--include',
     dest='include_list',
     type=int,
@@ -167,7 +173,7 @@ mutual.add_argument(
 Only the variables with the included stash codes will be converted.
 Cannot be used together with '--exclude'."""
 )
-mutual.add_argument(
+mutual2.add_argument(
     '--exclude',
     dest='exclude_list',
     type=int,
