@@ -13,6 +13,7 @@ Modified by Davide Marchegiani at ACCESS-NRI - davide.marchegiani@anu.edu.au
 Convert a UM fieldsfile to netCDF
 """
 import datetime
+import os
 import numpy as np
 import cf_units
 import cftime
@@ -180,8 +181,8 @@ def name_cube(cube,stash,simple):
     # Name cube variable
     if simple:
         cube.var_name = f"fld_s{stash.section}{stash.item}"
-    elif stash.uniquename:
-        cube.var_name = stash.uniquename
+    elif stash.unique_name:
+        cube.var_name = stash.unique_name
     # Cases with max or min
     if cube.var_name:
         if any(m.method == 'maximum' for m in cube.cell_methods):
@@ -297,10 +298,10 @@ def fix_latlon_coord(cube, grid_type):
 
 def fix_level_coord(cube, z_rho, z_theta):
     """Rename model_level_number coordinates to better distinguish rho and theta levels"""
-    c_height = cube.coord('level_height')
-    c_sigma = cube.coord('sigma')
     try:
         c_lev = cube.coord('model_level_number')
+        c_height = cube.coord('level_height')
+        c_sigma = cube.coord('sigma')
     except iris.exceptions.CoordinateNotFoundError:
         return
     if abs(c_height.points[0]-z_rho).min() < 1e-6:
@@ -539,9 +540,9 @@ def main(args):
                 # Convert proleptic calendar
                 convert_proleptic_calendar(c)
                 LOGGER.info(
-                    "Writing field {c.var_name} -- ITEMCODE: {itemcode} ..."
+                    f"Writing field '{c.var_name}' -- ITEMCODE: {itemcode} ..."
                 )
                 cubewrite(c, sman, args.compression)
     except Exception as e: #If there is an error, remove the netCDF file created
-        outfile.unlink(missing_ok=True)
+        os.remove(outfile)
         LOGGER.error(e)

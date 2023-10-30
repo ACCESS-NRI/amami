@@ -46,7 +46,7 @@ class Stash:
         self.name = ""
         self.units = ""
         self.standard_name = ""
-        self.uniquename = ""
+        self.unique_name = ""
         self._get_names()
 
     def _from_string(
@@ -87,10 +87,10 @@ class Stash:
             )
             var = ["UNKNOWN VARIABLE","", "", "", ""]
         self.long_name = var[0]
-        self.name = var[1] if var[1] else var[0]
+        self.name = var[1] if var[1] else self.string
         self.units = var[2]
         self.standard_name = var[3]
-        self.uniquename = var[4] if var[4] else self.name
+        self.unique_name = var[4] if var[4] else self.name
 
     # # from urllib.request import urlopen
     # # htlm = urlopen("https://reference.metoffice.gov.uk/um/stash").read().decode("utf-8")
