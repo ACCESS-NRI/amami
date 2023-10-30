@@ -129,7 +129,7 @@ PARSER.add_argument(
 Default 4."""
 )
 PARSER.add_argument(
-    '--64bit', '--64',
+    '--64bit',
     dest='use64bit',
     action='store_true',
     help='Use 64 bit netCDF for 64 bit input.'
