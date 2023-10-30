@@ -142,7 +142,7 @@ def apply_mask_to_pressure_level_field(
             LOGGER.info(
                 f"Masking field '{stash.long_name}' using heaviside_uv field "
                 f"`{Stash(heaviside_uv.attributes['STASH']).long_name}` and "
-                f"critical value {hcrit} ..."
+                f"critical value {hcrit}"
             )
             apply_mask(cube, heaviside_uv, hcrit)
         else:
@@ -160,7 +160,7 @@ def apply_mask_to_pressure_level_field(
             LOGGER.info(
                 f"Masking field '{stash.long_name}' using heaviside_t field "
                 f"`{Stash(heaviside_t.attributes['STASH']).long_name}` and "
-                f"critical value {hcrit} ..."
+                f"critical value {hcrit}"
             )
             apply_mask(cube, heaviside_t, hcrit)
         else:
@@ -464,7 +464,7 @@ def main(args):
     nc_format = get_nc_format(args.format)
     check_ncformat(nc_format,args.use64bit)
     # Use mule to get the model levels to help with dimension naming
-    LOGGER.info(f"Reading UM file {infile} ...")
+    LOGGER.info(f"Reading UM file {infile}")
     ff = umutils.read_fieldsfile(infile, check_ancil=False)
     try:
         cubes = iris.load(infile)
@@ -491,6 +491,7 @@ def main(args):
     z_theta = umutils.get_sealevel_theta(ff)
     # Get outfile
     outfile = io.get_abspath(args.outfile,check=False)
+    LOGGER.info(f"Writing netCDF file {outfile}")
     try:
         with iris.fileformats.netcdf.Saver(outfile, nc_format) as sman:
             # Add global attributes
@@ -540,9 +541,10 @@ def main(args):
                 # Convert proleptic calendar
                 convert_proleptic_calendar(c)
                 LOGGER.info(
-                    f"Writing field '{c.var_name}' -- ITEMCODE: {itemcode} ..."
+                    f"Writing field '{c.var_name}' -- ITEMCODE: {itemcode}"
                 )
                 cubewrite(c, sman, args.compression)
     except Exception as e: #If there is an error, remove the netCDF file created
         os.remove(outfile)
         LOGGER.error(e)
+    LOGGER.info(f"Done!")
