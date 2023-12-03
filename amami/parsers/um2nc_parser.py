@@ -168,17 +168,19 @@ mutual2.add_argument(
     '--include',
     dest='include_list',
     type=int,
+    metavar=("STASH_CODE1","STASH_CODE2"),
     nargs = '+',
-    help = """List of stash codes to include in the netCDF conversion.
-Only the variables with the included stash codes will be converted.
+    help = """List of STASH codes to include in the netCDF conversion.
+Only the variables with the included STASH codes will be converted.
 Cannot be used together with '--exclude'."""
 )
 mutual2.add_argument(
     '--exclude',
     dest='exclude_list',
     type=int,
+    metavar=("STASH_CODE1","STASH_CODE2"),
     nargs = '+',
-    help = """List of stash codes to exclude from the netCDF conversion.
-The variables with the excluded stash codes will not be converted.
+    help = """List of STASH codes to exclude from the netCDF conversion.
+The variables with the excluded STASH codes will not be converted.
 Cannot be used together with '--include'."""
 )
