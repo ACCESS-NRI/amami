@@ -5,8 +5,6 @@ ChangeLog
 LICENSE
 README.md
 py.typed
-requirements.txt
-requirements.yml
 results.prof
 setup.cfg
 setup.py
@@ -86,7 +84,6 @@ amami/amami.py
 amami/count_land_points.py
 amami/modify_ancil.py
 amami/regrid_ancil.py
-amami/test.py
 amami/validate.py
 amami.egg-info/PKG-INFO
 amami.egg-info/SOURCES.txt
@@ -99,14 +96,16 @@ amami.egg-info/top_level.txt
 amami/core/__init__.py
 amami/core/um2nc.py
 amami/data/metoffice_stash_page
+amami/io/__init__.py
 amami/loggers/__init__.py
 amami/netcdf_utils/__init__.py
 amami/parsers/__init__.py
 amami/parsers/core.py
 amami/parsers/main_parser.py
+amami/parsers/modify_parser.py
 amami/parsers/um2nc_parser.py
-amami/quieterrors/__init__.py
 amami/stash_utils/__init__.py
+amami/stash_utils/atm_stashlist.py
 amami/um_utils/__init__.py
 amami/um_utils/validation_tools.py
 tests/test.py

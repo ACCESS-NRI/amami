@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: amami
-Version: 0.0.2.dev12
+Version: 0.0.2.dev18
 Summary: ACCESS Models Ancillary Manipulation Instruments
 Home-page: https://github.com/ACCESS-NRI/amami
 Author: Davide Marchegiani
@@ -18,7 +18,6 @@ Requires-Dist: numpy>=1.17
 Requires-Dist: xarray
 Requires-Dist: mule@ git+https://github.com/metomi/mule@cce4b99c7046217b1ec1192118a786636e0d8e54#subdirectory=mule
 Requires-Dist: scitools-iris
-Requires-Dist: lazy_loader
 
 ACCESS Models Ancillary Manipulation Instruments (AMAMI)
 

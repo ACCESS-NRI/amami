@@ -3,7 +3,7 @@
 
 # Script created by Davide Marchegiani (davide.marchegiani@anu.edu.au) at ACCESS-NRI.
 
-# pylint: disable = no-member, no-name-in-module
+
 """Module to define main parser class."""
 
 from typing import Union, Callable
@@ -18,9 +18,11 @@ from amami.parsers.core import (
     DebugAction,
 )
 from amami.parsers.um2nc_parser import PARSER as um2nc_parser
+from amami.parsers.modify_parser import PARSER as modify_parser
 
 SUBPARSERS = {
     "um2nc": um2nc_parser,
+    "modify": modify_parser,
 }
 
 class MainParser(argparse.ArgumentParser):
@@ -49,7 +51,9 @@ class MainParser(argparse.ArgumentParser):
             "--version",
             action="version",
             version=f"{amami.__version__}",
-            help="Show program's version number and exit."
+            help="""Show program's version number and exit.
+
+"""
         )
         # Add subparsers for subcommands
         self.subparsers = self.add_subparsers(
@@ -71,7 +75,9 @@ class MainParser(argparse.ArgumentParser):
             "--help",
             action="help",
             default=argparse.SUPPRESS,
-            help="Show this help message and exit.",
+            help="""Show this help message and exit.
+
+""",
         )
         return help_parser
 
@@ -88,7 +94,9 @@ class MainParser(argparse.ArgumentParser):
             dest="verbose",
             action=VerboseAction,
             help="""Enable verbose output.
-Cannot be used together with '-s/--silent' nor '--debug'.""",
+Cannot be used together with '-s/--silent' nor '--debug'.
+
+""",
         )
         _mutual.add_argument(
             "-s",
@@ -96,14 +104,18 @@ Cannot be used together with '-s/--silent' nor '--debug'.""",
             dest="silent",
             action=SilentAction,
             help="""Make output completely silent (do not show warnings).
-Cannot be used together with '-v/--verbose' nor '--debug'.""",
+Cannot be used together with '-v/--verbose' nor '--debug'.
+
+""",
         )
         _mutual.add_argument(
             "--debug",
             dest="debug",
             action=DebugAction,
             help="""Enable debug mode.
-Cannot be used together with '-s/--silent' nor '-v/--verbose'.""",
+Cannot be used together with '-s/--silent' nor '-v/--verbose'.
+
+""",
         )
         return common_parser
 
