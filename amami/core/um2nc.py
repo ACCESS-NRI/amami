@@ -3,7 +3,6 @@
 # Copyright 2022 ACCESS-NRI and contributors. See the top-level COPYRIGHT file for details.
 # SPDX-License-Identifier: Apache-2.0
 
-# pylint: disable=logging-fstring-interpolation,import-outside-toplevel,broad-exception-caught,no-member
 """
 Original script (/g/data/access/projects/access/apps/pythonlib/um2netcdf4/2.1/um2netcdf4.py) 
 created by Martin Dix.
@@ -25,7 +24,7 @@ import amami
 from amami.stash_utils import Stash
 import amami.um_utils as umutils
 from amami.loggers import LOGGER
-from amami import io
+from amami.misc_utils import get_abspath    
 
 def get_nc_format(format_arg:str) -> str:
     """Convert format numbers to format strings"""
@@ -79,7 +78,11 @@ def get_heaviside_t(cubes):
             return c
     return None
 
-def apply_mask(cube, heaviside, hcrit):
+def apply_mask(
+    cube,
+    heaviside, 
+    hcrit
+):
     """
     Apply heaviside function to cube
     """
@@ -175,7 +178,11 @@ def apply_mask_to_pressure_level_field(
             return False
     return True
 
-def name_cube(cube,stash,simple):
+def name_cube(
+    cube,
+    stash,
+    simple
+):
     """
     Assign different name properties to cube
     """
@@ -460,13 +467,14 @@ def main(args):
     Main function for `um2nc` subcommand
     """
     LOGGER.debug(f"{args=}")
-    infile = io.get_abspath(args.infile)
+    infile = get_abspath(args.infile)
     LOGGER.debug(f"{infile=}")
+    # Get netCDF format
     nc_format = get_nc_format(args.format)
     check_ncformat(nc_format,args.use64bit)
     # Use mule to get the model levels to help with dimension naming
     LOGGER.info(f"Reading UM file {infile}")
-    ff = umutils.read_fieldsfile(infile, check_ancil=False)
+    ff = umutils.read_fieldsfile(infile)
     try:
         cubes = iris.load(infile)
     except iris.exceptions.CannotAddError:
@@ -491,7 +499,7 @@ def main(args):
     # Get sea level on theta levels
     z_theta = umutils.get_sealevel_theta(ff)
     # Get outfile
-    outfile = io.get_abspath(args.outfile,check=False)
+    outfile = get_abspath(args.outfile,check=False)
     LOGGER.info(f"Writing netCDF file {outfile}")
     try:
         with iris.fileformats.netcdf.Saver(outfile, nc_format) as sman:

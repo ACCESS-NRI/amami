@@ -18,7 +18,7 @@ UM_NANVAL=-1073741824.0 #(-2.0**30)
 
 def read_fieldsfile(
     um_filename: str,
-    check_ancil:bool=True
+    check_ancil:bool=False
     ) -> type[mule.UMFile]:
     """Read UM fieldsfile with mule, and optionally check if type is AncilFile"""
 
@@ -27,7 +27,7 @@ def read_fieldsfile(
         file.remove_empty_lookups()
     except ValueError:
         LOGGER.error(f"'{um_filename.resolve()}' does not appear to be a UM file.")
-    if (check_ancil) and (not isinstance(file, mule.ancil.AncilFile)):
+    if not (check_ancil) and (not isinstance(file, mule.ancil.AncilFile)):
         LOGGER.error(f"'{um_filename}' does not appear to be a UM ancillary file.")
     return file
 

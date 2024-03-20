@@ -22,13 +22,25 @@ class Stash:
         code:Union[str,int,irisSTASH],
     ):
         if isinstance(code,str):
-            if not re.match(r"^(m\d{2})?s\d{2}i\d{3}$",code):
+            if re.match(r"^(m\d{2})?s\d{2}i\d{3}$",code):
+                self.model,self.section,self.item = self._from_string(code)
+            elif re.match(r"^\d{1,5}$",code):
+                code = int(code)
+                if code > 54999 or code < 0:
+                    LOGGER.error(
+                        f"Invalid STASH item code '{code}'. For item codes reference "
+                        "please check the UM Documentation Paper C04 about 'Storage "
+                        "Handling and Diagnostic System (STASH)' --> "
+                        "https://code.metoffice.gov.uk/doc/um/latest/papers/umdp_C04.pdf"
+                    )
+                self.model,self.section,self.item = self._from_itemcode(code)
+            else:
                 LOGGER.error(
-                    "STASH code string needs to be in the format '[m--]s--i---', with each "
-                    "'-' being an integer between 0-9.\nThe part wrapped in squared brackets "
+                    "STASH code needs to be either an integer between 0 and 54999, "
+                    "or a string in the format '[m--]s--i---', with each '-' being "
+                    "an integer between 0-9.\nThe part wrapped in squared brackets "
                     "('[]') is optional."
                 )
-            self.model,self.section,self.item = self._from_string(code)
         elif isinstance(code,int):
             if code > 54999 or code < 0:
                 LOGGER.error(
@@ -62,12 +74,11 @@ class Stash:
         itemcode:int,
     ) -> tuple[int]:
         """Function to get the model, item and section from a STASH item code"""
-        itemcode = self.itemcode
         return 1, itemcode//1000, itemcode%1000
 
     def _to_string(self) -> str:
         """Function to return the STASH code string from model, section and item"""
-        return f"m{self.model:02d}s{self.section:03d}i{self.item:03d}"
+        return f"m{self.model:02d}s{self.section:02d}i{self.item:03d}"
 
     def _to_itemcode(self) -> int:
         """Function to return the STASH item code from section and item"""
