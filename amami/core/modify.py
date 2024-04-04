@@ -36,28 +36,28 @@ args = argparse.Namespace(
     nanval=None
 )
 # ========
-def check_option_formats(ufunc, variables) -> None:
+def check_option_formats(ufunc_arg, variables_arg) -> None:
     '''
     Check that the option arguments are in the right formats
     '''
     #ARGUMENTS
     # --ufunc
-    if ufunc is not None:
-        if not re.match(r"^\s*lambda\s+",ufunc):
+    if ufunc_arg is not None:
+        if not re.match(r"^\s*lambda\s+",ufunc_arg):
             LOGGER.error(
                 "Invalid user-defined function.\n"
                 "The function must be defined as a Python lambda function."
             )
         try:
-            eval(ufunc)
+            eval(ufunc_arg)
         except SyntaxError:
             LOGGER.error(
                 "Invalid Python lambda function defined.\n"
             )
     # --variables/--var
-    if variables is not None:
-        variables = variables.split()
-        for var in variables:
+    if variables_arg is not None:
+        variables_arg = variables_arg.split()
+        for var in variables_arg:
             if not re.match(r"^((m\d{2})?s\d{2}i\d{3})|(\d{1,5})$",var):
                 LOGGER.error(
                     f"Invalid variable STASH code '{var}'.\n"
@@ -119,8 +119,10 @@ def main(args: argparse.Namespace):
             len(ff.fields),
             len(nc.data_vars),
         )
-        
     else:
         # Use user-defined function
+        ufunc = eval(args.ufunc)
+    # Modify the UM fieldsfile
+    if args.variables is not None:
         pass
     LOGGER.info("Done!")

@@ -26,3 +26,14 @@ def get_abspath(
     elif checkdir and not os.path.exists(absdir:=os.path.dirname(abspath)):
         LOGGER.error(f"Directory '{absdir}' does not exist.")
     return abspath
+
+def create_unexistent_file(path):
+    """
+    Create a new file.
+    """
+    n=1
+    newpath = path
+    while os.path.exists(newpath):
+        n+=1
+        newpath = f"{path}_{n}"
+    return newpath

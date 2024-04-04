@@ -9,6 +9,7 @@ Script created by Davide Marchegiani (davide.marchegiani@anu.edu.au) at ACCESS-N
 
 from typing import List
 import argparse
+from amami.misc_utils import create_unexistent_file
 from amami.parsers.core import SubcommandParser
 from amami.loggers import LOGGER
 
@@ -74,12 +75,12 @@ def callback_function(
             if len(unknown_args) == 2:
                 known_args_dict['outfile'] = unknown_args[1]
             else:
-                known_args_dict['outfile'] = f"{known_args_dict['infile']}.nc"
+                known_args_dict['outfile'] = create_unexistent_file(f"{known_args_dict['infile']}.nc")
     elif known_args_dict['outfile'] is None:
         if len(unknown_args) == 1:
             known_args_dict['outfile'] = unknown_args[0]
         else:
-            known_args_dict['outfile'] = f"{known_args_dict['infile']}.nc"
+            known_args_dict['outfile'] = create_unexistent_file(f"{known_args_dict['infile']}.nc")
     return argparse.Namespace(**known_args_dict)
 
 # Create parser

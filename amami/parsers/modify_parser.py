@@ -11,6 +11,7 @@ from typing import List
 import argparse
 from amami.parsers.core import SubcommandParser
 from amami.loggers import LOGGER
+from amami.misc_utils import create_unexistent_file
 
 DESCRIPTION="""
 Modify UM fieldsfile data using netCDF data, or by applying a user-defined
@@ -75,7 +76,7 @@ def callback_function(
             LOGGER.error(f"'--level/--lev' argument cannot be used together with '--ufunc'.\n\nusage: {' '.join(USAGE.split())}")
     # Checks if output is provided, otherwise generates it
     if (known_args.outfile is None):
-        known_args.outfile = f"{known_args.infile}_modified"
+        known_args.outfile = create_unexistent_file(f"{known_args.infile}_modified")
     return known_args
 
 # Create parser
