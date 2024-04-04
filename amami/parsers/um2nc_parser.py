@@ -37,14 +37,16 @@ amami um2nc [-h] [-i] INPUT_FILE [[-o] OUTPUT_FILE] [-v|-s|--debug] """\
 """[--include STASH_CODE1 [STASH_CODE2 ...]|--exclude STASH_CODE1 [STASH_CODE2 ...]]
 """
 
-def check_input_output(
+def callback_function(
         known_args: argparse.Namespace,
         unknown_args: List[str]
     ) -> argparse.Namespace:
     """
     Preprocessing for `um2nc` parser.
-    Checks optional and positional parameters to understand input and output, 
-    and set default output if not provided.
+    Does the following tasks:
+    -   Checks optional and positional parameters to understand input and output;
+    -   Checks if the output path has been provided, otherwise generates it by
+        appending '.nc' to the input file.
     """
 
     # Convert known_args to dict to be able to modify them
@@ -84,7 +86,7 @@ def check_input_output(
 PARSER=SubcommandParser(
     usage=USAGE,
     description=DESCRIPTION,
-    callback=check_input_output,
+    callback=callback_function,
 )
 # Add arguments
 PARSER.add_argument(

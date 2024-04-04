@@ -31,11 +31,11 @@ f"""https://github.com/ACCESS-NRI/amami/issues.
 
 
 List of supported commands:
-----------------------------------------------------
-| command | description                             |
-----------------------------------------------------
-| {_C_CMD}um2nc{_C_END}   | {_C_DESC}Convert UM fieldsfile to netCDF.{_C_END}        |
-| {_C_CMD}modify{_C_END}  | {_C_DESC}Modify UM fieldsfile based on netCDF.{_C_END}   |
-----------------------------------------------------
+-----------------------------------------------------------------------------
+| command | description                                                      |
+-----------------------------------------------------------------------------
+| {_C_CMD}um2nc{_C_END}   | {_C_DESC}Convert UM fieldsfile to netCDF.{_C_END}                                 |
+| {_C_CMD}modify{_C_END}  | {_C_DESC}Modify UM fieldsfile based on netCDF or user-defined function.{_C_END}   |
+-----------------------------------------------------------------------------
 For more information about a specific command, please run `amami <command> -h`.
 """

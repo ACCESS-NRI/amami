@@ -466,9 +466,12 @@ def main(args):
     """
     Main function for `um2nc` subcommand
     """
+    # Get input path
     LOGGER.debug(f"{args=}")
     infile = get_abspath(args.infile)
     LOGGER.debug(f"{infile=}")
+    # Get output path
+    outfile = get_abspath(args.outfile, checkdir=True)
     # Get netCDF format
     nc_format = get_nc_format(args.format)
     check_ncformat(nc_format,args.use64bit)
@@ -498,8 +501,7 @@ def main(args):
     z_rho = umutils.get_sealevel_rho(ff)
     # Get sea level on theta levels
     z_theta = umutils.get_sealevel_theta(ff)
-    # Get outfile
-    outfile = get_abspath(args.outfile,check=False)
+    # Write output file
     LOGGER.info(f"Writing netCDF file {outfile}")
     try:
         with iris.fileformats.netcdf.Saver(outfile, nc_format) as sman:
@@ -509,7 +511,7 @@ def main(args):
                 stash = Stash(c.attributes['STASH'])
                 itemcode = stash.itemcode
                 LOGGER.debug(
-                    f"Processing field itemcode: {itemcode}"
+                    f"Processing STASH field: {itemcode}"
                 )
                 # Skip fields not specified with --include-list option
                 # or fields specified with --exclude-list option
@@ -556,4 +558,4 @@ def main(args):
     except Exception as e: #If there is an error, remove the netCDF file created
         os.remove(outfile)
         LOGGER.error(e)
-    LOGGER.info(f"Done!")
+    LOGGER.info("Done!")

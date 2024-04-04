@@ -10,16 +10,9 @@ Modify UM fieldsfile data using netCDF data, or by applying a user-defined
 function.
 """
 
-# import datetime
-# import os
-# import numpy as np
-# import cf_units
-# import cftime
-# import netCDF4
-# import iris
-# import iris.coords
 import argparse
 import re
+from amami.stash_utils import Stash
 from amami.netcdf_utils import read_netCDF
 import amami.um_utils as umutils
 from amami.loggers import LOGGER
@@ -35,7 +28,7 @@ args = argparse.Namespace(
     outfile=None,
     ncfile='/g/data/tm70/dm5220/ancil/dietmar/qrparm.orog.original_modified.nc',
     ufunc=None,
-    variables="ciao 324 m01s02i201",
+    variables=None,
     latitude_name=None,
     longitude_name=None,
     time_name=None,
@@ -43,25 +36,27 @@ args = argparse.Namespace(
     nanval=None
 )
 # ========
-def check_input_formats(args: argparse.Namespace) -> None:
+def check_option_formats(ufunc, variables) -> None:
     '''
-    Check that the input arguments are in the right formats
+    Check that the option arguments are in the right formats
     '''
-    # Args
-    if args.ufunc is not None:
-        if not re.match(r"^\s*lambda\s+",args.ufunc):
+    #ARGUMENTS
+    # --ufunc
+    if ufunc is not None:
+        if not re.match(r"^\s*lambda\s+",ufunc):
             LOGGER.error(
                 "Invalid user-defined function.\n"
                 "The function must be defined as a Python lambda function."
             )
         try:
-            eval(args.ufunc)
+            eval(ufunc)
         except SyntaxError:
             LOGGER.error(
                 "Invalid Python lambda function defined.\n"
             )
-    if args.variables is not None:
-        variables = args.variables.split()
+    # --variables/--var
+    if variables is not None:
+        variables = variables.split()
         for var in variables:
             if not re.match(r"^((m\d{2})?s\d{2}i\d{3})|(\d{1,5})$",var):
                 LOGGER.error(
@@ -91,7 +86,9 @@ def check_variables_consistency(variables_arg,nvar_um,nvar_nc) -> None:
     if nvar_nc != nvar:
         LOGGER.error(
             f"Number of{sel} variables in UM fieldsfile ({nvar}) "
-            f"and netCDF file ({nvar_nc}) do not match."
+            f"and netCDF file ({nvar_nc}) do not match.\nTo select "
+            "a subset of variables to modify in the UM fieldsfile, "
+            "use the '--var/--variables' option."
         )
 
 def main(args: argparse.Namespace):
@@ -99,9 +96,14 @@ def main(args: argparse.Namespace):
     Main function for `modify` subcommand
     """
     LOGGER.debug(f"{args=}")
+    # Get input path
     infile = get_abspath(args.infile)
     LOGGER.debug(f"{infile=}")
-    check_input_formats(args)
+    # Get output path
+    outfile = get_abspath(args.outfile, checkdir=True)
+    LOGGER.debug(f"{outfile=}")
+    # Check that options have the right formats
+    check_option_formats(args.ufunc, args.variables)
     # Use mule to read the UM file
     LOGGER.info(f"Reading UM file {infile}")
     ff = umutils.read_fieldsfile(infile)
@@ -121,4 +123,4 @@ def main(args: argparse.Namespace):
     else:
         # Use user-defined function
         pass
-    LOGGER.info(f"Done!")
+    LOGGER.info("Done!")
