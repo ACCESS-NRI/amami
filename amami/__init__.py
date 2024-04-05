@@ -21,7 +21,7 @@ _C_DESC = '\033[0;38;2;150;100;30m'
 __doc__ = """
 AMAMI (ACCESS Models Ancillary Manipulation Instruments) is a multi-tool package """\
 """to facilitate the manipulation of input and output files associated with ACCESS """\
-"""models and some of their components. For more information about ACCESS models """\
+"""models and their components. For more information about ACCESS models """\
 f"""and components, please refer to https://access-hive.org.au/models/.
 
 Created by {__author__} at ACCESS-NRI.
@@ -31,11 +31,11 @@ f"""https://github.com/ACCESS-NRI/amami/issues.
 
 
 List of supported commands:
------------------------------------------------------------------------------
-| command | description                                                      |
------------------------------------------------------------------------------
-| {_C_CMD}um2nc{_C_END}   | {_C_DESC}Convert UM fieldsfile to netCDF.{_C_END}                                 |
-| {_C_CMD}modify{_C_END}  | {_C_DESC}Modify UM fieldsfile based on netCDF or user-defined function.{_C_END}   |
------------------------------------------------------------------------------
-For more information about a specific command, please run `amami <command> -h`.
+------------------------------------------------------------------------------------------------
+| command | description                                                                        |
+------------------------------------------------------------------------------------------------
+| {_C_CMD}um2nc{_C_END}   | {_C_DESC}Convert a UM fieldsfile to netCDF.{_C_END}                                                 |
+| {_C_CMD}modify{_C_END}  | {_C_DESC}Modify a UM fieldsfile using data from a netCDF file, or a user-defined function.{_C_END}  |
+------------------------------------------------------------------------------------------------
+For more information about a specific command, run `amami <command> -h`.
 """

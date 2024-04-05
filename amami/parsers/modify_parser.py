@@ -14,18 +14,16 @@ from amami.loggers import LOGGER
 from amami.misc_utils import create_unexistent_file
 
 DESCRIPTION="""
-Modify UM fieldsfile data using netCDF data, or by applying a user-defined
-function.
+Modify UM fieldsfile data using netCDF data, or by applying a user-defined function.
 
 !IMPORTANT WARNING!
 Care needs to be taken when modifying UM fieldsfiles.
-If you modify a UM fieldsfile (INPUT_FILE) and produce a UM fieldsfile (OUTPUT_FILE) to be used in a simulation """\
-"""as a UM ancillary file, you have to make sure that this OUTPUT_FILE is consistent with the land-sea """\
-"""mask ancillary file used in the same simulation.
-Even if the INPUT_FILE is consistent with such land-sea mask, the OUTPUT_FILE is not guaranteed """\
-"""to be consistent with it.
-For the same reason, if your INPUT_FILE is a land-sea mask ancillary file, after producing the OUTPUT_FILE """\
-"""you will have to check that all the other ancillary files are consistent with it.
+If you modify a UM fieldsfile to be used in a simulation as a UM ancillary file, you have to make """\
+"""sure that it is consistent with the land-sea mask ancillary file used in the same simulation.
+Even if the original UM fieldsfile (INPUT) is consistent with such land-sea mask, the modified UM fieldsfile """\
+"""(OUTPUT) is not guaranteed to be consistent with it.
+For the same reason, if your INPUT is a land-sea mask ancillary file, after producing the OUTPUT, """\
+"""you have to make sure that all the ancillary files used in the same simulation are consistent with it.
 
 For more information about UM fieldsfiles, please refer to"""\
 """ https://code.metoffice.gov.uk/doc/um/latest/papers/umdp_F03.pdf"""\
@@ -43,7 +41,7 @@ Modify the INPUT_FILE data using the user-defined function FUNCTION, and saves t
 """
 
 USAGE="""
-amami modify [-h] -i INPUT_FILE (--nc NETCDF_FILE|--ufunc FUNCTION) [-o OUTPUT_FILE] [--var VARIABLES] [-v|-s|--debug] """\
+amami modify [-h] -i INPUT_FILE (--nc NETCDF_FILE|--ufunc FUNCTION) [-o OUTPUT_FILE] [--stash STASH_CODES] [-v|-s|--debug] """\
 """[--lat LATITUDE_NAME] [--lon LONGITUDE_NAME] [--t TIME_NAME] [--lev LEVEL_NAME] [--nan NAN_VALUE]
 """
 
@@ -74,6 +72,8 @@ def callback_function(
             LOGGER.error(f"'--time' argument cannot be used together with '--ufunc'.\n\nusage: {' '.join(USAGE.split())}")
         elif (known_args.level_name is not None):
             LOGGER.error(f"'--level/--lev' argument cannot be used together with '--ufunc'.\n\nusage: {' '.join(USAGE.split())}")
+        elif (known_args.nanval is not None):
+            LOGGER.error(f"'--nan' argument cannot be used together with '--ufunc'.\n\nusage: {' '.join(USAGE.split())}")
     # Checks if output is provided, otherwise generates it
     if (known_args.outfile is None):
         known_args.outfile = create_unexistent_file(f"{known_args.infile}_modified")
@@ -140,35 +140,38 @@ Add 1 to all data values greater than equal 0 and subtract 1 to all data values 
 )
 
 PARSER.add_argument(
-    '--var', '--variables',
+    '--stash', '--var', '--variables',
     required=False,
-    dest='variables',
+    dest='stash_codes',
     type=str,
-    metavar="VARIABLES",
+    metavar="STASH_CODES",
     help="""Space-separated list of STASH codes (as per UK Met Office Stash Registry """\
-"""https://reference.metoffice.gov.uk/um/stash) to change in the UM file.
-If a netCDF file is used for the modification:
-  - This list should be ordered according to the correspondent netCDF variables.
+"""https://reference.metoffice.gov.uk/um/stash) to change in the UM fieldsfile.
+If a netCDF file is provided for the modification:
+  - This list should be ordered according to the order of appearance of the correspondent netCDF variables.
   - The length of this list must be equal to the number of variables in the netCDF file.
   So, the first variable listed will be modified with the first netCDF """\
 """variable, the second with the second, and so on.
-Any UM variable not listed here will be left unchanged.
+Any UM variable having a STASH code not present in this list will be left unchanged.
 If not provided, all variables in the UM file will be modified.
-Cannot be used together with '--ufunc'.
 
 Examples:
-`--nc ncfile --var 2`
-The UM variable with STASH code 2 will be modified """
+`--nc ncfile --stash 2`
+The UM variable with STASH code 2 (m01s00i002) will be modified """
 """using the first (and only) netCDF variable. 
 
-`--nc ncfile --var "2 m01s01i004 33"`
-The UM variables with STASH codes 2, 1004 (m01s01i004) and 33 will be modified """
+`--nc ncfile --stash "1418 m01s03i209 1417"`
+The UM variables with STASH codes 1418 (m01s01i418), 3209 (m01s03i209) and 1417 (m01s01i417) will be modified """
 """using the first, second and third netCDF variables, respectively. 
 
 `--nc ncfile`
 The first UM variable will be modified using the first netCDF variable, """\
 """the second UM variable using the second netCDF variable, and so on for """\
 """all UM variables in the file.
+
+`--ufunc "lambda x: x+1" --stash "m01s01i004 33"`
+The UM variables with STASH codes 1004 (m01s01i004) and 33 (m01s00i033) will be modified """
+"""using the lambda function 'lambda x: x+1'. 
 
 """
 )
@@ -178,22 +181,21 @@ PARSER.add_argument(
     dest='latitude_name',
     type=str,
     metavar="LATITUDE_NAME",
-    help="""Name of the latitude dimension in the netCDF variable(s) used to modify the UM fieldsfile data.
-If the variables used have different latitude dimension names, space-separated list of the latitude """\
-"""dimension names for the used netCDF variables. 
-The list should follow the same variable order specified in the '--variables/--var' argument. 
-If no '--variables/--var' argument has been selected, the list will follow the default netCDF variable order.
-If not provided, the following latitude names will be tried (in this order): "latitude", "lat". 
-If none of these are found in the netCDF, an error will be thrown.
+    help="""Name of the latitude dimension of the netCDF variable(s).
+If the netCDF variables have different latitude dimension names, space-separated list of the latitude """\
+"""dimension names, in the same order of appearance as the correspondent netCDF variables.
+If not provided, the following names will be used to try and match the netCDF variables latitude """\
+"""dimension names (in this order): "latitude", "lat". If none of them are found in the netCDF, """\
+"""an error will be thrown.
 In the case of UM fieldsfile data without latitude dimension (one single latitude), this argument will not be taken into account.
 Cannot be used together with '--ufunc'.
 
 Examples:
 `--lat "lat_0"`
-All netCDF variables used for the modification have latitude dimension named 'lat_0'.
+All netCDF variables have latitude dimension named 'lat_0'.
 
 `--lat "lat_0 latitude latitude_0"`
-The three netCDF variables used for the modification have latitude dimension named "lat_0", "latitude" """\
+The netCDF has 3 variables with latitude dimensions named "lat_0", "latitude" """\
 """and "latitude_0", respectively.
 
 """
@@ -204,74 +206,71 @@ PARSER.add_argument(
     dest='longitude_name',
     type=str,
     metavar="LONGITUDE_NAME",
-    help="""Name of the longitude dimension in the netCDF variable(s) used to modify the UM fieldsfile data.
-If the variables used have different longitude dimension names, space-separated list of the longitude """\
-"""dimension names for the used netCDF variables. 
-The list should follow the same variable order specified in the '--variables/--var' argument.
-If no '--variables/--var' argument has been selected, the list will follow the default netCDF variable order.
-If not provided, the following longitude names will be tried (in this order): "longitude", "lon". 
-If none of these are found in the netCDF, an error will be thrown.
+    help="""Name of the longitude dimension of the netCDF variable(s).
+If the netCDF variables have different longitude dimension names, space-separated list of the longitude """\
+"""dimension names, in the same order of appearance as the correspondent netCDF variables.
+If not provided, the following names will be used to try and match the netCDF variables longitude """\
+"""dimension names (in this order): "longitude", "lon". If none of them are found in the netCDF, """\
+"""an error will be thrown.
 In the case of UM fieldsfile data without longitude dimension (one single longitude), this argument will not be taken into account.
 Cannot be used together with '--ufunc'.
 
 Examples:
 `--lon "lon_0"`
-All netCDF variables used for the modification have longitude dimension named 'lon_0'.
+All netCDF variables have longitude dimension named 'lon_0'.
 
 `--lon "lon_0 longitude longitude_0"`
-The three netCDF variables used for the modification have longitude dimension named "lat_0", "longitude" """\
+The netCDF has 3 variables with longitude dimensions named "lon_0", "longitude" """\
 """and "longitude_0", respectively.
 
 """
 )
 PARSER.add_argument(
-    '--time',
+    '--t', '--time',
     required=False,
     dest='time_name',
     type=str,
     metavar="TIME_NAME",
-    help="""Name of the time dimension in the netCDF variable(s) used to modify the UM fieldsfile data.
-If the variables used have different time dimension names, space-separated list of the time """\
-"""dimension names for the used netCDF variables. 
-The list should follow the same variable order specified in the '--variables/--var' argument.
-If no '--variables/--var' argument has been selected, the list will follow the default netCDF variable order.
-If not provided, the following time names will be tried (in this order): "time", "t". 
-If none of these are found in the netCDF, an error will be thrown.
+    help="""Name of the time dimension of the netCDF variable(s).
+If the netCDF variables have different time dimension names, space-separated list of the time """\
+"""dimension names, in the same order of appearance as the correspondent netCDF variables.
+If not provided, the following names will be used to try and match the netCDF variables time """\
+"""dimension names (in this order): "time", "t". If none of them are found in the netCDF, """\
+"""an error will be thrown.
 In the case of UM fieldsfile data without time dimension (one single time), this argument will not be taken into account.
 Cannot be used together with '--ufunc'.
 
 Examples:
-`--time "time_0"`
-All netCDF variables used for the modification have time dimension named 'time_0'.
+`--t "t_0"`
+All netCDF variables have time dimension named 't_0'.
 
-`--time "t_0 time time_0"`
-The three netCDF variables used for the modification have time dimension named "t_0", "time" """\
+`--t "t_0 time time_0"`
+The netCDF has 3 variables with time dimensions named "t_0", "time" """\
 """and "time_0", respectively.
 
 """
 )
 PARSER.add_argument(
-    '--level', '--lev',
+    '--lev', '--level',
     required=False,
     dest='level_name',
     type=str,
     metavar="LEVEL_NAME",
-    help="""Name of the level dimension in netCDF variable(s) used to modify the UM fieldsfile data.
-If the variables used have different level dimension names, space-separated list of the level """\
-"""dimension names for the used netCDF variables. 
-The list should follow the same variable order specified in the '--variables/--var' argument.
-If no '--variables/--var' argument has been selected, the list will follow the default netCDF variable order.
-If not provided, the following level names will be tried (in this order): "level", "lev". 
-If none of these are found in the netCDF, an error will be thrown.
+    help="""Name of the level dimension of the netCDF variable(s).
+If the netCDF variables have different level dimension names, space-separated list of the level """\
+"""dimension names, in the same order of appearance as the correspondent netCDF variables.
+If not provided, the following names will be used to try and match the netCDF variables level """\
+"""dimension names (in this order): "level", "lev". If none of them are found in the netCDF, """\
+"""an error will be thrown.
 In the case of UM fieldsfile data without level dimension (one single level), this argument will not be taken into account.
 Cannot be used together with '--ufunc'.
 
 Examples:
-`--level "level_0"`
-All netCDF variables used for the modification have level dimension named 'level_0'.
+`--lev "lev_0"`
+All netCDF variables have level dimension named 'lev_0'.
 
-`--level "t_0 level level_0"`
-The three netCDF variables used for the modification have level dimension named "t_0", "level" """\
+`--lev "lev_0 level level_0"`
+The netCDF has 3 variables with level dimensions named "lev_0", "level" """\
 """and "level_0", respectively.
 
 """
@@ -284,6 +283,11 @@ PARSER.add_argument(
     metavar="NANVAL",
     help="""Value in the netCDF data to be treated as NaN for the purpose of the modification.
 Any NaN in the netCDF data will also be treated as NaN for the purpose of the modification.
+Cannot be used together with '--ufunc'.
+
+Examples:
+`--nan 99999`
+All netCDF values equal to 99999 will be substituted with NaN for the purpose of the modification.
 
 """
 )

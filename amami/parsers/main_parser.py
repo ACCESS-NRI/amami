@@ -94,7 +94,7 @@ class MainParser(argparse.ArgumentParser):
             dest="verbose",
             action=VerboseAction,
             help="""Enable verbose output.
-Cannot be used together with '-s/--silent' nor '--debug'.
+Cannot be used together with '-s/--silent' or '--debug'.
 
 """,
         )
@@ -104,7 +104,7 @@ Cannot be used together with '-s/--silent' nor '--debug'.
             dest="silent",
             action=SilentAction,
             help="""Make output completely silent (do not show warnings).
-Cannot be used together with '-v/--verbose' nor '--debug'.
+Cannot be used together with '-v/--verbose' or '--debug'.
 
 """,
         )
@@ -113,7 +113,7 @@ Cannot be used together with '-v/--verbose' nor '--debug'.
             dest="debug",
             action=DebugAction,
             help="""Enable debug mode.
-Cannot be used together with '-s/--silent' nor '-v/--verbose'.
+Cannot be used together with '-s/--silent' or '-v/--verbose'.
 
 """,
         )

@@ -9,6 +9,7 @@ Module to control logging for 'amami' package
 import sys
 import logging
 from types import MethodType
+import warnings
 
 _C_DEBUG = '\033[1;38;2;130;70;160m'
 _C_INFO = '\033[1;38;2;0;130;180m'
@@ -91,11 +92,11 @@ def generate_logger():
     # Set handler (console) and custom formatter
     handler = logging.StreamHandler()
     formatter = CustomConsoleFormatter(
-        fmt_debug=f"{_C_DEBUG}%(levelname)s{_C_END} %(message)s",
-        fmt_info=f"{_C_INFO}%(levelname)s{_C_END} %(message)s",
-        fmt_warning=f"{_C_WARNING}%(levelname)s{_C_END} %(message)s",
-        fmt_error=f"{_C_ERROR}%(levelname)s{_C_END} %(message)s",
-        fmt_critical=f"{_C_CRITICAL}%(levelname)s{_C_END} %(message)s",
+        fmt_debug=f"{_C_DEBUG}%(levelname)-8s{_C_END} %(message)s",
+        fmt_info=f"{_C_INFO}%(levelname)-8s{_C_END} %(message)s",
+        fmt_warning=f"{_C_WARNING}%(levelname)-8s{_C_END} %(message)s",
+        fmt_error=f"{_C_ERROR}%(levelname)-8s{_C_END} %(message)s",
+        fmt_critical=f"{_C_CRITICAL}%(levelname)-8s{_C_END} %(message)s",
     )
     handler.setFormatter(formatter)
     # Add handler to logger
@@ -106,3 +107,21 @@ def generate_logger():
     return logger
 
 LOGGER = generate_logger()
+
+# Make warnings use LOGGER.warning instead of the default format
+def custom_warning(
+    message, 
+    category, 
+    filename, 
+    lineno, 
+    file=None, 
+    line=None
+):
+    """
+    Custom formatting for warnings, to use 'LOGGER.warning'.
+    """
+    LOGGER.warning(
+        f"{filename}:{lineno} - {message}"
+    )
+
+warnings.showwarning = custom_warning

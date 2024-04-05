@@ -61,6 +61,13 @@ class Stash:
         self.unique_name = ""
         self._get_names()
 
+    def __repr__(self):
+        '''
+        Representation of Stash class when printed out.
+        '''
+        return f"STASH {self.string} ({self.long_name})"
+    
+
     def _from_string(
         self,
         strcode:str,

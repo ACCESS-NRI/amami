@@ -7,7 +7,7 @@ Utility module for UM fieldsfiles
 """
 
 # pylint: disable=no-member
-from typing import Union
+from typing import List
 import mule
 from amami.loggers import LOGGER
 # import itertools
@@ -58,8 +58,8 @@ def get_sealevel_theta(um_file:type[mule.UMFile]) -> float:
     except AttributeError:
         return 0.
     
-# def get_stash_each_var(umFile):
-#     return list(dict.fromkeys([f.lbuser4 for f in umFile.fields]))
+def get_stash(um_file:type[mule.UMFile]) -> List:
+    return [f.lbuser4 for f in um_file.fields]
 
 # def _first_timestep_fields(umFile):
 #     return umFile.fields[:(len(umFile.fields)//(umFile.integer_constants.num_times))].copy()
