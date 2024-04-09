@@ -12,6 +12,7 @@ Modified by Davide Marchegiani at ACCESS-NRI - davide.marchegiani@anu.edu.au
 Convert a UM fieldsfile to netCDF
 """
 
+import traceback
 import datetime
 import os
 import numpy as np
@@ -24,7 +25,7 @@ import amami
 from amami.stash_utils import Stash
 import amami.um_utils as umutils
 from amami.loggers import LOGGER
-from amami.misc_utils import get_abspath    
+from amami.misc_utils import get_abspath
 
 def get_nc_format(format_arg:str) -> str:
     """Convert format numbers to format strings"""

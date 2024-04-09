@@ -27,7 +27,7 @@ def read_fieldsfile(
         file.remove_empty_lookups()
     except ValueError:
         LOGGER.error(f"'{um_filename.resolve()}' does not appear to be a UM file.")
-    if not (check_ancil) and (not isinstance(file, mule.ancil.AncilFile)):
+    if check_ancil and (not isinstance(file, mule.ancil.AncilFile)):
         LOGGER.error(f"'{um_filename}' does not appear to be a UM ancillary file.")
     return file
 
@@ -58,8 +58,35 @@ def get_sealevel_theta(um_file:type[mule.UMFile]) -> float:
     except AttributeError:
         return 0.
     
-def get_stash(um_file:type[mule.UMFile]) -> List:
-    return [f.lbuser4 for f in um_file.fields]
+def get_stash(
+    um_file:type[mule.UMFile],
+    repeat:bool=False,
+) -> List:
+    """
+    Get ordered list of stash codes in mule UMFile
+    with (repeat = True) or without (repeat = False) repetitions
+    """
+    stash_codes = [f.lbuser4 for f in um_file.fields]
+    if repeat:
+        return stash_codes
+    else:
+        return list(dict.fromkeys(stash_codes))
+
+def get_nvar(
+    um_file:type[mule.UMFile],
+) -> int:
+    """
+    Get number of variables in mule UMFile
+    """
+    return len(get_stash(um_file))
+
+def get_ntime(
+    um_file:type[mule.UMFile],
+) -> int:
+    """
+    Get length of time dimension in mule UMFile
+    """
+    return um_file.integer_constants.num_times
 
 # def _first_timestep_fields(umFile):
 #     return umFile.fields[:(len(umFile.fields)//(umFile.integer_constants.num_times))].copy()
