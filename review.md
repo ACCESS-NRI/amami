@@ -69,3 +69,17 @@ Suggested changes to simplify file & dir structure
   - Cleanup logic & parentheses in `callback_function()`
   - Refactor to use `argparse` API
   - Remove USAGE str, use `argparse` to generate help
+
+### stash_utils
+
+* Refactor `amami/stash_utils/__init__.py` to `amami/stash.py`
+* `atm_stashlist.py` is 4700 lines of constants, is this data in another python dependency?
+* `Stash` class
+  - Factor out constructor logic?
+  - Why are the `_from_` functions marked as implementation as internal?
+  - Refactor to `dataclass` with input/output functions?
+
+### um_utils
+
+* Move to `um_utils` module
+* Delete `validation_tools.py`?
