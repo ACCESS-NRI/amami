@@ -49,3 +49,23 @@ Suggested changes to simplify file & dir structure
 * Split read & remove bands functionality
 * Is any commented out code is required?
   - Does the netCDF API handle the funcs?
+
+### parsers
+
+* Consider splitting examples into docs, more terse text for man page
+* Refactor main parser
+  - Replace classes with function calls? (simplify the code)
+  - Fix formatting of multiline with `\n` chars
+  - Merge modules into single module?
+* Refactor `amami/parsers/core.py`, handle actions elsewhere?
+* Fix triple quoting `amami/parsers/modify_parser.py`
+  - Use justification in `textwrap` module if needed
+  - Cleanup logic & parentheses in `callback_function()`
+  - Refactor to use `argparse` API
+  - Remove USAGE str, use `argparse` to generate help
+  - Use non-optional args for input files
+* Fix triple quoting `amami/parsers/um2nc_parser.py`
+  - Use justification in `textwrap` module if needed
+  - Cleanup logic & parentheses in `callback_function()`
+  - Refactor to use `argparse` API
+  - Remove USAGE str, use `argparse` to generate help
