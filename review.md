@@ -13,6 +13,10 @@ General changes applying to the entire project.
 * Why is the `.eggs` directory under version control?
   - Eggs have been deprecated
 * Why is the `build` directory version controlled?
+* Clean/simplify the `__main__` entrypoints
+* Add `doc/docs` dir for more descriptive content/examples
+* Add `.gitignore`
+* Dead code removal (commented out & unused code)
 
 ## Structural Changes
 
@@ -32,6 +36,7 @@ Suggested changes to simplify file & dir structure
 ## Module Changes
 
 * Implement `cubes` as `dataclasses`?
+  - `Cubes` already a datatype in `Iris`
 * Add docstrings (at least for key modules)
 * Remove unused imports
 * Implement unit testing
