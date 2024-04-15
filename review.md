@@ -17,6 +17,8 @@ General changes applying to the entire project.
 * Add `doc/docs` dir for more descriptive content/examples
 * Add `.gitignore`
 * Dead code removal (commented out & unused code)
+* Configure for `coverage.py`
+* CI testing
 
 ## Structural Changes
 
