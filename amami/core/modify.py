@@ -241,7 +241,7 @@ def main(args: argparse.Namespace):
         ff_stash_ind = range(len(ff.fields))
     LOGGER.info(
         "The following UM variables will be modified:\n"
-        "\n".join([Stash(ff.fields[ind].lbuser4).__repr__() for ind in ff_stash_ind])
+        "\n".join([str(Stash(ff.fields[ind].lbuser4)) for ind in ff_stash_ind])
     )
     # Modify fieldsfile
     for ind in ff_stash_ind:
