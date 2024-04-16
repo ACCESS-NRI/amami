@@ -26,7 +26,7 @@ class Amami:
         from importlib import import_module
         mainfun = getattr(
             import_module(f'amami.core.{command}'),
-            'main'
+            'main',
         )
         # Call 'main' function of chosen command
         mainfun(self.args)
