@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 """
-Original script (/g/data/access/projects/access/apps/pythonlib/um2netcdf4/2.1/um2netcdf4.py) 
+Original script (/g/data/access/projects/access/apps/pythonlib/um2netcdf4/2.1/um2netcdf4.py)
 created by Martin Dix.
 
 Modified by Davide Marchegiani at ACCESS-NRI - davide.marchegiani@anu.edu.au
@@ -438,6 +438,8 @@ def cubewrite(cube, sman, compression):
         sman.write(cube, zlib=True, complevel=compression, fill_value=fill_value)
 
 
+# FIXME: can't see input args as they're buried in arg parsing code...
+#        needs refactoring so explicit args are included for users/docs
 def main(args):
     """
     Main function for `um2nc` subcommand

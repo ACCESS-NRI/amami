@@ -11,6 +11,8 @@ import sys
 from amami.parsers.main_parser import MainParser
 
 
+# FIXME: can the class be replaced by procedural argparse?
+#        argparse should clean up & autogenerate arg docs
 class Amami:
     """A class that represents the `amami` application."""
 
@@ -19,6 +21,10 @@ class Amami:
 
     def run_command(self):
         """Main function for `amami`."""
+
+        # FIXME: dynamic code hides args & calling of the sub commands
+        #        consider replacing with argparse subcommand to directly call
+        #        processing functions (with keyword args?)
         command = getattr(self.args, "subcommand")
         from importlib import import_module
 
