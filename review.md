@@ -45,6 +45,12 @@ Suggested changes to simplify file & dir structure
   - How much architectural change is required?
 * Replace magic numbers with constants
 
+### core
+
+* Refactor data processing modules (`um2nc.py` etc) main funcs to take input args
+  - Code currently coupled to arg parsers to create inputs & pass a single args obj
+  - Separate args increase readability, API clarity & docs
+
 ### loggers
 
 * Compress/refactor logger code?
