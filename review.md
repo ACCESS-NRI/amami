@@ -1,4 +1,4 @@
-# Project Review
+# Project Code Review
 
 Code/repo review April 2024. This is a list of items for preparing the `amami` for release.
 
@@ -59,6 +59,10 @@ Suggested changes to simplify file & dir structure
 
 ### parsers
 
+* FIXME: refactor multiple `ArgumentParser` declarations.
+  - 4 parsers exist: `MainParser`, `SubCommandParser`, `help Parser`, `common Parser`
+  - Simplify arg parsing overall
+  - Extract args for clean calling of data processing commands
 * Consider splitting examples into docs, more terse text for man page
 * Refactor main parser
   - Replace classes with function calls? (simplify the code)
