@@ -53,9 +53,7 @@ class MainParser(argparse.ArgumentParser):
             "--version",
             action="version",
             version=f"{amami.__version__}",
-            help="""Show program's version number and exit.
-
-""",
+            help="""Show program's version number and exit.\n\n""",
         )
         # Add subparsers for subcommands
         self.subparsers = self.add_subparsers(
@@ -75,9 +73,7 @@ class MainParser(argparse.ArgumentParser):
             "--help",
             action="help",
             default=argparse.SUPPRESS,
-            help="""Show this help message and exit.
-
-""",
+            help="""Show this help message and exit.\n\n""",
         )
         return help_parser
 
@@ -94,9 +90,7 @@ class MainParser(argparse.ArgumentParser):
             dest="verbose",
             action=VerboseAction,
             help="""Enable verbose output.
-Cannot be used together with '-s/--silent' or '--debug'.
-
-""",
+                    Cannot be used together with '-s/--silent' or '--debug'.\n\n""",
         )
         _mutual.add_argument(
             "-s",
@@ -104,18 +98,14 @@ Cannot be used together with '-s/--silent' or '--debug'.
             dest="silent",
             action=SilentAction,
             help="""Make output completely silent (do not show warnings).
-Cannot be used together with '-v/--verbose' or '--debug'.
-
-""",
+                    Cannot be used together with '-v/--verbose' or '--debug'.\n\n""",
         )
         _mutual.add_argument(
             "--debug",
             dest="debug",
             action=DebugAction,
             help="""Enable debug mode.
-Cannot be used together with '-s/--silent' or '-v/--verbose'.
-
-""",
+                    Cannot be used together with '-s/--silent' or '-v/--verbose'.\n\n""",
         )
         return common_parser
 
