@@ -4,3 +4,4 @@ tests/__init__.py
 .eggs/
 build/
 amami.egg-info/
+.idea/*
