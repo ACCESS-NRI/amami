@@ -353,17 +353,20 @@ def convert_proleptic_calendar(cube):
         )
         # Need a copy because can't assign to time.points[i]
         tvals = np.array(time.points)
+
         if time.bounds is not None:
             tbnds = np.array(time.bounds)
             has_bnds = True
         else:
             has_bnds = False
+
         for i in range(len(time.points)):
             date = time.units.num2date(tvals[i])
             newdate = cftime.DatetimeProlepticGregorian(
                 date.year, date.month, date.day, date.hour, date.minute, date.second
             )
             tvals[i] = newunits.date2num(newdate)
+
             if has_bnds:  # Fields with instantaneous data don't have bounds
                 for j in range(2):
                     date = time.units.num2date(tbnds[i][j])
@@ -377,6 +380,7 @@ def convert_proleptic_calendar(cube):
                     )
                     tbnds[i][j] = newunits.date2num(newdate)
         time.points = tvals
+
         if has_bnds:
             time.bounds = tbnds
         time.units = newunits
@@ -386,10 +390,12 @@ def convert_proleptic_calendar(cube):
     except iris.exceptions.CoordinateNotFoundError:
         # Dump files don't have forecast_reference_time
         return
+
     time = cube.coord("time")
     refdate = reftime.units.num2date(reftime.points[0])
     tuom = time.units.origin == "hours since 1970-01-01 00:00:00"
     LOGGER.debug(f"Time units origin match: {tuom}")
+
     if time.units.calendar == "proleptic_gregorian" and refdate.year < 1600:
         _convert_proleptic(time)
     else:
@@ -397,10 +403,13 @@ def convert_proleptic_calendar(cube):
             new_calendar = "proleptic_gregorian"
         else:
             new_calendar = time.units.calendar
+
         time.units = cf_units.Unit("days since 1970-01-01 00:00", calendar=new_calendar)
         time.points = time.points / 24.0
+
         if time.bounds is not None:
             time.bounds = time.bounds / 24.0
+
     cube.remove_coord("forecast_period")
     cube.remove_coord("forecast_reference_time")
 
@@ -426,6 +435,7 @@ def cubewrite(cube, sman, compression):
                 cube.transpose(neworder)
         else:
             cube = iris.util.new_axis(cube, cube.coord("time"))
+
         sman.write(
             cube,
             zlib=True,
@@ -484,6 +494,7 @@ def main(args):
     z_theta = umutils.get_sealevel_theta(ff)
     # Write output file
     LOGGER.info(f"Writing netCDF file {outfile}")
+
     try:
         with iris.fileformats.netcdf.Saver(outfile, nc_format) as sman:
             # Add global attributes
@@ -509,6 +520,7 @@ def main(args):
                 fix_latlon_coord(c, grid_type)
                 # Properly name model_level_number coordinates
                 fix_level_coord(c, z_rho, z_theta)
+
                 # Mask pressure level fields
                 if not args.nomask:
                     if not apply_mask_to_pressure_level_field(
