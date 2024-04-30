@@ -22,7 +22,7 @@ import iris.coords
 from stash_utils import Stash
 import um_utils as umutils
 from loggers import LOGGER
-from misc_utils import get_abspath
+import helpers
 
 
 def get_nc_format(format_arg: str) -> str:
@@ -485,10 +485,10 @@ def main(infile,
     :return:
     :rtype:
     """
-    infile = get_abspath(infile)
+    infile = helpers.get_abspath(infile)
     LOGGER.debug(f"{infile=}")
 
-    outfile = get_abspath(outfile, checkdir=True)
+    outfile = helpers.get_abspath(outfile, checkdir=True)
 
     nc_format = get_nc_format(format)
     check_ncformat(nc_format, use64bit)

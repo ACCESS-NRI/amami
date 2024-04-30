@@ -7,7 +7,7 @@ Miscellaneous module for different utility functions.
 """
 
 import os
-from loggers import LOGGER
+import loggers
 
 def get_abspath(
     fpath:str,
@@ -22,9 +22,9 @@ def get_abspath(
         check = False
     abspath = os.path.abspath(fpath)
     if check and not os.path.exists(abspath):
-        LOGGER.error(f"File '{abspath}' does not exist.")
+        loggers.LOGGER.error(f"File '{abspath}' does not exist.")
     elif checkdir and not os.path.exists(absdir:=os.path.dirname(abspath)):
-        LOGGER.error(f"Directory '{absdir}' does not exist.")
+        loggers.LOGGER.error(f"Directory '{absdir}' does not exist.")
     return abspath
 
 def create_unexistent_file(path):
