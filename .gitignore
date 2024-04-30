@@ -1,5 +1,4 @@
-tests/test.py
-tests/__init__.py
+test/
 **/__pycache__/
 .eggs/
 build/
