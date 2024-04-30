@@ -9,7 +9,7 @@ Utility module for UM fieldsfiles
 # pylint: disable=no-member
 from typing import List
 import mule
-from amami.loggers import LOGGER
+from loggers import LOGGER
 # import itertools
 # import numpy as np
 # from scipy.interpolate import interpn

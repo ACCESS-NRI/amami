@@ -7,7 +7,7 @@ Miscellaneous module for different utility functions.
 """
 
 import os
-from amami.loggers import LOGGER
+from loggers import LOGGER
 
 def get_abspath(
     fpath:str,

@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # Copyright 2022 ACCESS-NRI and contributors. See the top-level COPYRIGHT file for details.
 # SPDX-License-Identifier: Apache-2.0
 
@@ -20,11 +18,11 @@ import cftime
 import netCDF4
 import iris
 import iris.coords
-import amami
-from amami.stash_utils import Stash
-import amami.um_utils as umutils
-from amami.loggers import LOGGER
-from amami.misc_utils import get_abspath
+
+from stash_utils import Stash
+import um_utils as umutils
+from loggers import LOGGER
+from misc_utils import get_abspath
 
 
 def get_nc_format(format_arg: str) -> str:
@@ -448,34 +446,71 @@ def cubewrite(cube, sman, compression):
         sman.write(cube, zlib=True, complevel=compression, fill_value=fill_value)
 
 
-# FIXME: can't see input args as they're buried in arg parsing code...
-#        needs refactoring so explicit args are included for users/docs
-def main(args):
+def main(infile,
+         outfile=None,
+         format=None,
+         use64bit=None,
+         include_list=None,
+         exclude_list=None,
+         hcrit=None,
+         nomask=None,
+         nohist=None,
+         simple=None,
+         compression=None):
     """
-    Main function for `um2nc` subcommand
+    TODO: docstring
+
+    :param infile:
+    :type infile:
+    :param outfile:
+    :type outfile:
+    :param format:
+    :type format:
+    :param use64bit:
+    :type use64bit:
+    :param include_list:
+    :type include_list:
+    :param exclude_list:
+    :type exclude_list:
+    :param hcrit:
+    :type hcrit:
+    :param nomask:
+    :type nomask:
+    :param nohist:
+    :type nohist:
+    :param simple:
+    :type simple:
+    :param compression:
+    :type compression:
+    :return:
+    :rtype:
     """
-    # Get input path
-    LOGGER.debug(f"{args=}")
-    infile = get_abspath(args.infile)
+    infile = get_abspath(infile)
     LOGGER.debug(f"{infile=}")
-    # Get output path
-    outfile = get_abspath(args.outfile, checkdir=True)
-    # Get netCDF format
-    nc_format = get_nc_format(args.format)
-    check_ncformat(nc_format, args.use64bit)
+
+    outfile = get_abspath(outfile, checkdir=True)
+
+    nc_format = get_nc_format(format)
+    check_ncformat(nc_format, use64bit)
     # Use mule to get the model levels to help with dimension naming
+
     LOGGER.info(f"Reading UM file {infile}")
     ff = umutils.read_fieldsfile(infile)
+
     try:
         cubes = iris.load(infile)
     except iris.exceptions.CannotAddError:
-        LOGGER.error(
-            "UM file can not be processed. UM files with time series currently not supported.\n"
-            "Please convert using convsh (https://ncas-cms.github.io/xconv-doc/html/example1.html)."
-        )
+        msg = ("UM file can not be processed. UM files with time series currently not supported.\n"
+              "Please convert using convsh (https://ncas-cms.github.io/xconv-doc/html/example1.html).")
+        LOGGER.error(msg)
+
+        # TODO: handle clean exit if the file cannot be processed
+        raise NotImplementedError
+
     # Get order of fields (from stash codes)
     stash_order = list(dict.fromkeys([f.lbuser4 for f in ff.fields]))
     LOGGER.debug(f"{stash_order=}")
+
     # Order the cubelist based on input order
     cubes.sort(
         key=lambda c: stash_order.index(
@@ -483,37 +518,32 @@ def main(args):
         )
     )
     # Get heaviside fields for pressure level masking
-    if not args.nomask:
+    if not nomask:
         heaviside_uv = get_heaviside_uv(cubes)
         heaviside_t = get_heaviside_t(cubes)
-    # Get grid type
+
     grid_type = umutils.get_grid_type(ff)
-    # Get sea level on rho levels
     z_rho = umutils.get_sealevel_rho(ff)
-    # Get sea level on theta levels
     z_theta = umutils.get_sealevel_theta(ff)
-    # Write output file
+
     LOGGER.info(f"Writing netCDF file {outfile}")
 
     try:
         with iris.fileformats.netcdf.Saver(outfile, nc_format) as sman:
-            # Add global attributes
-            add_global_attrs(infile, sman, args.nohist)
+            add_global_attrs(infile, sman, nohist)
             for c in cubes:
                 stash = Stash(c.attributes["STASH"])
                 itemcode = stash.itemcode
                 LOGGER.debug(f"Processing STASH field: {itemcode}")
                 # Skip fields not specified with --include-list option
                 # or fields specified with --exclude-list option
-                if (args.include_list and itemcode not in args.include_list) or (
-                    args.exclude_list and itemcode in args.exclude_list
-                ):
-                    LOGGER.debug(
-                        f"Field with itemcode '{itemcode}' excluded from the conversion."
-                    )
+                if (include_list and itemcode not in include_list) or (
+                    exclude_list and itemcode in exclude_list):
+                    LOGGER.debug(f"Field with itemcode '{itemcode}' excluded from the conversion.")
                     continue
-                # Name cube
-                name_cube(c, stash, args.simple)
+
+                name_cube(c, stash, simple)
+
                 # Remove unreliable intervals in cell methods
                 fix_cell_methods(c)
                 # Properly name lat/lon coordinates
@@ -522,23 +552,24 @@ def main(args):
                 fix_level_coord(c, z_rho, z_theta)
 
                 # Mask pressure level fields
-                if not args.nomask:
+                if not nomask:
                     if not apply_mask_to_pressure_level_field(
-                        c, stash, heaviside_uv, heaviside_t, args.hcrit
+                        c, stash, heaviside_uv, heaviside_t, hcrit
                     ):
                         continue
-                # Fix pressure coordinates
+
                 c = fix_pressure_coord(c)
-                # change data to 32bit
-                if not args.use64bit:
+
+                if not use64bit:
                     to32bit_data(c)
-                # Set missing value
+
                 set_missing_value(c)
-                # Convert proleptic calendar
                 convert_proleptic_calendar(c)
                 LOGGER.info(f"Writing field '{c.var_name}' -- ITEMCODE: {itemcode}")
-                cubewrite(c, sman, args.compression)
-    except Exception as e:  # If there is an error, remove the netCDF file created
+                cubewrite(c, sman, compression)
+
+    # TODO: make exception capture more specific
+    except Exception as e:
         os.remove(outfile)
         LOGGER.error(e)
     LOGGER.info("Done!")

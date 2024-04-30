@@ -11,7 +11,7 @@ Script created by Davide Marchegiani (davide.marchegiani@anu.edu.au) at ACCESS-N
 from typing import Union
 import re
 from iris.fileformats.pp import STASH as irisSTASH
-from amami.loggers import LOGGER
+from loggers import LOGGER
 
 class Stash:
     """

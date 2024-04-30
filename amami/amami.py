@@ -7,35 +7,117 @@ Module to define main class and entry point for CLI usage of `amami`.
 """
 # pylint: disable=no-member,import-outside-toplevel,too-few-public-methods
 
-import sys
-from amami.parsers.main_parser import MainParser
+
+import argparse
+import core.um2nc
 
 
-# FIXME: can the class be replaced by procedural argparse?
-#        argparse should clean up & autogenerate arg docs
-class Amami:
-    """A class that represents the `amami` application."""
+def main():
+    parser = argparse.ArgumentParser()
+    # parser.add_argument("-V", "--version",
+    #                     version=f"{amami.__version__}",
+    #                     help="Show program's version number and exit.")
 
-    def __init__(self, argv: list[str]):
-        self.args = MainParser().parse_and_process(argv[1:] if argv[1:] else ["-h"])
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("-v", "--verbose",
+                       action="store_true",
+                       help="Enable verbose output. Cannot be used with '-s/--silent' or '--debug'.")
+    group.add_argument("-s", "--silent",
+                       action="store_true",
+                       help="Make output completely silent (do not show warnings). Cannot be used with '-v/--verbose' or '--debug'.")
+    group.add_argument("--debug",
+                       action="store_true",
+                       help="Enable debug mode. Cannot be used with '-s/--silent' or '-v/--verbose'.")
 
-    def run_command(self):
-        """Main function for `amami`."""
+    subparsers = parser.add_subparsers(dest="subparser_name")
 
-        # FIXME: dynamic code hides args & calling of the sub commands
-        #        consider replacing with argparse subcommand to directly call
-        #        processing functions (with keyword args?)
-        command = getattr(self.args, "subcommand")
-        from importlib import import_module
+    # configure um2nc subparser
+    um2nc_parser = subparsers.add_parser("um2nc")
+    um2nc_parser.add_argument("infile",
+                              type=str,
+                              #metavar="INPUT_FILE",
+                              help="Path to the UM fieldsfile for conversion.")
 
-        mainfun = getattr(
-            import_module(f"amami.core.{command}"),
-            "main",
-        )
-        # Call 'main' function of chosen command
-        mainfun(self.args)
+    um2nc_parser.add_argument("-o", "--outfile",
+                              required=False,
+                              #dest="outfile",
+                              type=str,
+                              metavar="OUTPUT_FILE",
+                              help="Path for converted netCDF output. Defaults to input path with '.nc' suffix.")
+
+    um2nc_parser.add_argument("-f", "--format",
+                              default="NETCDF4",
+                              choices=["NETCDF4",
+                                       "NETCDF4_CLASSIC",
+                                       "NETCDF3_CLASSIC",
+                                       "NETCDF3_64BIT",
+                                       "1",
+                                       "2",
+                                       "3",
+                                       "4",
+                                ],
+                                help="Specify netCDF format.")
+
+    um2nc_parser.add_argument("-c", "--compression",
+                              type=int,
+                              default=4,
+                              help="Compression level (0=none, 9=max).")
+    um2nc_parser.add_argument("--64bit",
+                              dest="use64bit",
+                              action="store_true",
+                              help="Use 64 bit netCDF for input.")
+    um2nc_parser.add_argument("--nohist",
+                              action="store_true",
+                              help="Don't update history attribute.")
+    um2nc_parser.add_argument("--simple",
+                              action="store_true",
+                              help="Use 'simple' variable names of form 'fld_s01i123'.")
+
+    exclusive = um2nc_parser.add_mutually_exclusive_group()
+    exclusive.add_argument("--nomask",
+                           action="store_true",
+                           help="Don't apply heavyside function mask to pressure level fields. Cannot be used with '--hcrit'.")
+    exclusive.add_argument("--hcrit",
+                           type=float,
+                           default=0.5,
+                           help="Critical value of heavyside function for pressure level masking. Cannot be used with '--nomask'")
+
+    exclusive2 = um2nc_parser.add_mutually_exclusive_group()
+    exclusive2.add_argument("--include",
+                            dest="include_list",
+                            type=int,
+                            metavar=("STASH_CODE1", "STASH_CODE2"),
+                            nargs="+",
+                            help="List of STASH codes to include in the netCDF conversion. Only variables with included STASH codes are converted.")
+    exclusive2.add_argument("--exclude",
+                            dest="exclude_list",
+                            type=int,
+                            metavar=("STASH_CODE1", "STASH_CODE2"),
+                            nargs="+",
+                            help="List of STASH codes to exclude from netCDF conversion. Variables with excluded STASH codes will not be converted.")
+
+    # configure modify subparser
+    modify_parser = subparsers.add_parser("modify")
 
 
-def main() -> None:
-    """Entry point for CLI usage of `amami`."""
-    Amami(sys.argv).run_command()
+    ns = parser.parse_args()
+    print(f"namespace:\n{ns}")
+
+    if ns.subparser_name == "um2nc":
+        core.um2nc.main(ns.infile,
+                        ns.outfile,
+                        ns.format,
+                        ns.use64bit,
+                        ns.include_list,
+                        ns.exclude_list,
+                        ns.hcrit,
+                        ns.nomask,
+                        ns.nohist,
+                        ns.simple,
+                        ns.compression)
+    elif ns.subparser_name == "modify":
+        parser.exit(-1, "Not implemented!\n")
+
+
+if __name__ == "__main__":
+    main()
