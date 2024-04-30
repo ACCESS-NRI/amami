@@ -14,7 +14,7 @@ from amami.loggers import LOGGER
 from amami.misc_utils import create_unexistent_file
 
 DESCRIPTION="""
-Modify UM fieldsfile data using netCDF data, or by applying a user-defined function.
+Modify UM ancillary or restart file data using netCDF data, or by applying a user-defined function.
 
 !IMPORTANT WARNING!
 Care needs to be taken when modifying UM fieldsfiles.
@@ -22,7 +22,7 @@ If you modify a UM fieldsfile to be used in a simulation as a UM ancillary file,
 """sure that it is consistent with the land-sea mask ancillary file used in the same simulation.
 Even if the original UM fieldsfile (INPUT) is consistent with such land-sea mask, the modified UM fieldsfile """\
 """(OUTPUT) is not guaranteed to be consistent with it.
-For the same reason, if your INPUT is a land-sea mask ancillary file, after producing the OUTPUT, """\
+For the same reason, if your INPUT is a land-sea mask ancillary file, after producing the OUTPUT """\
 """you have to make sure that all the ancillary files used in the same simulation are consistent with it.
 
 For more information about UM fieldsfiles, please refer to"""\

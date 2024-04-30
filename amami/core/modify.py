@@ -13,13 +13,13 @@ function.
 import argparse
 import re
 import numpy as np
-from mule import ArrayDataProvider
+import mule
 from amami.stash_utils import Stash
 from amami.netcdf_utils import read_netCDF
 from amami.um_utils import (
     read_fieldsfile, 
     get_stash, 
-    UM_NANVAL,
+    RMDI,
 )
 from amami.loggers import LOGGER
 from amami.misc_utils import get_abspath
@@ -146,6 +146,22 @@ def get_stash_index(
             stash_code
         )
 
+def check_ancil_or_restart(
+    fieldsfile,
+    fieldsfile_path,
+) -> None:
+    '''
+    Checks that the input fieldsfile is either an ancillary file or
+    a restart dump.
+    '''
+    if isinstance(fieldsfile) not in [mule.dump.DumpFile, mule.ancil.AncilFile]:
+        LOGGER.error(
+            "Type of input fieldsfile '%s' not supported.\n"
+            "Only ancillary and restart dump fieldfiles types supported.",
+            fieldsfile_path,
+        )
+
+
 # ===== TO TEST
 args = argparse.Namespace(
     subcommand='modify',
@@ -175,7 +191,6 @@ def main(args: argparse.Namespace):
         "args = %s",
         args,
     )
-    exit()
     # Get input path
     infile = get_abspath(args.infile)
     LOGGER.debug(
@@ -196,6 +211,7 @@ def main(args: argparse.Namespace):
         infile,
     )
     ff = read_fieldsfile(infile)
+    check_ancil_or_restart(ff, infile)
     if args.ncfile is not None:
         # Read netCDF file
         ncfile = get_abspath(args.ncfile)
@@ -271,7 +287,7 @@ def main(args: argparse.Namespace):
             
         else:
             data_new = ufunc(data)
-        ff_new.fields[ind].set_data_provider(ArrayDataProvider(data_new))
+        ff_new.fields[ind].set_data_provider(mule.ArrayDataProvider(data_new))
     LOGGER.info(
         "Writing UM fieldsfile %s",
         outfile,

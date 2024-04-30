@@ -6,15 +6,15 @@ Script created by Davide Marchegiani (davide.marchegiani@anu.edu.au) at ACCESS-N
 Utility module for UM fieldsfiles
 """
 
-# pylint: disable=no-member
 from typing import List
 import mule
 from amami.loggers import LOGGER
-# import itertools
+import itertools
 # import numpy as np
 # from scipy.interpolate import interpn
 
-UM_NANVAL=-1073741824.0 #(-2.0**30)
+IMDI=int(-32768) #(-2.0**15)
+RMDI=-1073741824.0 #(-2.0**30)
 
 def read_fieldsfile(
     um_filename: str,
@@ -60,33 +60,31 @@ def get_sealevel_theta(um_file:type[mule.UMFile]) -> float:
     
 def get_stash(
     um_file:type[mule.UMFile],
-    repeat:bool=False,
+    repeat:bool=True,
 ) -> List:
     """
     Get ordered list of stash codes in mule UMFile
-    with (repeat = True) or without (repeat = False) repetitions
+    with (repeat = True) or without (repeat = False) repetitions.
     """
     stash_codes = [f.lbuser4 for f in um_file.fields]
-    if repeat:
-        return stash_codes
-    else:
+    if not repeat:
         return list(dict.fromkeys(stash_codes))
+    return stash_codes
 
-def get_nvar(
-    um_file:type[mule.UMFile],
-) -> int:
+def separate_variables(
+    ff,
+) -> List:
     """
-    Get number of variables in mule UMFile
+    Separate UM fieldsfile fields into variables with the same STASH code
     """
-    return len(get_stash(um_file))
-
-def get_ntime(
-    um_file:type[mule.UMFile],
-) -> int:
-    """
-    Get length of time dimension in mule UMFile
-    """
-    return um_file.integer_constants.num_times
+    if isinstance(ff,mule.ancil.AncilFile):
+        ntimes=ff.integer_constants.num_times
+        [list(y) for _,y in itertools.groupby(get_stash(ff,repeat=True))]
+    stashlist = get_stash(um_file, repeat=True)
+    start=
+    if not isinstance(um_file, mule.ancil.AncilFile):
+        raise ValueError(f"um_file is not a mule AncilFile.")
+    return um_file.integer_constants.raw[15] # Number of different field types in dump
 
 # def _first_timestep_fields(umFile):
 #     return umFile.fields[:(len(umFile.fields)//(umFile.integer_constants.num_times))].copy()
