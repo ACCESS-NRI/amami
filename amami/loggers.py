@@ -65,6 +65,7 @@ def custom_error(self, msg, *args, **kwargs):
         traceback.format_exc() != "NoneType: None\n"
     ):
         msg += "\n" + traceback.format_exc()
+    # FIXME: logging includes control flow
     sys.exit(self._log(logging.ERROR, msg, args, **kwargs))
 
 
@@ -77,6 +78,7 @@ def custom_critical(self, msg, *args, **kwargs):
     msg = indent(msg, self.TABS)
     if self.isEnabledFor(logging.DEBUG):
         msg += "\n" + indent(traceback.format_exc(), self.TABS)
+    # FIXME: logging includes control flow
     sys.exit(self._log(logging.CRITICAL, msg, args, **kwargs))
 
 
@@ -131,6 +133,7 @@ class CustomConsoleFormatter(logging.Formatter):
         return result
 
 
+# TODO: refactor & subclass builtin logging.Logger, move overridden "methods" above into the class
 def generate_logger():
     """Generate main logger"""
     # Get logger
@@ -162,7 +165,7 @@ LOGGER = generate_logger()
 # Set tabs space for logging indentation
 setattr(LOGGER, "TABS", 9)
 
-
+# FIXME: duplicate custom_warning() func
 # Make warnings use LOGGER.warning instead of the default format
 def custom_warning(message, category, filename, lineno, file=None, line=None):
     """
