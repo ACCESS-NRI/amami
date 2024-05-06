@@ -16,13 +16,17 @@ import numpy as np
 import cf_units
 import cftime
 import netCDF4
-import iris
-import iris.coords
 
-from stash_utils import Stash
-import um_utils as umutils
-from loggers import LOGGER
-import helpers
+import iris
+import iris.util
+import iris.coords
+import iris.exceptions
+import iris.fileformats
+
+from amami.stash_utils import Stash
+import amami.um_utils as umutils
+from amami.loggers import LOGGER
+from amami import helpers
 
 
 def main(infile,
@@ -70,50 +74,47 @@ def main(infile,
     nc_format = get_nc_format(format)
     check_ncformat(nc_format, use64bit)
 
-    # TODO: refactor to gather mule operations
     # TODO: why are both mule & iris used?
     # TODO: refactor move mule I/O elsewhere/pass in open mule obj
     # Use mule to get the model levels to help with dimension naming
-    LOGGER.info(f"Reading UM file {infile}")
     ff = umutils.read_fieldsfile(infile)
 
+    stash_order = list(dict.fromkeys([f.lbuser4 for f in ff.fields]))
+    LOGGER.debug(f"{stash_order=}")
+
+    grid_type = umutils.get_grid_type(ff)
+    z_rho = umutils.get_sealevel_rho(ff)
+    z_theta = umutils.get_sealevel_theta(ff)
+
+    # TODO: refactor iris I/O, pass in iris/cube obj
     try:
         cubes = iris.load(infile)
     except iris.exceptions.CannotAddError:
         msg = ("UM file can not be processed. UM files with time series currently not supported.\n"
-              "Please convert using convsh (https://ncas-cms.github.io/xconv-doc/html/example1.html).")
+               "Please convert using convsh (https://ncas-cms.github.io/xconv-doc/html/example1.html).")
         LOGGER.error(msg)
 
         # TODO: exit clean if file cannot be processed
         raise NotImplementedError
 
-    # TODO: refactor to gather mule operations
-    # Get order of fields (from stash codes)
-    stash_order = list(dict.fromkeys([f.lbuser4 for f in ff.fields]))
-    LOGGER.debug(f"{stash_order=}")
-
-    # Order the cubelist based on input order
+    # Order cubelist based on input order
+    # TODO: magic numbers
     cubes.sort(
         key=lambda c: stash_order.index(
             c.attributes["STASH"].section * 1000 + c.attributes["STASH"].item
         )
     )
+
     # Get heaviside fields for pressure level masking
     if not nomask:
         # TODO: what happens if either are None?
         heaviside_uv = get_heaviside_uv(cubes)
         heaviside_t = get_heaviside_t(cubes)
 
-    # TODO: refactor & move mule operations up
-    grid_type = umutils.get_grid_type(ff)
-    z_rho = umutils.get_sealevel_rho(ff)
-    z_theta = umutils.get_sealevel_theta(ff)
-
-    LOGGER.info(f"Writing netCDF file {outfile}")
-
     try:
         with iris.fileformats.netcdf.Saver(outfile, nc_format) as sman:
             add_global_attrs(infile, sman, nohist)
+
             for c in cubes:
                 stash = Stash(c.attributes["STASH"])
                 itemcode = stash.itemcode
