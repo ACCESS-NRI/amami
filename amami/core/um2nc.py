@@ -100,6 +100,7 @@ def main(infile,
     )
     # Get heaviside fields for pressure level masking
     if not nomask:
+        # TODO: what happens if either are None?
         heaviside_uv = get_heaviside_uv(cubes)
         heaviside_t = get_heaviside_t(cubes)
 
@@ -119,8 +120,9 @@ def main(infile,
                 LOGGER.debug(f"Processing STASH field: {itemcode}")
                 # Skip fields not specified with --include-list option
                 # or fields specified with --exclude-list option
-                if (include_list and itemcode not in include_list) or (
-                    exclude_list and itemcode in exclude_list):
+
+                # TODO: refactor with sets to simplify?
+                if (include_list and itemcode not in include_list) or (exclude_list and itemcode in exclude_list):
                     LOGGER.debug(f"Field with itemcode '{itemcode}' excluded from the conversion.")
                     continue
 
@@ -183,6 +185,7 @@ def check_ncformat(ncformat, use64bit):
         )
 
 
+# TODO: refactor nohist check to main() ?
 def add_global_attrs(infile, fid, nohist) -> None:
     """Add global attributes to converted NetCDF file"""
     if not nohist:
@@ -250,18 +253,19 @@ def apply_mask(cube, heaviside, hcrit):
             )
 
 
-def apply_mask_to_pressure_level_field(
-    cube,
-    stash,
-    heaviside_uv,
-    heaviside_t,
-    hcrit,
-):
+def apply_mask_to_pressure_level_field(cube,
+                                       stash,
+                                       heaviside_uv,
+                                       heaviside_t,
+                                       hcrit):
     """
     Check whether there are any pressure level fields that should be masked
     using heaviside function and mask them.
     """
     itemcode = stash.itemcode
+
+    # TODO: handle magic numbers
+    # TODO: fix string quotes
     # Heaviside_uv
     if (30201 <= itemcode <= 30288) or (30302 <= itemcode <= 30303):
         if heaviside_uv:
@@ -301,6 +305,7 @@ def apply_mask_to_pressure_level_field(
     return True
 
 
+# TODO: refactor func name for clarity
 def name_cube(cube, stash, simple):
     """
     Assign different name properties to cube
@@ -310,28 +315,29 @@ def name_cube(cube, stash, simple):
         cube.var_name = f"fld_s{stash.section}{stash.item}"
     elif stash.unique_name:
         cube.var_name = stash.unique_name
+
     # Cases with max or min
     if cube.var_name:
         if any(m.method == "maximum" for m in cube.cell_methods):
             cube.var_name += "_max"
         if any(m.method == "minimum" for m in cube.cell_methods):
             cube.var_name += "_min"
+
     # The iris name mapping seems wrong for these - perhaps assuming rotated grids?
     if cube.standard_name == "x_wind":
         cube.standard_name = "eastward_wind"
     elif cube.standard_name == "y_wind":
         cube.standard_name = "northward_wind"
+
     # If standard name mismatch use STASH
-    if (
-        cube.standard_name
-        and stash.standard_name
-        and (cube.standard_name != stash.standard_name)
-    ):
+    if (cube.standard_name and stash.standard_name and
+            (cube.standard_name != stash.standard_name)):
         LOGGER.warning(
             f"Standard name mismatch for ITEMCODE: {stash.itemcode}.\n"
             f"iris standard name: {cube.standard_name}, STASH standard name: {stash.standard_name}."
         )
         cube.standard_name = stash.standard_name
+
     # If unit mismatch use STASH
     if cube.units and stash.units and (str(cube.units) != stash.units):
         LOGGER.warning(
@@ -339,9 +345,11 @@ def name_cube(cube, stash, simple):
             f"iris units: {cube.units}, STASH units: {stash.units}."
         )
         cube.units = stash.units
+
     # If there's no iris standard_name or long_name use one from STASH
     if not cube.standard_name and stash.standard_name:
         cube.standard_name = stash.standard_name
+
     if not cube.long_name and stash.long_name:
         cube.long_name = stash.long_name
 
@@ -352,17 +360,24 @@ def fix_cell_methods(cube):
     newm = []
     for m in cube.cell_methods:
         newi = []
+
+        # TODO: replace with tuple comprehension
         for i in m.intervals:
             # Skip the misleading hour intervals
             if i.find("hour") == -1:
                 newi.append(i)
+
         n = iris.coords.CellMethod(m.method, m.coord_names, tuple(newi), m.comments)
         newm.append(n)
+
     cube.cell_methods = tuple(newm)
 
 
 def fix_latlon_coord(cube, grid_type):
     """Get proper lat/lon coordinate names based on cube grid_type"""
+
+    # TODO: what are "proper" lat/lon coordinate names?
+    #       what standard is used?
 
     def _add_coord_bounds(coord):
         if not coord.has_bounds():
@@ -383,6 +398,7 @@ def fix_latlon_coord(cube, grid_type):
         lon.points = lon.points.astype(np.float64)
         _add_coord_bounds(lon)
 
+        # TODO: do the codes need constants for clarity?
         if len(lat.points) == 180:
             lat.var_name = "lat_river"
         elif (lat.points[0] == -90 and grid_type == "EG") or (
@@ -395,6 +411,7 @@ def fix_latlon_coord(cube, grid_type):
         else:
             lat.var_name = "lat"
 
+        # TODO: clarify logic with small funcs?
         if len(lon.points) == 360:
             lon.var_name = "lon_river"
         elif (lon.points[0] == 0 and grid_type == "EG") or (
@@ -412,6 +429,7 @@ def fix_latlon_coord(cube, grid_type):
         )
 
 
+# TODO: rename for clarity?
 def fix_level_coord(cube, z_rho, z_theta):
     """Rename model_level_number coordinates to better distinguish rho and theta levels"""
     try:
@@ -419,7 +437,9 @@ def fix_level_coord(cube, z_rho, z_theta):
         c_height = cube.coord("level_height")
         c_sigma = cube.coord("sigma")
     except iris.exceptions.CoordinateNotFoundError:
+        # TODO: is better handling required?
         return
+
     if abs(c_height.points[0] - z_rho).min() < 1e-6:
         c_lev.var_name = "model_rho_level_number"
         c_height.var_name = "rho_level_height"
