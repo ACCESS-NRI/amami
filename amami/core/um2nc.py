@@ -70,6 +70,9 @@ def main(infile,
     nc_format = get_nc_format(format)
     check_ncformat(nc_format, use64bit)
 
+    # TODO: refactor to gather mule operations
+    # TODO: why are both mule & iris used?
+    # TODO: refactor move mule I/O elsewhere/pass in open mule obj
     # Use mule to get the model levels to help with dimension naming
     LOGGER.info(f"Reading UM file {infile}")
     ff = umutils.read_fieldsfile(infile)
@@ -84,6 +87,7 @@ def main(infile,
         # TODO: exit clean if file cannot be processed
         raise NotImplementedError
 
+    # TODO: refactor to gather mule operations
     # Get order of fields (from stash codes)
     stash_order = list(dict.fromkeys([f.lbuser4 for f in ff.fields]))
     LOGGER.debug(f"{stash_order=}")
@@ -99,6 +103,7 @@ def main(infile,
         heaviside_uv = get_heaviside_uv(cubes)
         heaviside_t = get_heaviside_t(cubes)
 
+    # TODO: refactor & move mule operations up
     grid_type = umutils.get_grid_type(ff)
     z_rho = umutils.get_sealevel_rho(ff)
     z_theta = umutils.get_sealevel_theta(ff)
