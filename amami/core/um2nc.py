@@ -18,11 +18,14 @@ import cftime
 import netCDF4
 import iris
 import iris.coords
+import iris.exceptions
+import iris.fileformats
 
-from stash_utils import Stash
-import um_utils as umutils
-from loggers import LOGGER
-import helpers
+import amami
+from amami.stash_utils import Stash
+from amami import um_utils as umutils # TODO: fix naming
+from amami.loggers import LOGGER
+from amami import helpers
 
 
 def main(infile,
@@ -78,7 +81,7 @@ def main(infile,
         cubes = iris.load(infile)
     except iris.exceptions.CannotAddError:
         msg = ("UM file can not be processed. UM files with time series currently not supported.\n"
-              "Please convert using convsh (https://ncas-cms.github.io/xconv-doc/html/example1.html).")
+               "Please convert using convsh (https://ncas-cms.github.io/xconv-doc/html/example1.html).")
         LOGGER.error(msg)
 
         # TODO: exit clean if file cannot be processed

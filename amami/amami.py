@@ -9,11 +9,14 @@ Module to define main class and entry point for CLI usage of `amami`.
 
 
 import argparse
-import core.um2nc
+from amami.core import um2nc
 
 
 def main():
     parser = argparse.ArgumentParser()
+
+    # TODO: pass in global/logging options, or are these best set in logger config?
+    # TODO: versioning to a version.py module?
     # parser.add_argument("-V", "--version",
     #                     version=f"{amami.__version__}",
     #                     help="Show program's version number and exit.")
@@ -76,11 +79,13 @@ def main():
     exclusive = um2nc_parser.add_mutually_exclusive_group()
     exclusive.add_argument("--nomask",
                            action="store_true",
-                           help="Don't apply heavyside function mask to pressure level fields. Cannot be used with '--hcrit'.")
+                           help=("Don't apply heavyside function mask to pressure level fields. "
+                                 "Cannot be used with '--hcrit'."))  # TODO: shorten & rely on exclusion group docs?
     exclusive.add_argument("--hcrit",
                            type=float,
                            default=0.5,
-                           help="Critical value of heavyside function for pressure level masking. Cannot be used with '--nomask'")
+                           help=("Critical value of heavyside function for pressure level masking."
+                                 " Cannot be used with '--nomask'"))  # TODO: rely on exclusion groups docs?
 
     exclusive2 = um2nc_parser.add_mutually_exclusive_group()
     exclusive2.add_argument("--include",
@@ -99,22 +104,21 @@ def main():
     # configure modify subparser
     modify_parser = subparsers.add_parser("modify")
 
-
     ns = parser.parse_args()
-    print(f"namespace:\n{ns}")
+    print(f"\nnamespace:\n{ns}")
 
     if ns.subparser_name == "um2nc":
-        core.um2nc.main(ns.infile,
-                        ns.outfile,
-                        ns.format,
-                        ns.use64bit,
-                        ns.include_list,
-                        ns.exclude_list,
-                        ns.hcrit,
-                        ns.nomask,
-                        ns.nohist,
-                        ns.simple,
-                        ns.compression)
+        um2nc.main(ns.infile,
+                   ns.outfile,
+                   ns.format,
+                   ns.use64bit,
+                   ns.include_list,
+                   ns.exclude_list,
+                   ns.hcrit,
+                   ns.nomask,
+                   ns.nohist,
+                   ns.simple,
+                   ns.compression)
     elif ns.subparser_name == "modify":
         parser.exit(-1, "Not implemented!\n")
 

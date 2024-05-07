@@ -7,7 +7,7 @@ Miscellaneous module for different utility functions.
 """
 
 import os
-import loggers
+from amami import loggers
 
 # TODO: rename to include verification
 def get_abspath(fpath: str, check: bool = True, checkdir: bool = False) -> str:
