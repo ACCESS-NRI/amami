@@ -5,3 +5,4 @@ tests/__init__.py
 build/
 amami.egg-info/
 .idea/*
+*.DS_Store
