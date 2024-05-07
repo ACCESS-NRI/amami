@@ -24,7 +24,7 @@ import iris.fileformats
 
 import amami
 from amami.stash_utils import Stash
-from amami import um_utils as umutils # TODO: fix naming
+from amami import um_utils
 from amami.loggers import LOGGER
 from amami import helpers
 
@@ -77,15 +77,15 @@ def main(infile,
     # TODO: why are both mule & iris used?
     # TODO: refactor move mule I/O elsewhere/pass in open mule obj
     # Use mule to get the model levels to help with dimension naming
-    ff = umutils.read_fieldsfile(infile)
+    ff = um_utils.read_fieldsfile(infile)
 
     # Get order of fields (from stash codes)
     stash_order = list(dict.fromkeys([f.lbuser4 for f in ff.fields]))
     LOGGER.debug(f"{stash_order=}")
 
-    grid_type = umutils.get_grid_type(ff)
-    z_rho = umutils.get_sealevel_rho(ff)
-    z_theta = umutils.get_sealevel_theta(ff)
+    grid_type = um_utils.get_grid_type(ff)
+    z_rho = um_utils.get_sealevel_rho(ff)
+    z_theta = um_utils.get_sealevel_theta(ff)
 
     # TODO: refactor iris I/O, pass in iris/cube obj
     try:
