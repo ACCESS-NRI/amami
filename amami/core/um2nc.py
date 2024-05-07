@@ -91,8 +91,10 @@ def main(infile,
     try:
         cubes = iris.load(infile)
     except iris.exceptions.CannotAddError:
-        msg = ("UM file can not be processed. UM files with time series currently not supported.\n"
-               "Please convert using convsh (https://ncas-cms.github.io/xconv-doc/html/example1.html).")
+        msg = (
+            "UM file can not be processed. UM files with time series currently not supported.\n"
+            "Please convert using convsh (https://ncas-cms.github.io/xconv-doc/html/example1.html)."
+        )
         LOGGER.error(msg)
 
         # TODO: exit cleanly if file cannot be processed
@@ -124,8 +126,12 @@ def main(infile,
                 # or fields specified with --exclude-list option
 
                 # TODO: refactor with sets to simplify?
-                if (include_list and itemcode not in include_list) or (exclude_list and itemcode in exclude_list):
-                    LOGGER.debug(f"Field with itemcode '{itemcode}' excluded from the conversion.")
+                if (include_list and itemcode not in include_list) or (
+                    exclude_list and itemcode in exclude_list
+                ):
+                    LOGGER.debug(
+                        f"Field with itemcode '{itemcode}' excluded from the conversion."
+                    )
                     continue
 
                 name_cube(c, stash, simple)
@@ -255,11 +261,7 @@ def apply_mask(cube, heaviside, hcrit):
             )
 
 
-def apply_mask_to_pressure_level_field(cube,
-                                       stash,
-                                       heaviside_uv,
-                                       heaviside_t,
-                                       hcrit):
+def apply_mask_to_pressure_level_field(cube, stash, heaviside_uv, heaviside_t, hcrit):
     """
     Check whether there are any pressure level fields that should be masked
     using heaviside function and mask them.
@@ -332,8 +334,11 @@ def name_cube(cube, stash, simple):
         cube.standard_name = "northward_wind"
 
     # If standard name mismatch use STASH
-    if (cube.standard_name and stash.standard_name and
-            (cube.standard_name != stash.standard_name)):
+    if (
+        cube.standard_name
+        and stash.standard_name
+        and (cube.standard_name != stash.standard_name)
+    ):
         LOGGER.warning(
             f"Standard name mismatch for ITEMCODE: {stash.itemcode}.\n"
             f"iris standard name: {cube.standard_name}, STASH standard name: {stash.standard_name}."
