@@ -10,16 +10,11 @@ Utility module for UM fieldsfiles
 from typing import List
 import mule
 from amami.loggers import LOGGER
-# import itertools
-# import numpy as np
-# from scipy.interpolate import interpn
 
-UM_NANVAL=-1073741824.0 #(-2.0**30)
+UM_NANVAL = -1073741824.0  # (-2.0**30)
 
-def read_fieldsfile(
-    um_filename: str,
-    check_ancil:bool=False
-    ) -> type[mule.UMFile]:
+
+def read_fieldsfile(um_filename: str, check_ancil: bool = False) -> type[mule.UMFile]:
     """Read UM fieldsfile with mule, and optionally check if type is AncilFile"""
 
     try:
@@ -31,36 +26,40 @@ def read_fieldsfile(
         LOGGER.error(f"'{um_filename}' does not appear to be a UM ancillary file.")
     return file
 
-def get_grid_type(um_file:type[mule.UMFile]) -> str:
+
+def get_grid_type(um_file: type[mule.UMFile]) -> str:
     """Get UM grid type from mule UMFile"""
     gs = um_file.fixed_length_header.grid_staggering
     if gs == 6:
-        return 'EG' # End Game
+        return "EG"  # End Game
     elif gs == 3:
-        return 'ND' # New Dynamics
+        return "ND"  # New Dynamics
     else:
         LOGGER.error(
-            "Unable to determine grid staggering from UM Fielsfile header. "\
+            "Unable to determine grid staggering from UM Fielsfile header. "
             f"Grid staggering '{gs}' not supported."
         )
 
-def get_sealevel_rho(um_file:type[mule.UMFile]) -> float:
+
+def get_sealevel_rho(um_file: type[mule.UMFile]) -> float:
     """Get UM sea level on rho levels from mule UMFile"""
     try:
         return um_file.level_dependent_constants.zsea_at_rho
     except AttributeError:
-        return 0.
+        return 0.0
 
-def get_sealevel_theta(um_file:type[mule.UMFile]) -> float:
+
+def get_sealevel_theta(um_file: type[mule.UMFile]) -> float:
     """Get UM sea level on thetha levels from mule UMFile"""
     try:
         return um_file.level_dependent_constants.zsea_at_theta
     except AttributeError:
-        return 0.
-    
+        return 0.0
+
+
 def get_stash(
-    um_file:type[mule.UMFile],
-    repeat:bool=False,
+    um_file: type[mule.UMFile],
+    repeat: bool = False,
 ) -> List:
     """
     Get ordered list of stash codes in mule UMFile
@@ -72,21 +71,24 @@ def get_stash(
     else:
         return list(dict.fromkeys(stash_codes))
 
+
 def get_nvar(
-    um_file:type[mule.UMFile],
+    um_file: type[mule.UMFile],
 ) -> int:
     """
     Get number of variables in mule UMFile
     """
     return len(get_stash(um_file))
 
+
 def get_ntime(
-    um_file:type[mule.UMFile],
+    um_file: type[mule.UMFile],
 ) -> int:
     """
     Get length of time dimension in mule UMFile
     """
     return um_file.integer_constants.num_times
+
 
 # def _first_timestep_fields(umFile):
 #     return umFile.fields[:(len(umFile.fields)//(umFile.integer_constants.num_times))].copy()
@@ -160,7 +162,7 @@ def get_ntime(
 #         be performed over latitude.
 #     -   lon_out is a list of array-like variables with the output longitude coordinate. If set to None, no regridding will
 #         be performed over longitude.
-#     -   lev_out is a list of array-like variables with the output vertical level coordinate for each variable in ancilFile. 
+#     -   lev_out is a list of array-like variables with the output vertical level coordinate for each variable in ancilFile.
 #         If set to None, no regridding will be performed over vertical levels.
 #     -   method is a string defining the interpolation method. Methods supported are 'linear', 'nearest', 'cubic', 'quintic' and 'pchip'.
 #         If set to None, 'nearest' interpolation is used.
@@ -186,7 +188,7 @@ def get_ntime(
 #     has_pseudo_in_each_var = has_pseudo_each_var(umFile)
 #     # Mix pseudo-levels and normal levels
 #     levels_in_each_var = [pseudo_in_each_var[ivar] if ps else lev_in_each_var[ivar] for ivar,ps in enumerate(has_pseudo_in_each_var)]
-#     # Parse output coords 
+#     # Parse output coords
 #     # Latitude
 #     if lat_out_each_var is None:
 #         lat_out_each_var = lat_in_each_var
@@ -202,12 +204,12 @@ def get_ntime(
 #         lev_out_each_var = levels_in_each_var.copy()
 #     elif not isinstance(lev_out_each_var,list) or not all([hasattr(l,'__iter__') for l in lev_out_each_var]):
 #         raise TypeError("'lev_out' needs to be a list of iterables.")
-    
+
 #     # Get num_levels
 #     if all(has_pseudo_in_each_var):
 #         num_levels_out = umFile.integer_constants.num_levels
 #     else:
-#         for ivar,hp in enumerate(has_pseudo_in_each_var): 
+#         for ivar,hp in enumerate(has_pseudo_in_each_var):
 #             if not hp:
 #                 num_levels_out = len(lev_out_each_var[ivar])
 #                 break
@@ -215,7 +217,7 @@ def get_ntime(
 #     nlat_out_each_var = [len(l) for l in lat_out_each_var]
 #     nlon_out_each_var = [len(l) for l in lon_out_each_var]
 #     nlev_out_each_var = [len(l) for l in lev_out_each_var]
-    
+
 #     # Check that both InputFile and gridFile are consistent in case latitude, longitude or levels are of length 1
 #     # Check Latitude
 #     for ivar,nlo in enumerate(nlat_out_each_var):
@@ -238,7 +240,7 @@ def get_ntime(
 
 #     dlat_out_each_var = [l[1]-l[0] if len(l)> 1 else 180. for l in lat_out_each_var]
 #     dlon_out_each_var = [l[1]-l[0] if len(l)> 1 else 180. for l in lon_out_each_var]
-    
+
 #     # Define regridding output points
 #     outpoints_each_var = [list(itertools.product(lat,lon,lev)) for lat,lon,lev in zip(lat_out_each_var,lon_out_each_var,lev_out_each_var)]
 
@@ -252,19 +254,19 @@ def get_ntime(
 #                 data.append(next(f).get_data())
 #             data = np.stack(data, axis=-1)
 #             data = np.where(data == UM_NANVAL,np.nan,data)
-#             interp_data.append(interpn((lat_in_each_var[ivar],lon_in_each_var[ivar],lvls), data, outpoints_each_var[ivar], 
+#             interp_data.append(interpn((lat_in_each_var[ivar],lon_in_each_var[ivar],lvls), data, outpoints_each_var[ivar],
 #                 bounds_error=False, fill_value=None, method=method).reshape(nlat_out_each_var[ivar],nlon_out_each_var[ivar],nlev_out_each_var[ivar]))
 #     newfields = np.concatenate(interp_data,axis=-1)
 #     newfields = np.where(np.isnan(newfields),UM_NANVAL,newfields)
 
 #     # If the grid is a global one, force polar values to be the zonal means
-#     if (umFile.fixed_length_header.horiz_grid_type == 0 and 
+#     if (umFile.fixed_length_header.horiz_grid_type == 0 and
 #         np.allclose(lat_out_each_var[0][0], -90) and
 #         np.allclose(lon_out_each_var[0][0], 0)):
 #         newfields[0,...]=newfields[0,...].mean(axis=0)
 #         newfields[-1,...]=newfields[-1,...].mean(axis=0)
 
-#     # Create new ancil file 
+#     # Create new ancil file
 #     regriddedFile = umFile.copy(include_fields=False)
 #     # Change regridded file header
 #     regriddedFile.integer_constants.num_rows = nlat_out_each_var[0]
