@@ -100,3 +100,14 @@ Suggested changes to simplify file & dir structure
 
 * Move to `um_utils` module
 * Delete `validation_tools.py`?
+
+## um2nc
+
+* Refactor logic in main (split function up)
+* Factor include/exclude functionality:
+  - Return list of names to keep
+  - Validation: ensure no common items between include/exclude
+  - Simplify logic so default args are empty containers
+* Fix exception based control flow in `um2nc.cubewrite()`
+  - Manually check for ancilliary file
+  - Split modification & write steps into separate funcs
