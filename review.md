@@ -103,11 +103,17 @@ Suggested changes to simplify file & dir structure
 
 ## um2nc
 
+* Use constraints arg in opener to filter/open required cubes first (saves filtering)
 * Refactor logic in main (split function up)
+  - Split in pre & post processing funcs for each data library?
+  - Refactor I/O to separate functions
 * Factor include/exclude functionality:
   - Return list of names to keep
   - Validation: ensure no common items between include/exclude
   - Simplify logic so default args are empty containers
+* Fix heavi/heavy naming - is this a typo?
 * Fix exception based control flow in `um2nc.cubewrite()`
   - Manually check for ancilliary file
   - Split modification & write steps into separate funcs
+* Saving: can cubes & global metadata be modified, then `save()` relying on the file extension?
+  - Can this get around I/O sprinkled throughout `main()`?
