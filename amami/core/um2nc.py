@@ -23,7 +23,12 @@ import iris.exceptions
 import iris.fileformats
 
 import amami
-from amami.stash_utils import Stash
+from amami.stash_utils import ATM_STASHLIST as Stash
+
+ls = len(Stash)
+print("LEN OF STASH", ls)
+assert ls
+
 from amami import um_utils
 from amami.loggers import LOGGER
 from amami import helpers
@@ -74,8 +79,8 @@ def main(infile,
     :return:
     :rtype:
     """
-    infile = helpers.get_abspath(infile)
-    outfile = helpers.get_abspath(outfile, checkdir=True)
+    # infile = helpers.get_abspath(infile)
+    # outfile = helpers.get_abspath(outfile, checkdir=True)
 
     if nc_format not in NC_SUPPORTED_FORMATS:
         msg = f"Unrecognised NetCDF format: {nc_format}"
@@ -96,6 +101,7 @@ def main(infile,
     z_rho = um_utils.get_sealevel_rho(ff)
     z_theta = um_utils.get_sealevel_theta(ff)
 
+    # TODO: handle include/exclude logic for filtering
     cubes = cube_open(infile)
 
     # Order cubelist based on input order
@@ -107,17 +113,22 @@ def main(infile,
     )
 
     # Get heaviside fields for pressure level masking
-    if not nomask:
-        # TODO: what happens if either are None?
-        heaviside_uv = get_heaviside_uv(cubes)
-        heaviside_t = get_heaviside_t(cubes)
+    # if not nomask:
+    #     # TODO: what happens if either are None?
+    #     heaviside_uv = get_heaviside_uv(cubes)
+    #     heaviside_t = get_heaviside_t(cubes)
 
     try:
         with iris.fileformats.netcdf.Saver(outfile, nc_format) as sman:
-            add_global_attrs(infile, sman, nohist)
+            # add_global_attrs(infile, sman, nohist)
 
             for c in cubes:
-                stash = Stash(c.attributes["STASH"])
+                print("STASH =", c.attributes["STASH"])
+                stash = Stash[c.attributes["STASH"]]
+
+                print(f"Stash entry is {stash}")
+                4/0
+
                 itemcode = stash.itemcode
 
                 # Skip fields not specified with --include-list option
@@ -160,10 +171,20 @@ def main(infile,
     LOGGER.info("Done!")
 
 
-def cube_open(path):
+def cube_open(path, include_list=None, exclude_list=None):
     """TODO"""
+
+    if include_list and exclude_list:
+        msg = "Specify only an include list or exclude list"
+        raise ValueError(msg)
+
     try:
         cubes = iris.load(path)
+
+        print([d for d in dir(cubes[0]) if not d.startswith("_")])
+        print("\n\nCube names")
+        print("\n".join([str((c.name(), c.var_name or "-", c.standard_name or "-", c.long_name or "-")) for c in cubes]))
+
     except iris.exceptions.CannotAddError:
         msg = (
             "UM file can not be processed. UM files with time series currently not supported.\n"

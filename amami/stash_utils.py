@@ -28,74 +28,99 @@ import re
 from iris.fileformats.pp import STASH as irisSTASH
 from amami.loggers import LOGGER
 
+from collections import UserDict
 
-class Stash:
+
+class Stash(UserDict):
     """
     Class to implement STASH-related functionalities
     """
 
-    def __init__(
-            self,
-            code: Union[str, int, irisSTASH],
-    ):
+    def __init__(self):
+        super().__init__()
+
+    def __setitem__(self, key, value):
+        if isinstance(key, str):
+            key = Stash.convert(key)
+
+        if isinstance(key, int):
+            return super().__setitem__(key, value)
+
+        raise NotImplementedError
+
+    def __getitem__(self, item):
+        print(f"__getitem__: {item} {type(item)}")
+        if isinstance(item, str):
+            print("converting str to stash code")
+            item = Stash.convert(item)
+
+        if isinstance(item, int):
+            return super().__getitem__(item)
+
+        raise NotImplementedError
+
+    @classmethod
+    def convert(cls, code):
         if isinstance(code, str):
             if re.match(r"^(m\d{2})?s\d{2}i\d{3}$", code):
-                self.model, self.section, self.item = self._from_string(code)
-            elif re.match(r"^\d{1,5}$", code):
-                code = int(code)
-                if code > 54999 or code < 0:
-                    LOGGER.error(
-                        f"Invalid STASH item code '{code}'. For item codes reference "
-                        "please check the UM Documentation Paper C04 about 'Storage "
-                        "Handling and Diagnostic System (STASH)' --> "
-                        "https://code.metoffice.gov.uk/doc/um/latest/papers/umdp_C04.pdf"
-                    )
-                self.model, self.section, self.item = self._from_itemcode(code)
-            else:
-                LOGGER.error(
-                    "STASH code needs to be either an integer between 0 and 54999, "
-                    "or a string in the format '[m--]s--i---', with each '-' being "
-                    "an integer between 0-9.\nThe part wrapped in squared brackets "
-                    "('[]') is optional."
-                )
-        elif isinstance(code, int):
-            if code > 54999 or code < 0:
-                LOGGER.error(
-                    f"Invalid STASH item code '{code}'. For item codes reference "
-                    "please check the UM Documentation Paper C04 about 'Storage "
-                    "Handling and Diagnostic System (STASH)' --> "
-                    "https://code.metoffice.gov.uk/doc/um/latest/papers/umdp_C04.pdf"
-                )
-            self.model, self.section, self.item = self._from_itemcode(code)
+                # model = int(code[1:3]) if len(code) == 10 else 1
+                section, item = int(code[-6:-4]), int(code[-3:])
+                return Stash._to_itemcode(section, item)
+
         elif isinstance(code, irisSTASH):
-            self.model, self.section, self.item = code.model, code.section, code.item
-        self.string = self._to_string()
-        self.itemcode = self._to_itemcode()
-        self.long_name = ""
-        self.name = ""
-        self.units = ""
-        self.standard_name = ""
-        self.unique_name = ""
-        self._get_names()
+            return Stash._to_itemcode(code.section, code.item)
+
+        raise NotImplementedError("needs more coversions")
+
+    #         elif re.match(r"^\d{1,5}$", code):
+    #             code = int(code)
+    #             if code > 54999 or code < 0:
+    #                 LOGGER.error(
+    #                     f"Invalid STASH item code '{code}'. For item codes reference "
+    #                     "please check the UM Documentation Paper C04 about 'Storage "
+    #                     "Handling and Diagnostic System (STASH)' --> "
+    #                     "https://code.metoffice.gov.uk/doc/um/latest/papers/umdp_C04.pdf"
+    #                 )
+    #             self.model, self.section, self.item = self._from_itemcode(code)
+    #         else:
+    #             LOGGER.error(
+    #                 "STASH code needs to be either an integer between 0 and 54999, "
+    #                 "or a string in the format '[m--]s--i---', with each '-' being "
+    #                 "an integer between 0-9.\nThe part wrapped in squared brackets "
+    #                 "('[]') is optional."
+    #             )
+    #     elif isinstance(code, int):
+    #         if code > 54999 or code < 0:
+    #             LOGGER.error(
+    #                 f"Invalid STASH item code '{code}'. For item codes reference "
+    #                 "please check the UM Documentation Paper C04 about 'Storage "
+    #                 "Handling and Diagnostic System (STASH)' --> "
+    #                 "https://code.metoffice.gov.uk/doc/um/latest/papers/umdp_C04.pdf"
+    #             )
+    #         self.model, self.section, self.item = self._from_itemcode(code)
+
+
+        # self.string = self._to_string()
+        # self.itemcode = self._to_itemcode()
+        # self.long_name = ""
+        # self.name = ""
+        # self.units = ""
+        # self.standard_name = ""
+        # self.unique_name = ""
+        # self._get_names()
 
     def __str__(self):
-        '''
-        Representation of Stash class when printed out.
-        '''
+        '''Representation of Stash class when printed out.'''
         return f"STASH {self.string} ({self.long_name})"
 
-    def _from_string(
-            self,
-            strcode: str,
-    ) -> tuple[int]:
+    @classmethod
+    def _from_string(cls, strcode: str):
         """Function to get the model, item and section from a STASH code string"""
         model = int(strcode[1:3]) if len(strcode) == 10 else 1
         return model, int(strcode[-6:-4]), int(strcode[-3:])
 
-    def _from_itemcode(
-            self,
-            itemcode: int,
-    ) -> tuple[int]:
+    @classmethod
+    def _from_itemcode(cls, itemcode: int):
         """Function to get the model, item and section from a STASH item code"""
         return 1, itemcode // 1000, itemcode % 1000
 
@@ -103,9 +128,10 @@ class Stash:
         """Function to return the STASH code string from model, section and item"""
         return f"m{self.model:02d}s{self.section:02d}i{self.item:03d}"
 
-    def _to_itemcode(self) -> int:
+    @classmethod
+    def _to_itemcode(cls, section, item) -> int:
         """Function to return the STASH item code from section and item"""
-        return self.section * 1000 + self.item
+        return section * 1000 + item
 
     def _get_names(self):
         """
@@ -119,6 +145,7 @@ class Stash:
                 f"Could not identify STASH variable from STASH item code '{self.itemcode}'."
             )
             var = ["UNKNOWN VARIABLE", "", "", "", ""]
+
         self.long_name = var[0]
         self.name = var[1] if var[1] else self.string
         self.units = var[2]
@@ -126,7 +153,7 @@ class Stash:
         self.unique_name = var[4] if var[4] else self.name
 
 
-ATM_STASHLIST = {}
+ATM_STASHLIST = Stash()
 
 ATM_STASHLIST[2] = ["U COMPNT OF WIND AFTER TIMESTEP", "ua", "m s-1", "eastward_wind", ""]
 ATM_STASHLIST[3] = ["V COMPNT OF WIND AFTER TIMESTEP", "va", "m s-1", "northward_wind", ""]
