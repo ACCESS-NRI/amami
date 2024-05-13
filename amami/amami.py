@@ -59,7 +59,7 @@ def main():
                                        "3",
                                        "4",
                                 ],
-                                help="Specify netCDF format.")
+                              help="Specify netCDF format.")
 
     um2nc_parser.add_argument("-c", "--compression",
                               type=int,
@@ -108,6 +108,11 @@ def main():
     print(f"\nnamespace:\n{ns}")
 
     if ns.subparser_name == "um2nc":
+        # general validation
+        if ns.format == "NETCDF3_CLASSIC" and ns.use64bit:
+            msg = "'NETCDF3_CLASSIC' does not support 64 bit data."
+            parser.error(msg)
+
         um2nc.main(ns.infile,
                    ns.outfile,
                    ns.format,
