@@ -81,7 +81,6 @@ def main(infile,
 
     # Get order of fields (from stash codes)
     stash_order = list(dict.fromkeys([f.lbuser4 for f in ff.fields]))
-    LOGGER.debug(f"{stash_order=}")
 
     grid_type = um_utils.get_grid_type(ff)
     z_rho = um_utils.get_sealevel_rho(ff)
@@ -121,17 +120,13 @@ def main(infile,
             for c in cubes:
                 stash = Stash(c.attributes["STASH"])
                 itemcode = stash.itemcode
-                LOGGER.debug(f"Processing STASH field: {itemcode}")
+
                 # Skip fields not specified with --include-list option
                 # or fields specified with --exclude-list option
 
                 # TODO: refactor with sets to simplify?
-                if (include_list and itemcode not in include_list) or (
-                    exclude_list and itemcode in exclude_list
-                ):
-                    LOGGER.debug(
-                        f"Field with itemcode '{itemcode}' excluded from the conversion."
-                    )
+                if (include_list and itemcode not in include_list) or \
+                   (exclude_list and itemcode in exclude_list):
                     continue
 
                 name_cube(c, stash, simple)
@@ -157,7 +152,6 @@ def main(infile,
 
                 set_missing_value(c)
                 convert_proleptic_calendar(c)
-                LOGGER.info(f"Writing field '{c.var_name}' -- ITEMCODE: {itemcode}")
                 cubewrite(c, sman, compression)
 
     # TODO: make exception capture more specific
