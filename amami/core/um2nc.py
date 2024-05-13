@@ -29,9 +29,15 @@ from amami.loggers import LOGGER
 from amami import helpers
 
 
+NC_SUPPORTED_FORMATS = ["NETCDF4",
+                        "NETCDF4_CLASSIC",
+                        "NETCDF3_CLASSIC",
+                        "NETCDF3_64BIT"]
+
+
 def main(infile,
          outfile=None,
-         format=None,
+         nc_format=None,
          use64bit=None,
          include_list=None,
          exclude_list=None,
@@ -47,8 +53,8 @@ def main(infile,
     :type infile:
     :param outfile:
     :type outfile:
-    :param format:
-    :type format:
+    :param nc_format:
+    :type nc_format:
     :param use64bit:
     :type use64bit:
     :param include_list:
@@ -71,7 +77,11 @@ def main(infile,
     infile = helpers.get_abspath(infile)
     outfile = helpers.get_abspath(outfile, checkdir=True)
 
-    nc_format = get_nc_format(format)
+    if nc_format not in NC_SUPPORTED_FORMATS:
+        msg = f"Unrecognised NetCDF format: {nc_format}"
+        raise ValueError(msg)
+
+    # TODO: move into NetCDF writer func
     check_ncformat(nc_format, use64bit)
 
     # TODO: why are both mule & iris used?
@@ -161,14 +171,6 @@ def main(infile,
     LOGGER.info("Done!")
 
 
-def get_nc_format(format_arg: str) -> str:
-    """Convert format numbers to format strings"""
-    nc_formats = {
-        1: "NETCDF4",
-        2: "NETCDF4_CLASSIC",
-        3: "NETCDF3_CLASSIC",
-        4: "NETCDF3_64BIT",
-    }
     try:
         return nc_formats[int(format_arg)]
     except ValueError:
