@@ -96,18 +96,7 @@ def main(infile,
     z_rho = um_utils.get_sealevel_rho(ff)
     z_theta = um_utils.get_sealevel_theta(ff)
 
-    # TODO: refactor iris I/O, pass in iris/cube obj
-    try:
-        cubes = iris.load(infile)
-    except iris.exceptions.CannotAddError:
-        msg = (
-            "UM file can not be processed. UM files with time series currently not supported.\n"
-            "Please convert using convsh (https://ncas-cms.github.io/xconv-doc/html/example1.html)."
-        )
-        LOGGER.error(msg)
-
-        # TODO: exit cleanly if file cannot be processed
-        raise NotImplementedError
+    cubes = cube_open(infile)
 
     # Order cubelist based on input order
     # TODO: magic numbers
@@ -171,10 +160,21 @@ def main(infile,
     LOGGER.info("Done!")
 
 
+def cube_open(path):
+    """TODO"""
     try:
-        return nc_formats[int(format_arg)]
-    except ValueError:
-        return format_arg
+        cubes = iris.load(path)
+    except iris.exceptions.CannotAddError:
+        msg = (
+            "UM file can not be processed. UM files with time series currently not supported.\n"
+            "Please convert using convsh (https://ncas-cms.github.io/xconv-doc/html/example1.html)."
+        )
+        LOGGER.error(msg)
+
+        # TODO: exit cleanly if file cannot be processed
+        raise NotImplementedError
+
+    return cubes
 
 
 def check_ncformat(ncformat, use64bit):
