@@ -89,12 +89,12 @@ Suggested changes to simplify file & dir structure
 
 ### stash_utils
 
-* Refactor `amami/stash_utils/__init__.py` to `amami/stash.py`
+* Refactor `amami/stash_utils/__init__.py` to `amami/stash.py` (package to simple module)
 * `atm_stashlist.py` is 4700 lines of constants, is this data in another python dependency?
-* `Stash` class
-  - Factor out constructor logic?
-  - Why are the `_from_` functions marked as implementation as internal?
-  - Refactor to `dataclass` with input/output functions?
+* Refactor `Stash` class & `ATM_STASHLIST` to dict lookup (avoids `Stash` obj creation)
+  - Implement `__getitem__`, `__aetitem__` to work with `str`, stash codes etc
+  - Remove existing interface, use dict interface for standard python interoperability
+  - Move to `um_utils` module, as it's part of the unified model
 
 ### um_utils
 
