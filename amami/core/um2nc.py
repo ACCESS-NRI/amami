@@ -86,9 +86,6 @@ def main(infile,
         msg = f"Unrecognised NetCDF format: {nc_format}"
         raise ValueError(msg)
 
-    # TODO: move into NetCDF writer func
-    check_ncformat(nc_format, use64bit)
-
     # TODO: why are both mule & iris used?
     # TODO: refactor move mule I/O elsewhere/pass in open mule obj
     # Use mule to get the model levels to help with dimension naming
@@ -202,18 +199,6 @@ def cube_open(path, include_list=None, exclude_list=None):
         raise NotImplementedError
 
     return cubes
-
-
-def check_ncformat(ncformat, use64bit):
-    """
-    Check whether the --64bit option was chosen along with
-    the nc format 'NETCDF3_CLASSIC', as they are incompatible.
-    """
-    if ncformat == "NETCDF3_CLASSIC" and use64bit:
-        LOGGER.error(
-            "Chosen netCDF format 'NETCDF3_CLASSIC' is incompatible with"
-            "the '--64bit' option, as it does not support 64-bit data."
-        )
 
 
 # TODO: refactor nohist check to main() ?
