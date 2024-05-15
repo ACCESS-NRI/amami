@@ -23,11 +23,7 @@ import iris.exceptions
 import iris.fileformats
 
 import amami
-from amami.stash_utils import ATM_STASHLIST as Stash
-
-ls = len(Stash)
-print("LEN OF STASH", ls)
-assert ls
+from amami.stash_utils import ATM_STASHLIST, to_stash_code
 
 from amami import um_utils
 from amami.loggers import LOGGER
@@ -121,13 +117,11 @@ def main(infile,
             # add_global_attrs(infile, sman, nohist)
 
             for c in cubes:
+                section, item, itemcode = to_stash_code(c.attributes["STASH"])
+                stash = ATM_STASHLIST[itemcode]
+
                 print("STASH =", c.attributes["STASH"])
-                stash = Stash[c.attributes["STASH"]]
-
-                print(f"Stash entry is {stash}")
-                4/0
-
-                itemcode = stash.itemcode
+                print(f"Stash entry has id={itemcode}, stash={str(stash)}")
 
                 # Skip fields not specified with --include-list option
                 # or fields specified with --exclude-list option
@@ -151,7 +145,7 @@ def main(infile,
                 # Mask pressure level fields
                 if not nomask:
                     if not apply_mask_to_pressure_level_field(
-                        c, stash, heaviside_uv, heaviside_t, hcrit
+                        c, stash, itemcode, heaviside_uv, heaviside_t, hcrit
                     ):
                         continue
 
@@ -184,8 +178,8 @@ def cube_open(path, include_list=None, exclude_list=None):
     try:
         cubes = iris.load(path)
 
-        print([d for d in dir(cubes[0]) if not d.startswith("_")])
-        print("\n\nCube names")
+        # print([d for d in dir(cubes[0]) if not d.startswith("_")])
+        print("\nCube names")
         print("\n".join([str((c.name(), c.var_name or "-", c.standard_name or "-", c.long_name or "-")) for c in cubes]))
 
     except iris.exceptions.CannotAddError:
@@ -217,17 +211,21 @@ def add_global_attrs(infile, fid, nohist) -> None:
 def get_heaviside_uv(cubes):
     """Get heaviside_uv field if UM file has it, otherwise return None"""
     for c in cubes:
-        if Stash(c.attributes["STASH"]).itemcode == 30301:
+        _, _, code = to_stash_code(c.attributes["STASH"])
+        if code == 30301:
             return c
-    return None
+
+    print("Heavyside UV not found")
 
 
 def get_heaviside_t(cubes):
     """Get heaviside_t field if UM file has it, otherwise return None"""
     for c in cubes:
-        if Stash(c.attributes["STASH"]).itemcode == 30304:
+        _, _, code = to_stash_code(c.attributes["STASH"])
+        if code == 30304:
             return c
-    return None
+
+    print("Heavyside T not found")
 
 
 def apply_mask(cube, heaviside, hcrit):
@@ -263,28 +261,28 @@ def apply_mask(cube, heaviside, hcrit):
                     cube.data / h_tmp.data, h_tmp.data <= hcrit
                 ).astype(np.float32)
         else:
+            _, _, sc = to_stash_code(cube.attributes['STASH'])
             LOGGER.error(
                 "Unable to match levels of heaviside function to variable "
-                f"{Stash(cube.attributes['STASH']).long_name}."
+                f"{ATM_STASHLIST[sc].long_name}."
             )
 
 
-def apply_mask_to_pressure_level_field(cube, stash, heaviside_uv, heaviside_t, hcrit):
+def apply_mask_to_pressure_level_field(cube, stash, itemcode, heaviside_uv, heaviside_t, hcrit):
     """
     Check whether there are any pressure level fields that should be masked
     using heaviside function and mask them.
     """
-    itemcode = stash.itemcode
 
     # TODO: handle magic numbers
     # TODO: fix string quotes
     # Heaviside_uv
     if (30201 <= itemcode <= 30288) or (30302 <= itemcode <= 30303):
         if heaviside_uv:
+            _, _, hcode = to_stash_code(heaviside_uv.attributes['STASH'])
             LOGGER.info(
                 f"Masking field '{stash.long_name}' using heaviside_uv field "
-                f"`{Stash(heaviside_uv.attributes['STASH']).long_name}` and "
-                f"critical value {hcrit}"
+                f"`{ATM_STASHLIST[hcode].long_name}` and critical value {hcrit}"
             )
             apply_mask(cube, heaviside_uv, hcrit)
         else:
@@ -299,19 +297,17 @@ def apply_mask_to_pressure_level_field(cube, stash, heaviside_uv, heaviside_t, h
     # Heaviside_t
     elif 30293 <= itemcode <= 30298:
         if heaviside_t:
+            _, _, hcode = to_stash_code(heaviside_t.attributes['STASH'])
             LOGGER.info(
                 f"Masking field '{stash.long_name}' using heaviside_t field "
-                f"`{Stash(heaviside_t.attributes['STASH']).long_name}` and "
-                f"critical value {hcrit}"
+                f"`{ATM_STASHLIST[hcode].long_name}` and critical value {hcrit}"
             )
             apply_mask(cube, heaviside_t, hcrit)
         else:
             LOGGER.warning(
-                "Heaviside_t field needed for masking pressure level data "
-                f"is not present. The field '{stash.long_name} -- ITEMCODE:{itemcode}' "
-                f"will be skipped.\n"
-                "If you still want convert this field without masking, "
-                "use the '--nomask' option."
+                f"Heaviside_t field required to mask pressure level data is missing. "
+                f"Skipping '{stash.long_name} -- ITEMCODE:{itemcode}'.\n"
+                "To convert field without masking, specify '--nomask'."
             )
             return False
     return True
