@@ -7,7 +7,7 @@ Module to define main class and entry point for CLI usage of `amami`.
 """
 # pylint: disable=no-member,import-outside-toplevel,too-few-public-methods
 
-
+import os
 import argparse
 from amami.core import um2nc
 
@@ -48,6 +48,8 @@ def main():
                               metavar="OUTPUT_FILE",
                               help="Path for converted netCDF output. Defaults to input path with '.nc' suffix.")
 
+    # TODO: move choice list to a constant in um2nc.py? Are these constants in Iris?
+    # TODO: remove numerical formats?
     um2nc_parser.add_argument("-f", "--format",
                               default="NETCDF4",
                               choices=["NETCDF4",
@@ -109,6 +111,11 @@ def main():
 
     if ns.subparser_name == "um2nc":
         # general validation
+        if not os.path.exists(ns.infile):
+            parser.error(f"{ns.infile} does not exist")
+        
+        # TODO: does outfile exist & should it be overwritten?
+        # TODO: was outfile not specified, what is the default filename to pass in?
         if ns.format == "NETCDF3_CLASSIC" and ns.use64bit:
             msg = "'NETCDF3_CLASSIC' does not support 64 bit data."
             parser.error(msg)
