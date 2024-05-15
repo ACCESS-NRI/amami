@@ -27,7 +27,6 @@ from amami.stash_utils import ATM_STASHLIST, to_stash_code
 
 from amami import um_utils
 from amami.loggers import LOGGER
-from amami import helpers
 
 
 NC_SUPPORTED_FORMATS = ["NETCDF4",
@@ -106,10 +105,10 @@ def main(infile,
     )
 
     # Get heaviside fields for pressure level masking
-    # if not nomask:
-    #     # TODO: what happens if either are None?
-    #     heaviside_uv = get_heaviside_uv(cubes)
-    #     heaviside_t = get_heaviside_t(cubes)
+    if not nomask:
+        # TODO: what happens if either are None?
+        heaviside_uv = get_heaviside_uv(cubes)
+        heaviside_t = get_heaviside_t(cubes)
 
     try:
         with iris.fileformats.netcdf.Saver(outfile, nc_format) as sman:
