@@ -61,13 +61,31 @@ class Stash:
         self.unique_name = ""
         self._get_names()
 
+    def __repr__(self):
+        '''
+        Representation of Stash class.
+        '''
+        return f"STASH {self.string} ({self.long_name})"
+    
     def __str__(self):
         '''
         Representation of Stash class when printed out.
         '''
         return f"STASH {self.string} ({self.long_name})"
     
-
+    def __eq__(self, other):
+        '''
+        Set criteria to check equality for Stash class instances.
+        '''
+        if isinstance(other, Stash):
+            return other.itemcode == self.itemcode
+        elif isinstance(other, str):
+            return self.string == other or self.long_name == other
+        elif isinstance(other, int):
+            return self.itemcode == other
+        else:
+            return False
+    
     def _from_string(
         self,
         strcode:str,
@@ -101,7 +119,8 @@ class Stash:
             var = ATM_STASHLIST[self.itemcode]
         except KeyError:
             LOGGER.warning(
-                f"Could not identify STASH variable from STASH item code '{self.itemcode}'."
+                "Could not identify STASH variable from STASH item code %s.",
+                self.itemcode,
             )
             var = ["UNKNOWN VARIABLE","", "", "", ""]
         self.long_name = var[0]

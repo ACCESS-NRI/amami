@@ -9,11 +9,11 @@ Utility module for UM fieldsfiles
 from typing import List
 import mule
 from amami.loggers import LOGGER
-import itertools
-# import numpy as np
+from amami.stash_utils import Stash
+import numpy as np
 # from scipy.interpolate import interpn
 
-IMDI=int(-32768) #(-2.0**15)
+IMDI=-32768 #(-2.0**15)
 RMDI=-1073741824.0 #(-2.0**30)
 
 def read_fieldsfile(
@@ -70,21 +70,32 @@ def get_stash(
     if not repeat:
         return list(dict.fromkeys(stash_codes))
     return stash_codes
+    
+def separate_umfile(ff: mule.UMFile):
+    """
+    Create a structured dictionary as a mapped representation
+    of the index of UM fieldsfile fields relative to the same
+    variable (identified through the STASH code and time coordinate).
+    `fld_mapping` is a 2-D numpy array, with dimensions being:
+    level (or pseudo-level), time.
 
-def separate_variables(
-    ff,
-) -> List:
+    For example:
+    {
+        'STASH_1':[fld_mapping],
+        'STASH_2':[fld_mapping],
+        ...
+        'STASH_N':[fld_mapping],
+    }
     """
-    Separate UM fieldsfile fields into variables with the same STASH code
-    """
-    if isinstance(ff,mule.ancil.AncilFile):
-        ntimes=ff.integer_constants.num_times
-        [list(y) for _,y in itertools.groupby(get_stash(ff,repeat=True))]
-    stashlist = get_stash(um_file, repeat=True)
-    start=
-    if not isinstance(um_file, mule.ancil.AncilFile):
-        raise ValueError(f"um_file is not a mule AncilFile.")
-    return um_file.integer_constants.raw[15] # Number of different field types in dump
+    if not isinstance(ff,mule.UMFile):
+        raise ValueError("The input variable is not a mule UMFile.")
+    separated_ff = dict()
+    for f,field in enumerate(ff.fields):
+        stash = Stash(field.lbuser4)
+        if stash not in separated_ff:
+            separated_ff[stash] = np.atleast3d(f)
+        else:
+            separated_ff[stash] = np.atleast3d(f)
 
 # def _first_timestep_fields(umFile):
 #     return umFile.fields[:(len(umFile.fields)//(umFile.integer_constants.num_times))].copy()
