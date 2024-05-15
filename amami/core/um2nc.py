@@ -120,6 +120,7 @@ def main(infile,
 
     try:
         with iris.fileformats.netcdf.Saver(outfile, nc_format) as sman:
+            # TODO: move attr writes to modifier function, split out any I/O too
             # add_global_attrs(infile, sman, nohist)
 
             for c in cubes:
@@ -134,6 +135,8 @@ def main(infile,
                 # Skip fields not specified with --include-list option
                 # or fields specified with --exclude-list option
 
+                # TODO: refactor filtering to select required cubes (vars?) & pass as args instead of file path
+                #       this filtering is run every cube & is inefficient
                 # TODO: refactor with sets to simplify?
                 if (include_list and itemcode not in include_list) or \
                    (exclude_list and itemcode in exclude_list):
@@ -162,9 +165,12 @@ def main(infile,
 
                 set_missing_value(c)
                 convert_proleptic_calendar(c)
+
+                # TODO: move I/O to separate function, separate from modification steps
                 cubewrite(c, sman, compression)
 
     # TODO: make exception capture more specific
+    # TODO: create more general exception handler for the entire utility workflow?
     except Exception as e:
         os.remove(outfile)
         LOGGER.error(e)
