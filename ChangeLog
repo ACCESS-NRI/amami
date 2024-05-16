@@ -7,47 +7,16 @@ CHANGES
 0.0.1
 -----
 
-* minor fix
 * Changed package name to AMAMI (ACCESS Models Ancillary Manipulation Instruments), to diversify it from the existing umami package in conda-forge
-* Fixed cf-units
-* fix shebang main functions
-* minor changes
-* Fix numpy>=1.17
-* Fix package build
-* Fix package build
-* Fix package build
-* Fix packate build
-* fix conda build
-* fix conda build
-* fixes conda build
-* fix
-* conda build identical to v.0.0.1
-* fixes
-* Fixes
-* Fixed conda build
-* Fixes in conda build
-* Fixes in conda build
-* Fixes in conda build
-* Fixes in conda build
-* Fixes in conda build
 * Fixes to package requirements
-* Minor fixes
 * Update README.md
-* Update README.md
-* Update README.md
-* Updated readme
 * Added settings for conda packaging
-* Update README.md
 * Fixed an issue with propleptic calendar in iris
-* minor fixes
-* Minor fixes
 * - Updated um2nc.py script, to take dlat and dlon from fields rather than file. - Various updates to um\_utils folder
 * - Created stash\_utils folder - Updated argument parser for um2nc.py - Other minor improvements
-* Fixed minor bugs
-* Minor fixes
 * Added check for consistency of interpolation to the ancil\_utils.regrid\_ancil function
 * Added possibility to handle variables with different lat/lon coordinates within the same file
-* Restructured functions to be clearer. Fixed some issues
+* Restructured functions to be clearer.
 * Fix the regridding for pseudo-levels
 * Added proper read of latitude/longitude from ancil file
 * Handled case in which number of variables in input file and grid file are different
