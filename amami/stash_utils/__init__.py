@@ -7,7 +7,6 @@ Module to define the Stash class to implement STASH-related functionalities
 Script created by Davide Marchegiani (davide.marchegiani@anu.edu.au) at ACCESS-NRI.
 """
 
-# pylint: disable=logging-fstring-interpolation,import-outside-toplevel
 from typing import Union
 import re
 from iris.fileformats.pp import STASH as irisSTASH
@@ -128,13 +127,3 @@ class Stash:
         self.units = var[2]
         self.standard_name = var[3]
         self.unique_name = var[4] if var[4] else self.name
-
-    # # from urllib.request import urlopen
-    # # htlm = urlopen("https://reference.metoffice.gov.uk/um/stash").read().decode("utf-8")
-    # with open("../data/metoffice_stash_page",'r') as file:
-    #     html = file.read()
-    # name=re.findall(f"(?<=,)[^,]+(?=,{code})",html)
-    # if len(name) == 0:
-    #     print("Warning: no item associated with the stash code provided.")
-    #     name = code
-    # return name

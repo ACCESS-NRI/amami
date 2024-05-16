@@ -4,26 +4,24 @@
 # Script created by Davide Marchegiani (davide.marchegiani@anu.edu.au) at ACCESS-NRI.
 
 
-"""Module to define main parser class."""
+"""Module to define main parser class that generates parsers and run the parse processing."""
 
 from typing import Union, Callable
+import pkgutil
+from importlib import import_module
 import argparse
 import amami
 import sys
-from amami.parsers.core import (
+from amami.parsers import (
     ParseFormatter,
     SubcommandParser,
     VerboseAction,
     SilentAction,
     DebugAction,
 )
-from amami.parsers.um2nc_parser import PARSER as um2nc_parser
-from amami.parsers.modify_parser import PARSER as modify_parser
+from amami import commands as amami_commands
 
-SUBPARSERS = {
-    "um2nc": um2nc_parser,
-    "modify": modify_parser,
-}
+COMMANDS = [command.name for command in pkgutil.iter_modules(amami_commands.__path__)]
 
 class MainParser(argparse.ArgumentParser):
     """
@@ -119,6 +117,31 @@ Cannot be used together with '-s/--silent' or '-v/--verbose'.
         )
         return common_parser
 
+    def generate_subparsers(self) -> None:
+        """
+        Function to generate the subparsers dynamically, as they are added to the 
+        amami/parsers folder. 
+        The parser name need to be in the format `<command>_parser.py`.
+        """
+        for command in COMMANDS:
+            subparser = getattr(
+                import_module(f'amami.parsers.{command}_parser'),
+                'PARSER',
+            )
+            self.subparsers.add_parser(
+                command,
+                parents=[
+                    self.help_parser,
+                    self.common_parser,
+                    subparser,
+                ],
+                usage=" ".join(subparser.usage.split()),
+                description=subparser.description,
+                formatter_class=ParseFormatter,
+                add_help=False,
+                callback=subparser.callback,
+            )
+
     def parse_and_process(
             self,
             *args,
@@ -137,19 +160,3 @@ Cannot be used together with '-s/--silent' or '-v/--verbose'.
             self.print_usage()
             sys.exit(f"Option '{unknown_args[0]}' not supported.")
 
-    def generate_subparsers(self) -> None:
-        """Function to generate the subparsers for different subcommands"""
-        for subcmd,subparser in SUBPARSERS.items():
-            self.subparsers.add_parser(
-                subcmd,
-                parents=[
-                    self.help_parser,
-                    self.common_parser,
-                    subparser,
-                ],
-                usage=" ".join(subparser.usage.split()),
-                description=subparser.description,
-                formatter_class=ParseFormatter,
-                add_help=False,
-                callback=subparser.callback,
-            )

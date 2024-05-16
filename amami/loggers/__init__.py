@@ -1,7 +1,6 @@
 # Copyright 2022 ACCESS-NRI and contributors. See the top-level COPYRIGHT file for details.
 # SPDX-License-Identifier: Apache-2.0
 
-# pylint: disable = protected-access, no-name-in-module
 """
 Module to control logging for 'amami' package
 """
@@ -184,7 +183,7 @@ LOGGER = generate_logger()
 setattr(LOGGER,"TABS",9)
 
 # Make warnings use LOGGER.warning instead of the default format
-def custom_warning(
+def external_warning_formatting(
     message, 
     category, 
     filename, 
@@ -200,4 +199,4 @@ def custom_warning(
         f"{filename}:{lineno} - {message}".replace('\n','\n\t').expandtabs(LOGGER.TABS)
     )
 
-warnings.showwarning = custom_warning
+warnings.showwarning = external_warning_formatting

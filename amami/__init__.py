@@ -1,18 +1,24 @@
 # Copyright 2022 ACCESS-NRI and contributors. See the top-level COPYRIGHT file for details.
 # SPDX-License-Identifier: Apache-2.0
 
-# pylint: disable = missing-module-docstring
 import importlib.metadata
+from amami.loggers import LOGGER
 
 # Set version
 try:
     __version__ = importlib.metadata.version(__name__)
 except importlib.metadata.PackageNotFoundError:
-    import warnings
     __version__ = ""
-    warnings.warn("Unable to interrogate version string from installed distribution.")
+    LOGGER.warning("Unable to interrogate version string from installed amami distribution.")
 
-__author__ = "Davide Marchegiani (davide.marchegiani@anu.edu.au)"
+__authors__ = [
+    "Davide Marchegiani <davide.marchegiani@anu.edu.au>",
+    "Ben Davies <Ben.Davies@anu.edu.au>",
+]
+if len(__authors__) >1:
+    AUTORS_STRING = ", ".join(__authors__[:-1])+f" and {__authors__[-1]}"
+else:
+    AUTORS_STRING = __authors__[0]
 
 _C_END = '\033[0m'
 _C_CMD = '\033[1;38;2;10;150;200m'
@@ -24,7 +30,7 @@ AMAMI (ACCESS Models Ancillary Manipulation Instruments) is a multi-tool package
 """models and their components. For more information about ACCESS models """\
 f"""and components, please refer to https://access-hive.org.au/models/.
 
-Created by {__author__} at ACCESS-NRI.
+Created by {AUTORS_STRING} at ACCESS-NRI.
 If you want to report any bugs, issues, or would like to request any functionality to be """\
 """added to the AMAMI package, please refer to the issue page of the GitHub repository: """\
 f"""https://github.com/ACCESS-NRI/amami/issues.

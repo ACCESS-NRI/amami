@@ -10,7 +10,7 @@ Script created by Davide Marchegiani (davide.marchegiani@anu.edu.au) at ACCESS-N
 from typing import List
 import argparse
 from amami.misc_utils import create_unexistent_file
-from amami.parsers.core import SubcommandParser
+from amami.parsers import SubcommandParser
 from amami.loggers import LOGGER
 
 DESCRIPTION="""

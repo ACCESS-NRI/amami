@@ -5,9 +5,9 @@ Script created by Davide Marchegiani (davide.marchegiani@anu.edu.au) at ACCESS-N
 
 Module to define main class and entry point for CLI usage of `amami`.
 """
-# pylint: disable=no-member,import-outside-toplevel,too-few-public-methods
 
 import sys
+from importlib import import_module
 from amami.parsers.main_parser import MainParser
 
 class Amami:
@@ -21,15 +21,17 @@ class Amami:
         )
 
     def run_command(self):
-        """Main function for `amami`."""
+        """
+        Calls the entry point for the chosen`amami` command, which is the `main` 
+        function of the amami.commands.<chosen command> module.
+        """
         command = getattr(self.args, 'subcommand')
-        from importlib import import_module
-        mainfun = getattr(
-            import_module(f'amami.core.{command}'),
+        command_entry_point = getattr(
+            import_module(f'amami.commands.{command}'),
             'main',
         )
         # Call 'main' function of chosen command
-        mainfun(self.args)
+        command_entry_point(self.args)
 
 def main() -> None:
     """Entry point for CLI usage of `amami`."""
