@@ -116,17 +116,19 @@ General changes:
 
 ## um2nc
 
-* Use constraints arg in opener to filter/open required cubes first (saves filtering)
+* Use constraints arg in `iris` load to filter required cubes first
+  - This reduces repeated filtering further down in the funciton body
 * Refactor logic in main (split function up)
-  - Split in pre & post processing funcs for each data library?
+  - Split in pre & post processing funcs for each data library? (split `mule` & `iris` ops out to specific functions)
   - Refactor I/O to separate functions
-* Factor include/exclude functionality:
+* Refactor include/exclude functionality:
   - Return list of names to keep
   - Validation: ensure no common items between include/exclude
-  - Simplify logic so default args are empty containers
+  - Simplify logic so default args are empty containers?
 * Fix heavi/heavy naming - is this a typo?
 * Fix exception based control flow in `um2nc.cubewrite()`
-  - Manually check for ancilliary file
+  - Manually check for ancilliary file (other file types? make check explicit for code clarity)
   - Split modification & write steps into separate funcs
 * Saving: can cubes & global metadata be modified, then `save()` relying on the file extension?
   - Can this get around I/O sprinkled throughout `main()`?
+* Needs unit tests
