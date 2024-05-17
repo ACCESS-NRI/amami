@@ -10,35 +10,46 @@ General changes applying to the entire project.
   - Observation: `black` providing odd results in some cases (`ATM STASH`)
   - Use a configurable linter as some longer lines can't really br avoided?
 * Is licence header comment required in all Python modules?
-  - Can it be deleted and referenced in a single file elsewhere? 
+  - Can it be deleted and referenced in a single file elsewhere?
+  - TODO: check the internal style guide (GH repo: `devdocs`)
 * Add requirements/versioning `requirements.txt`?
   - Requirements currently in `setup.cfg`
+  - TODO: check a packaging guide
 * ~~Why is the `.eggs` directory under version control?~~
   - ~~Eggs have been deprecated~~
 * ~~Why is the `build` directory version controlled?~~
 * Clean/simplify the `__main__` entrypoints
+  - TODO: Ben - what does this mean?
 * Add `amami/docs` dir for more descriptive content/examples
-  - Is a doc system like `sphinx` required?
+  - Is a doc system like `sphinx` required? (likely)
+  - Add docstrings (at least for key modules & functions (needed for `sphinx`)
 * Expand `.gitignore`
-* Remove `.DS_Store` & any other macturds from tracking
+  - Ben: check other branches
+  - Remove `.DS_Store` & any other macturds from tracking
 * Dead code removal (commented out & unused code)
 * Configure repo for `coverage.py`
-* Implement CI unit testing, coverage checks etc
+  - TODO: grab config from experimental branch
+* Implement CI to include unit testing runs, coverage checks etc
+  - Do GitHub actions cover our requirements?
 
 ## Structural Changes
 
 Suggested changes to simplify file & dir structure 
 
-* Move `amami/core/modify.py` to root `amami` dir (to simplify dir structure & imports)
-* Move `amami/core/um2nc.py` to root `amami` dir
+* SKIP: Move `amami/commands/modify.py` to root `amami` dir (to simplify dir structure & imports)
+* SKIP: Move `amami/commands/um2nc.py` to root `amami` dir
 * ~~Is `amami/data/metoffice_stash_page` required?~~
   - ~~7.5MB block of text/URLs (many duplicated URLs)~~
   - ~~Tested several URLs, all failed on HTTP404~~
 * Is any functionality duplicated & replaceable with existing dependencies?
+  - Needs double check of some of the `um2nc` helper funcs
+  - See the `iris.load()` & inbuilt cube filtering
+  - TODO: what edge cases can be removed? (simplifies unit testing)
 * Move `amami/loggers/__init__.py` to `amami/loggers.py`
 * Consider removing `amami/misc_utils/__init__.py`
-* Move `amami/netcdf_utils/__init__.py` to a root level `netcdf` module
-  - Is the module needed?
+  - Is this now `helpers.py`?
+* DEFER: Move `amami/netcdf_utils/__init__.py` to a root level `netcdf` module
+  - Is the module needed? Will be part of a future review...
 
 ## Module Changes
 
@@ -46,10 +57,9 @@ General changes:
 
 * ~~Implement `cubes` as `dataclasses`?~~
   - ~~`Cubes` already a datatype in `Iris`~~
-* Add docstrings (at least for key modules)
 * Remove unused imports
-  - Add this as a CI/CD step?
-  - TODO: what is the import cleaner tool?
+  - Add this as a CI/CD check/cleanup step?
+  - TODO: what is the import cleaner tool? `ruff`?
 * Implement unit testing
   - Requires architectural modification
   - Numerous functions require splitting/logic reordering etc to facilitate conversion to smaller, testable funcs
