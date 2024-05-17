@@ -67,75 +67,70 @@ General changes:
 
 ### commands
 
-* Refactor data processing modules (`um2nc.py` etc) main func(s) to take separate input args
-  - Code currently coupled to arg parsers to create inputs & pass a single args obj (splits the um2nc API away from the module, which affects testing)
-  - Separate args in main increases readability, API clarity & docs & has testing benefits)
+* Refactor data processing modules (`um2nc.py` etc) main func(s) to take separate, documented input args
+  - Expand args in `main()` command funcs (introduces an API for each command, which helps with clarity & testing)
 
 ### loggers
 
-* Compress/refactor logger module code
-  - Use `functools.partial` to simplify substantially duplicated funcs?
+* DEFER Compress/refactor logger module code
+  - SKIP? Use `functools.partial` to simplify substantially duplicated funcs?
   - Can default logging format/styling be overriden, removing the need for a custom logging class?
   - Try to remove the custom logger where custom methods are manually attached to the logger
   - See relevant logging refactoring issue
 
 ### netcdf_utils
 
-* Refactor: separate functionality to read & remove bands
-* Is any commented out code is required?
-  - Does the netCDF API handle the funcs?
+* DEFER (file temp removed) Refactor: separate functionality to read & remove boundary coords
+   Does the netCDF API handle the funcs?
 
 ### parsers
 
 * FIXME: refactor multiple `ArgumentParser` declarations.
   - 4 parsers exist: `MainParser`, `SubCommandParser`, `help Parser`, `common Parser`
   - Simplify arg parsing overall
-  - Extract args for clean calling of data processing commands
+  - TODO: Extract args for clean calling of data processing commands
 * Consider splitting examples into docs, more terse text for man page
-* Refactor main parser
+* DEFER FROM HERE Refactor main parser
   - Replace classes with function calls? (simplify the code)
   - Fix formatting of multiline with `\n` chars
   - Merge modules into single module?
 * Refactor `amami/parsers/core.py`, handle actions elsewhere?
-* Fix triple quoting `amami/parsers/modify_parser.py`
-  - Use justification in `textwrap` module if needed
-  - Cleanup logic & parentheses in `callback_function()`
-  - Refactor to use `argparse` API
-  - Remove USAGE str, use `argparse` to generate help
-  - Use non-optional args for input files
 * Fix triple quoting `amami/parsers/um2nc_parser.py`
-  - Use justification in `textwrap` module if needed
-  - Cleanup logic & parentheses in `callback_function()`
-  - Refactor to use `argparse` API
-  - Remove USAGE str, use `argparse` to generate help
+  - TODO Confirm automatic dedentation in triple quoted strings
+  - Cleanup formatting parentheses in `callback_function()`
+  - Simplify the logic?
+  - Refactor to use `argparse` API (defer: can argparse handle required customisation?)
+  - Remove USAGE str, use `argparse` to generate help?
 
 ### stash_utils
 
-* Refactor `amami/stash_utils/__init__.py` to `amami/stash.py` (package to simple module)
+* Refactor `amami/stash_utils/__init__.py` to `amami/stash.py` (package to module)
 * `atm_stashlist.py` is 4700 lines of constants, is this data in another python dependency?
+  - Not in a library, there's a canonical stash DB
 * Refactor `Stash` class & `ATM_STASHLIST` to dict lookup (avoids `Stash` obj creation)
   - Implement `__getitem__`, `__aetitem__` to work with `str`, stash codes etc
   - Remove existing interface, use dict interface for standard python interoperability
-  - TODO: find neat way to handle section/item code/int codes for the lookup
+  - TODO: find neat way to handle section/item code/int codes for the lookup (use annotation?)
+  - `namedtuples` for `ATM_STASHLIST`
   - Move to `um_utils` module, as it's part of the unified model
 
 ### um_utils
 
 * Convert from empty package to `amami/um_utils.py` module
-* Delete `validation_tools.py`?
+* ~~Delete `validation_tools.py`?~~
 
 ## um2nc
 
-* Use constraints arg in `iris` load to filter required cubes first
-  - This reduces repeated filtering further down in the funciton body
-* Refactor logic in main (split function up)
-  - Split in pre & post processing funcs for each data library? (split `mule` & `iris` ops out to specific functions)
+* Use constraints arg in `iris.load()` to filter to required cubes first
+  - This reduces repeated filtering further down in the function body
+* Refactor logic in main (split function up for testing etc)
+  - Split in pre & post processing funcs for each data library? (split `mule` & `iris` ops out to separate functions)
   - Refactor I/O to separate functions
 * Refactor include/exclude functionality:
   - Return list of names to keep
   - Validation: ensure no common items between include/exclude
   - Simplify logic so default args are empty containers?
-* Fix heavi/heavy naming - is this a typo?
+* Fix heavi/heavy (heaviside/heavyside) naming - is this a typo?
 * Fix exception based control flow in `um2nc.cubewrite()`
   - Manually check for ancilliary file (other file types? make check explicit for code clarity)
   - Split modification & write steps into separate funcs
