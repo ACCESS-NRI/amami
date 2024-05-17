@@ -7,18 +7,23 @@ Code/repo review April 2024. This is a list of items for preparing the `amami` f
 General changes applying to the entire project.
 
 * Apply linter across code files
+  - Observation: `black` providing odd results in some cases (`ATM STASH`)
+  - Use a configurable linter as some longer lines can't really br avoided?
 * Is licence header comment required in all Python modules?
   - Can it be deleted and referenced in a single file elsewhere? 
-* Add requirements/versioning `requirements.txt`
-* Why is the `.eggs` directory under version control?
-  - Eggs have been deprecated
-* Why is the `build` directory version controlled?
+* Add requirements/versioning `requirements.txt`?
+  - Requirements currently in `setup.cfg`
+* ~~Why is the `.eggs` directory under version control?~~
+  - ~~Eggs have been deprecated~~
+* ~~Why is the `build` directory version controlled?~~
 * Clean/simplify the `__main__` entrypoints
-* Add `doc/docs` dir for more descriptive content/examples
-* Add `.gitignore`
+* Add `amami/docs` dir for more descriptive content/examples
+  - Is a doc system like `sphinx` required?
+* Expand `.gitignore`
+* Remove `.DS_Store` & any other macturds from tracking
 * Dead code removal (commented out & unused code)
-* Configure for `coverage.py`
-* CI testing
+* Configure repo for `coverage.py`
+* Implement CI unit testing, coverage checks etc
 
 ## Structural Changes
 
