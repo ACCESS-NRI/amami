@@ -42,12 +42,17 @@ Suggested changes to simplify file & dir structure
 
 ## Module Changes
 
-* Implement `cubes` as `dataclasses`?
-  - `Cubes` already a datatype in `Iris`
+General changes:
+
+* ~~Implement `cubes` as `dataclasses`?~~
+  - ~~`Cubes` already a datatype in `Iris`~~
 * Add docstrings (at least for key modules)
 * Remove unused imports
+  - Add this as a CI/CD step?
+  - TODO: what is the import cleaner tool?
 * Implement unit testing
-  - How much architectural change is required?
+  - Requires architectural modification
+  - Numerous functions require splitting/logic reordering etc to facilitate conversion to smaller, testable funcs
 * Replace magic numbers with constants
 
 ### core
