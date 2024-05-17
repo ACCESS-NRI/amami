@@ -29,15 +29,15 @@ General changes applying to the entire project.
 
 Suggested changes to simplify file & dir structure 
 
-* Move `amami/core/modify.py` to `amami` dir
-* Move `amami/core/um2nc.py` to `amami` dir
-* Is `amami/data/metoffice_stash_page` required?
-  - 7.5MB block of text/URLs (many duplicated URLs)
-  - Tested several URLs, all failed on HTTP404
-* Is any functionality duplicate & can be replaced by existing dependencies?
+* Move `amami/core/modify.py` to root `amami` dir (to simplify dir structure & imports)
+* Move `amami/core/um2nc.py` to root `amami` dir
+* ~~Is `amami/data/metoffice_stash_page` required?~~
+  - ~~7.5MB block of text/URLs (many duplicated URLs)~~
+  - ~~Tested several URLs, all failed on HTTP404~~
+* Is any functionality duplicated & replaceable with existing dependencies?
 * Move `amami/loggers/__init__.py` to `amami/loggers.py`
 * Consider removing `amami/misc_utils/__init__.py`
-* Move `amami/netcdf_utils/__init__.py` to a base level module
+* Move `amami/netcdf_utils/__init__.py` to a root level `netcdf` module
   - Is the module needed?
 
 ## Module Changes
