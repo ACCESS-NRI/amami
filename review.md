@@ -55,7 +55,7 @@ General changes:
   - Numerous functions require splitting/logic reordering etc to facilitate conversion to smaller, testable funcs
 * Replace magic numbers with constants
 
-### core
+### commands
 
 * Refactor data processing modules (`um2nc.py` etc) main func(s) to take separate input args
   - Code currently coupled to arg parsers to create inputs & pass a single args obj (splits the um2nc API away from the module, which affects testing)
