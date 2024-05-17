@@ -71,7 +71,7 @@ General changes:
 
 ### netcdf_utils
 
-* Split read & remove bands functionality
+* Refactor: separate functionality to read & remove bands
 * Is any commented out code is required?
   - Does the netCDF API handle the funcs?
 
