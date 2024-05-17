@@ -63,9 +63,11 @@ General changes:
 
 ### loggers
 
-* Compress/refactor logger code?
-  - Use `functools.partial` to simplify substantially duplicated funcs
-* Fix access to "internal" detail variables (refactor)
+* Compress/refactor logger module code
+  - Use `functools.partial` to simplify substantially duplicated funcs?
+  - Can default logging format/styling be overriden, removing the need for a custom logging class?
+  - Try to remove the custom logger where custom methods are manually attached to the logger
+  - See relevant logging refactoring issue
 
 ### netcdf_utils
 
