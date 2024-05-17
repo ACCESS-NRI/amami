@@ -111,7 +111,7 @@ General changes:
 
 ### um_utils
 
-* Move to `um_utils` module
+* Convert from empty package to `amami/um_utils.py` module
 * Delete `validation_tools.py`?
 
 ## um2nc
