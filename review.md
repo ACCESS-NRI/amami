@@ -106,6 +106,7 @@ General changes:
 * Refactor `Stash` class & `ATM_STASHLIST` to dict lookup (avoids `Stash` obj creation)
   - Implement `__getitem__`, `__aetitem__` to work with `str`, stash codes etc
   - Remove existing interface, use dict interface for standard python interoperability
+  - TODO: find neat way to handle section/item code/int codes for the lookup
   - Move to `um_utils` module, as it's part of the unified model
 
 ### um_utils
