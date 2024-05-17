@@ -113,6 +113,11 @@ General changes:
   - TODO: find neat way to handle section/item code/int codes for the lookup (use annotation?)
   - `namedtuples` for `ATM_STASHLIST`
   - Move to `um_utils` module, as it's part of the unified model
+* IDEA: subclass Iris `STASH` class:
+  - Link to `ATM STASHLIST` to allow lookup from the custom class
+  - https://github.com/SciTools/iris/blob/main/lib/iris/fileformats/pp.py
+* IDEA: add `(section/code)` tuple keys for `ATM_STASHLIST` lookup?
+  - con: doubles number of dict keys
 
 ### um_utils
 
