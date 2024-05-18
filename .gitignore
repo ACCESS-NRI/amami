@@ -3,3 +3,4 @@ test/*
 .eggs/
 build/
 amami.egg-info/
+.vscode
