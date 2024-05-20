@@ -7,10 +7,11 @@ Module to define the Stash class to implement STASH-related functionalities
 Script created by Davide Marchegiani (davide.marchegiani@anu.edu.au) at ACCESS-NRI.
 """
 
-from typing import Union
 import re
+from typing import Union
 from iris.fileformats.pp import STASH as irisSTASH
 from amami.loggers import LOGGER
+from amami._atm_stashlist import ATM_STASHLIST
 
 class Stash:
     """
@@ -132,7 +133,6 @@ class Stash:
         Get STASH variable names based on the UM STASH Registry 
         (https://reference.metoffice.gov.uk/um/stash)
         """
-        from amami.stash_utils.atm_stashlist import ATM_STASHLIST
         try:
             var = ATM_STASHLIST[self.itemcode]
         except KeyError:
