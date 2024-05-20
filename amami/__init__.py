@@ -28,9 +28,10 @@ if len(__authors__) >1:
 else:
     AUTORS_STRING = __authors__[0]
 
-_C_END = '\033[0m'
+_C_END = '\033[m'
 _C_CMD = '\033[1;38;2;10;150;200m'
 _C_DESC = '\033[0;38;2;150;100;30m'
+_C_BOLD = '\033[1;38;5;251m'
 
 __doc__ = """
 AMAMI (ACCESS Models Ancillary Manipulation Instruments) is a multi-tool package """\
@@ -45,12 +46,11 @@ f"""https://github.com/ACCESS-NRI/amami/issues.
 
 
 List of supported commands:
-------------------------------------------------------------------------------------------------
-| command | description                                                                        |
-------------------------------------------------------------------------------------------------
-| {_C_CMD}um2nc{_C_END}   | {_C_DESC}Convert a UM fieldsfile to netCDF.{_C_END}                                                 |
-| {_C_CMD}modify{_C_END}  | {_C_DESC}Modify a UM fieldsfile using data from a netCDF file, or a user-defined function.{_C_END}  |
-------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------
+| {_C_BOLD}command{_C_END} | {_C_BOLD}description{_C_END}                                                                                             | 
+---------------------------------------------------------------------------------------------------------------------
+| {_C_CMD}um2nc{_C_END}   | {_C_DESC}Convert a UM fieldsfile (https://code.metoffice.gov.uk/doc/um/latest/papers/umdp_F03.pdf) to netCDF.{_C_END}    |
+---------------------------------------------------------------------------------------------------------------------
 For more information about a specific command, run `amami <command> -h`.
 """
 
