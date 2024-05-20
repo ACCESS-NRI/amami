@@ -16,6 +16,20 @@ class Stash:
     """
     Class to implement STASH-related functionalities
     """
+
+    __slots__ = [
+        "model",
+        "section",
+        "item",
+        "string",
+        "itemcode",
+        "long_name",
+        "name",
+        "units",
+        "standard_name",
+        "unique_name",
+    ]
+
     def __init__(
         self,
         code:Union[str,int,irisSTASH],
@@ -85,6 +99,9 @@ class Stash:
         else:
             return False
     
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def _from_string(
         self,
         strcode:str,
