@@ -19,10 +19,10 @@ import netCDF4
 import iris
 import iris.coords
 import amami
-from amami.stash_utils import Stash
 import amami.um_utils as umutils
+from amami.stash_utils import Stash
 from amami.loggers import LOGGER
-from amami.misc_utils import get_abspath
+from amami.helpers import get_abspath
 
 def get_nc_format(format_arg:str) -> str:
     """Convert format numbers to format strings"""
