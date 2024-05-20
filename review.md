@@ -6,13 +6,13 @@ Code/repo review April 2024. This is a list of items for preparing the `amami` f
 
 General changes applying to the entire project.
 
-* Apply linter across code files
+* Apply linter across code files [#10](https://github.com/ACCESS-NRI/amami/issues/10)
   - Observation: `black` providing odd results in some cases (`ATM STASH`)
   - Use a configurable linter as some longer lines can't really br avoided?
-* Is licence header comment required in all Python modules?
+* Is licence header comment required in all Python modules? [#24](https://github.com/ACCESS-NRI/amami/issues/24)
   - Can it be deleted and referenced in a single file elsewhere?
   - TODO: check the internal style guide (GH repo: `devdocs`)
-* Add requirements/versioning `requirements.txt`?
+* Add requirements/versioning `requirements.txt`? [#25](https://github.com/ACCESS-NRI/amami/issues/25)
   - Requirements currently in `setup.cfg`
   - TODO: check a packaging guide
 * ~~Why is the `.eggs` directory under version control?~~
@@ -20,16 +20,16 @@ General changes applying to the entire project.
 * ~~Why is the `build` directory version controlled?~~
 * Clean/simplify the `__main__` entrypoints
   - TODO: Ben - what does this mean?
-* Add `amami/docs` dir for more descriptive content/examples
+* Add `amami/docs` dir for more descriptive content/examples [#26](https://github.com/ACCESS-NRI/amami/issues/26)
   - Is a doc system like `sphinx` required? (likely)
   - Add docstrings (at least for key modules & functions (needed for `sphinx`)
-* Expand `.gitignore`
+* Expand `.gitignore` 
   - Ben: check other branches
   - Remove `.DS_Store` & any other macturds from tracking
-* Dead code removal (commented out & unused code)
+* Dead code removal (commented out & unused code) 
 * Configure repo for `coverage.py`
   - TODO: grab config from experimental branch
-* Implement CI to include unit testing runs, coverage checks etc
+* Implement CI to include unit testing runs, coverage checks etc [#27](https://github.com/ACCESS-NRI/amami/issues/27)
   - Do GitHub actions cover our requirements?
 
 ## Structural Changes
@@ -41,14 +41,13 @@ Suggested changes to simplify file & dir structure
 * ~~Is `amami/data/metoffice_stash_page` required?~~
   - ~~7.5MB block of text/URLs (many duplicated URLs)~~
   - ~~Tested several URLs, all failed on HTTP404~~
-* Is any functionality duplicated & replaceable with existing dependencies?
+* Is any functionality duplicated & replaceable with existing dependencies? [#28](https://github.com/ACCESS-NRI/amami/issues/28)
   - Needs double check of some of the `um2nc` helper funcs
   - See the `iris.load()` & inbuilt cube filtering
   - TODO: what edge cases can be removed? (simplifies unit testing)
-* Move `amami/loggers/__init__.py` to `amami/loggers.py`
-* Consider removing `amami/misc_utils/__init__.py`
-  - Is this now `helpers.py`?
-* DEFER: Move `amami/netcdf_utils/__init__.py` to a root level `netcdf` module
+* Move `amami/loggers/__init__.py` to `amami/loggers.py` [#20](https://github.com/ACCESS-NRI/amami/issues/20)
+* Move `amami/misc_utils/__init__.py` to `amami/helpers.py` [#20](https://github.com/ACCESS-NRI/amami/issues/20)
+* DEFER: Move `amami/netcdf_utils/__init__.py` to a root level `netcdf` module 
   - Is the module needed? Will be part of a future review...
 
 ## Module Changes
@@ -60,19 +59,19 @@ General changes:
 * Remove unused imports
   - Add this as a CI/CD check/cleanup step?
   - TODO: what is the import cleaner tool? `ruff`?
-* Implement unit testing
+* Implement unit testing [#17](https://github.com/ACCESS-NRI/amami/issues/17)
   - Requires architectural modification
   - Numerous functions require splitting/logic reordering etc to facilitate conversion to smaller, testable funcs
-* Replace magic numbers with constants
+* Replace magic numbers with constants [#29](https://github.com/ACCESS-NRI/amami/issues/29)
 
 ### commands
 
-* Refactor data processing modules (`um2nc.py` etc) main func(s) to take separate, documented input args
+* Refactor data processing modules (`um2nc.py` etc) main func(s) to take separate, documented input args [#30](https://github.com/ACCESS-NRI/amami/issues/30)
   - Expand args in `main()` command funcs (introduces an API for each command, which helps with clarity & testing)
 
 ### loggers
 
-* DEFER Compress/refactor logger module code
+* DEFER Compress/refactor logger module code [#18](https://github.com/ACCESS-NRI/amami/issues/18)
   - SKIP? Use `functools.partial` to simplify substantially duplicated funcs?
   - Can default logging format/styling be overriden, removing the need for a custom logging class?
   - Try to remove the custom logger where custom methods are manually attached to the logger
@@ -83,9 +82,9 @@ General changes:
 * DEFER (file temp removed) Refactor: separate functionality to read & remove boundary coords
    Does the netCDF API handle the funcs?
 
-### parsers
+### parsers [#32](https://github.com/ACCESS-NRI/amami/issues/32)
 
-* FIXME: refactor multiple `ArgumentParser` declarations.
+* FIXME: refactor multiple `ArgumentParser` declarations. 
   - 4 parsers exist: `MainParser`, `SubCommandParser`, `help Parser`, `common Parser`
   - Simplify arg parsing overall
   - TODO: Extract args for clean calling of data processing commands
@@ -94,7 +93,7 @@ General changes:
   - Replace classes with function calls? (simplify the code)
   - Fix formatting of multiline with `\n` chars
   - Merge modules into single module?
-* Refactor `amami/parsers/core.py`, handle actions elsewhere?
+* ~~Refactor `amami/parsers/core.py`, handle actions elsewhere?~~
 * Fix triple quoting `amami/parsers/um2nc_parser.py`
   - TODO Confirm automatic dedentation in triple quoted strings
   - Cleanup formatting parentheses in `callback_function()`
@@ -102,7 +101,7 @@ General changes:
   - Refactor to use `argparse` API (defer: can argparse handle required customisation?)
   - Remove USAGE str, use `argparse` to generate help?
 
-### stash_utils
+### stash_utils [#22](https://github.com/ACCESS-NRI/amami/issues/22)
 
 * Refactor `amami/stash_utils/__init__.py` to `amami/stash.py` (package to module)
 * `atm_stashlist.py` is 4700 lines of constants, is this data in another python dependency?
@@ -124,7 +123,7 @@ General changes:
 * Convert from empty package to `amami/um_utils.py` module
 * ~~Delete `validation_tools.py`?~~
 
-## um2nc
+## um2nc [#11](https://github.com/ACCESS-NRI/amami/issues/11)
 
 * Use constraints arg in `iris.load()` to filter to required cubes first
   - This reduces repeated filtering further down in the function body
