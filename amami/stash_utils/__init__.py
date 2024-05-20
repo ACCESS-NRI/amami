@@ -96,6 +96,8 @@ class Stash:
             return self.string == other or self.long_name == other
         elif isinstance(other, int):
             return self.itemcode == other
+        elif isinstance(other, irisSTASH):
+            return self.model == other.model and self.section == other.section and self.item == other.item
         else:
             return False
     
