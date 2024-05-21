@@ -20,7 +20,7 @@ import iris
 import iris.coords
 import amami
 import amami.um_utils as umutils
-from amami.stash_utils import Stash
+from amami.um_utils import Stash
 from amami.loggers import LOGGER
 from amami.helpers import get_abspath
 
