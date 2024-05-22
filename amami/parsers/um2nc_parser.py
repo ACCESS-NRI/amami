@@ -7,9 +7,9 @@ Module to define the parser for the `um2nc` subcommand.
 Script created by Davide Marchegiani (davide.marchegiani@anu.edu.au) at ACCESS-NRI.
 """
 
-from typing import List
 import argparse
-from amami.misc_utils import create_unexistent_file
+from typing import List
+from amami.helpers import create_unexistent_file
 from amami.parsers import SubcommandParser
 from amami.loggers import LOGGER
 

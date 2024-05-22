@@ -2,15 +2,23 @@
 # SPDX-License-Identifier: Apache-2.0
 
 """
-Module to define the Stash class to implement STASH-related functionalities 
-
 Script created by Davide Marchegiani (davide.marchegiani@anu.edu.au) at ACCESS-NRI.
+
+Utility module for UM fieldsfiles and STASH-related functionalities
 """
 
-from typing import Union
+
+
+
 import re
-from iris.fileformats.pp import STASH as irisSTASH
+import mule
+from typing import Union, List
 from amami.loggers import LOGGER
+from iris.fileformats.pp import STASH as irisSTASH
+from amami._atm_stashlist import ATM_STASHLIST
+
+IMDI=-32768 #(-2.0**15)
+RMDI=-1073741824.0 #(-2.0**30)
 
 class Stash:
     """
@@ -132,7 +140,6 @@ class Stash:
         Get STASH variable names based on the UM STASH Registry 
         (https://reference.metoffice.gov.uk/um/stash)
         """
-        from amami.stash_utils.atm_stashlist import ATM_STASHLIST
         try:
             var = ATM_STASHLIST[self.itemcode]
         except KeyError:
@@ -146,3 +153,58 @@ class Stash:
         self.units = var[2]
         self.standard_name = var[3]
         self.unique_name = var[4] if var[4] else self.name
+
+def read_fieldsfile(
+    um_filename: str,
+    check_ancil:bool=False
+    ) -> type[mule.UMFile]:
+    """Read UM fieldsfile with mule, and optionally check if type is AncilFile"""
+
+    try:
+        file = mule.load_umfile(um_filename)
+        file.remove_empty_lookups()
+    except ValueError:
+        LOGGER.error(f"'{um_filename.resolve()}' does not appear to be a UM file.")
+    if check_ancil and (not isinstance(file, mule.ancil.AncilFile)):
+        LOGGER.error(f"'{um_filename}' does not appear to be a UM ancillary file.")
+    return file
+
+def get_grid_type(um_file:type[mule.UMFile]) -> str:
+    """Get UM grid type from mule UMFile"""
+    gs = um_file.fixed_length_header.grid_staggering
+    if gs == 6:
+        return 'EG' # End Game
+    elif gs == 3:
+        return 'ND' # New Dynamics
+    else:
+        LOGGER.error(
+            "Unable to determine grid staggering from UM Fielsfile header. "\
+            f"Grid staggering '{gs}' not supported."
+        )
+
+def get_sealevel_rho(um_file:type[mule.UMFile]) -> float:
+    """Get UM sea level on rho levels from mule UMFile"""
+    try:
+        return um_file.level_dependent_constants.zsea_at_rho
+    except AttributeError:
+        return 0.
+
+def get_sealevel_theta(um_file:type[mule.UMFile]) -> float:
+    """Get UM sea level on thetha levels from mule UMFile"""
+    try:
+        return um_file.level_dependent_constants.zsea_at_theta
+    except AttributeError:
+        return 0.
+    
+def get_stash(
+    um_file:type[mule.UMFile],
+    repeat:bool=True,
+) -> List:
+    """
+    Get ordered list of stash codes in mule UMFile
+    with (repeat = True) or without (repeat = False) repetitions.
+    """
+    stash_codes = [f.lbuser4 for f in um_file.fields]
+    if not repeat:
+        return list(dict.fromkeys(stash_codes))
+    return stash_codes
