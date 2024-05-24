@@ -34,17 +34,12 @@ def main(args):
     """
     Main function for `um2nc` subcommand
     """
-    # Get input path
-    LOGGER.debug(f"{args=}")
     infile = get_abspath(args.infile)
-    LOGGER.debug(f"{infile=}")
-    # Get output path
     outfile = get_abspath(args.outfile, checkdir=True)
-    # Get netCDF format
     nc_format = get_nc_format(args.format)
     check_ncformat(nc_format,args.use64bit)
+
     # Use mule to get the model levels to help with dimension naming
-    LOGGER.info(f"Reading UM file {infile}")
     ff = umutils.read_fieldsfile(infile)
     try:
         cubes = iris.load(infile)
@@ -53,27 +48,28 @@ def main(args):
             "UM file can not be processed. UM files with time series currently not supported.\n"
             "Please convert using convsh (https://ncas-cms.github.io/xconv-doc/html/example1.html)."
         )
+
     # Get order of fields (from stash codes)
     stash_order = list(dict.fromkeys([f.lbuser4 for f in ff.fields]))
     LOGGER.debug(f"{stash_order=}")
-    # Order the cubelist based on input order
+
+    # Order cubelist based on input order
     cubes.sort(key = lambda c:
                stash_order.index(c.attributes['STASH'].section*1000 + c.attributes['STASH'].item))
+
     # Get heaviside fields for pressure level masking
     if not args.nomask:
         heaviside_uv = get_heaviside_uv(cubes)
         heaviside_t = get_heaviside_t(cubes)
-    # Get grid type
+
     grid_type = umutils.get_grid_type(ff)
-    # Get sea level on rho levels
     z_rho = umutils.get_sealevel_rho(ff)
-    # Get sea level on theta levels
     z_theta = umutils.get_sealevel_theta(ff)
+
     # Write output file
     LOGGER.info(f"Writing netCDF file {outfile}")
     try:
         with iris.fileformats.netcdf.Saver(outfile, nc_format) as sman:
-            # Add global attributes
             add_global_attrs(infile, sman, args.nohist)
             for c in cubes:
                 stash = Stash(c.attributes['STASH'])
@@ -81,25 +77,17 @@ def main(args):
                 LOGGER.debug(
                     f"Processing STASH field: {itemcode}"
                 )
-                # Skip fields not specified with --include-list option
-                # or fields specified with --exclude-list option
-                if (
-                    (args.include_list and itemcode not in args.include_list)
-                    or
-                    (args.exclude_list and itemcode in args.exclude_list)
-                ):
-                    LOGGER.debug(
-                        f"Field with itemcode '{itemcode}' excluded from the conversion."
-                    )
+                # Skip fields not specified with --include-list or excluded fields
+                if ((args.include_list and itemcode not in args.include_list) or
+                        (args.exclude_list and itemcode in args.exclude_list)):
+                    LOGGER.debug(f"Itemcode '{itemcode}' field excluded from conversion.")
                     continue
-                # Name cube
+
                 name_cube(c,stash,args.simple)
-                # Remove unreliable intervals in cell methods
-                fix_cell_methods(c)
-                # Properly name lat/lon coordinates
-                fix_latlon_coord(c, grid_type)
-                # Properly name model_level_number coordinates
-                fix_level_coord(c, z_rho, z_theta)
+                fix_cell_methods(c)  # Remove unreliable intervals in cell methods
+                fix_latlon_coord(c, grid_type)  # Properly name lat/lon coordinates
+                fix_level_coord(c, z_rho, z_theta)  # Properly name model_level_number coordinates
+
                 # Mask pressure level fields
                 if not args.nomask:
                     if not apply_mask_to_pressure_level_field(
@@ -110,20 +98,17 @@ def main(args):
                         args.hcrit
                     ):
                         continue
-                # Fix pressure coordinates
+
                 c = fix_pressure_coord(c)
-                # change data to 32bit
+
                 if not args.use64bit:
                     to32bit_data(c)
-                # Set missing value
+
                 set_missing_value(c)
-                # Convert proleptic calendar
                 convert_proleptic_calendar(c)
-                LOGGER.info(
-                    f"Writing field '{c.var_name}' -- ITEMCODE: {itemcode}"
-                )
                 cubewrite(c, sman, args.compression)
-    except Exception as e: #If there is an error, remove the netCDF file created
+                LOGGER.info(f"Wrote field '{c.var_name}' -- ITEMCODE: {itemcode}")
+    except Exception as e:
         os.remove(outfile)
         LOGGER.error(e)
     LOGGER.info("Done!")
