@@ -10,19 +10,24 @@ Modified by Davide Marchegiani at ACCESS-NRI - davide.marchegiani@anu.edu.au
 Convert a UM fieldsfile to netCDF
 """
 
-import datetime
 import os
-import numpy as np
-import cf_units
-import cftime
-import netCDF4
-import iris
-import iris.coords
+import datetime
+
 import amami
 import amami.um_utils as umutils
 from amami.um_utils import Stash
 from amami.loggers import LOGGER
 from amami.helpers import get_abspath
+
+import numpy as np
+import cf_units
+import cftime
+import netCDF4
+import iris
+import iris.util
+import iris.coords
+import iris.exceptions
+import iris.fileformats
 
 
 def main(args):
