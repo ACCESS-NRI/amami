@@ -231,10 +231,8 @@ def apply_mask_to_pressure_level_field(
     using heaviside function and mask them.
     """
     itemcode = stash.itemcode
-    # Heaviside_uv
-    if ((30201 <= itemcode <= 30288)
-    or
-    (30302 <= itemcode <= 30303)):
+
+    if (30201 <= itemcode <= 30288) or (30302 <= itemcode <= 30303):
         if heaviside_uv:
             LOGGER.info(
                 f"Masking field '{stash.long_name}' using heaviside_uv field "
@@ -244,14 +242,13 @@ def apply_mask_to_pressure_level_field(
             apply_mask(cube, heaviside_uv, hcrit)
         else:
             LOGGER.warning(
-            "Heaviside_uv field needed for masking pressure level data "
-            f"is not present. The field '{stash.long_name} -- ITEMCODE:{itemcode}' "
-            f"will be skipped.\n"
-            "If you still want convert this field without masking, "
-            "use the '--nomask' option."
+                "Heaviside_uv field needed for masking pressure level data "
+                f"is not present. The field '{stash.long_name} -- ITEMCODE:{itemcode}' "
+                f"will be skipped.\n"
+                "If you still want convert this field without masking, "
+                "use the '--nomask' option."
             )
             return False
-    # Heaviside_t
     elif 30293 <= itemcode <= 30298:
         if heaviside_t:
             LOGGER.info(
@@ -262,11 +259,11 @@ def apply_mask_to_pressure_level_field(
             apply_mask(cube, heaviside_t, hcrit)
         else:
             LOGGER.warning(
-            "Heaviside_t field needed for masking pressure level data "
-            f"is not present. The field '{stash.long_name} -- ITEMCODE:{itemcode}' "
-            f"will be skipped.\n"
-            "If you still want convert this field without masking, "
-            "use the '--nomask' option."
+                "Heaviside_t field needed for masking pressure level data "
+                f"is not present. The field '{stash.long_name} -- ITEMCODE:{itemcode}' "
+                f"will be skipped.\n"
+                "If you still want convert this field without masking, "
+                "use the '--nomask' option."
             )
             return False
     return True
