@@ -6,7 +6,6 @@ Module to control logging for 'amami' package
 """
 
 import traceback
-import sys
 import logging
 from types import MethodType
 import warnings
@@ -18,11 +17,13 @@ _COLOR_ERROR = '\033[1;38;2;230;50;50m'
 _COLOR_CRITICAL = '\033[1;38;2;255;10;10m'
 _COLOR_END = '\033[0m'
 
+
 def indent(msg, numtabs):
     """
     Indent a message by a given number of tabs.
     """
     return msg.replace('\n','\n\t'.expandtabs(numtabs))
+
 
 def custom_debug(self, msg, *args, **kwargs):
     """
@@ -37,6 +38,7 @@ def custom_debug(self, msg, *args, **kwargs):
             **kwargs
         )
 
+
 def custom_info(self, msg, *args, **kwargs):
     """
     Extend logging.info method to add indentation to logging messages.
@@ -50,6 +52,7 @@ def custom_info(self, msg, *args, **kwargs):
             **kwargs
         )
 
+
 def custom_warning(self, msg, *args, **kwargs):
     """
     Extend logging.warning method to add indentation to logging messages.
@@ -62,6 +65,7 @@ def custom_warning(self, msg, *args, **kwargs):
             args, 
             **kwargs
         )
+
 
 def custom_error(self, msg, *args, **kwargs):
     """
@@ -94,10 +98,10 @@ class CustomConsoleFormatter(logging.Formatter):
     """
     def __init__(
             self,
-            fmt_debug:str=None,
-            fmt_info:str=None,
-            fmt_warning:str=None,
-            fmt_error:str=None,
+            fmt_debug: str=None,
+            fmt_info: str=None,
+            fmt_warning: str=None,
+            fmt_error: str=None,
             fmt_critical=None,
             **formatter_kwargs,
         ) -> None:
@@ -137,6 +141,7 @@ class CustomConsoleFormatter(logging.Formatter):
         self._style._fmt = format_orig
         return result
 
+
 def generate_logger():
     """Generate main logger"""
     # Get logger
@@ -163,9 +168,11 @@ def generate_logger():
     logger.critical = MethodType(custom_critical,logger)
     return logger
 
+
 LOGGER = generate_logger()
 # Set tabs space for logging indentation
 setattr(LOGGER,"TABS",9)
+
 
 # Make warnings use LOGGER.warning instead of the default format
 def external_warning_formatting(
@@ -183,5 +190,6 @@ def external_warning_formatting(
     LOGGER.warning(
         f"{filename}:{lineno} - {message}".replace('\n','\n\t').expandtabs(LOGGER.TABS)
     )
+
 
 warnings.showwarning = external_warning_formatting
