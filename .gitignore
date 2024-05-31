@@ -5,3 +5,5 @@ build/
 amami.egg-info/
 .vscode
 .DS_Store
+.idea/
+.coverage
