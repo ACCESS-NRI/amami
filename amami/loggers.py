@@ -70,20 +70,11 @@ def custom_error(self, msg, *args, **kwargs):
     and automatically exit after the message is logged.
     """
     msg = indent(msg, self.TABS)
-    if (
-        (self.isEnabledFor(logging.DEBUG))
-        and
-        (traceback.format_exc() != "NoneType: None\n")
-    ):
+    if ((self.isEnabledFor(logging.DEBUG)) and
+            (traceback.format_exc() != "NoneType: None\n")):
         msg += "\n" + traceback.format_exc()
-    sys.exit(
-        self._log(
-            logging.ERROR, 
-            msg,
-            args, 
-            **kwargs
-        )
-    )
+        self._log(logging.ERROR, msg, args, **kwargs)
+
 
 def custom_critical(self, msg, *args, **kwargs):
     """
@@ -94,14 +85,8 @@ def custom_critical(self, msg, *args, **kwargs):
     msg = indent(msg, self.TABS)
     if self.isEnabledFor(logging.DEBUG):
         msg += "\n" + indent(traceback.format_exc(), self.TABS)
-    sys.exit(
-        self._log(
-            logging.CRITICAL, 
-            msg,
-            args, 
-            **kwargs
-        )
-    )
+        self._log(logging.CRITICAL, msg, args, **kwargs)
+
 
 class CustomConsoleFormatter(logging.Formatter):
     """
