@@ -27,12 +27,12 @@ from amami.um_utils import Stash
 from amami.loggers import LOGGER
 from amami.helpers import get_abspath
 
-def get_nc_format(format_arg:str) -> str:
+def get_nc_format(format_arg: str) -> str:
     """Convert format numbers to format strings"""
     nc_formats = {
-        1:'NETCDF4',
-        2:'NETCDF4_CLASSIC',
-        3:'NETCDF3_CLASSIC',
+        1: 'NETCDF4',
+        2: 'NETCDF4_CLASSIC',
+        3: 'NETCDF3_CLASSIC',
         4: 'NETCDF3_64BIT',
     }
     try:
@@ -40,7 +40,8 @@ def get_nc_format(format_arg:str) -> str:
     except ValueError:
         return format_arg
 
-def check_ncformat(ncformat,use64bit):
+
+def check_ncformat(ncformat, use64bit):
     """
     Check whether the --64bit option was chosen along with
     the nc format 'NETCDF3_CLASSIC', as they are incompatible.
@@ -62,8 +63,9 @@ def add_global_attrs(
         date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         history = f"File {infile} converted with 'amami um2nc' v{amami.__version__} "\
             f"on {date}"
-        fid.update_global_attributes({'history':history})
-    fid.update_global_attributes({'Conventions':'CF-1.6'})
+        fid.update_global_attributes({'history': history})
+    fid.update_global_attributes({'Conventions': 'CF-1.6'})
+
 
 def get_heaviside_uv(cubes):
     """Get heaviside_uv field if UM file has it, otherwise return None"""
@@ -72,12 +74,14 @@ def get_heaviside_uv(cubes):
             return c
     return None
 
+
 def get_heaviside_t(cubes):
     """Get heaviside_t field if UM file has it, otherwise return None"""
     for c in cubes:
         if Stash(c.attributes['STASH']).itemcode == 30304:
             return c
     return None
+
 
 def apply_mask(
     cube,
@@ -95,7 +99,7 @@ def apply_mask(
     if cube.shape == heaviside.shape:
         # If the shapes match it's simple
         # Temporarily turn off warnings from 0/0
-        with np.errstate(divide='ignore',invalid='ignore'):
+        with np.errstate(divide='ignore', invalid='ignore'):
             cube.data = np.ma.masked_array(
                 cube.data/heaviside.data,
                 heaviside.data <= hcrit
@@ -116,7 +120,7 @@ def apply_mask(
                 LOGGER.error(
                     'Unexpected mismatch in levels of extracted heaviside function.'
                 )
-            with np.errstate(divide='ignore',invalid='ignore'):
+            with np.errstate(divide='ignore', invalid='ignore'):
                 cube.data = np.ma.masked_array(
                     cube.data/h_tmp.data,
                     h_tmp.data <= hcrit
@@ -126,6 +130,7 @@ def apply_mask(
                 "Unable to match levels of heaviside function to variable "
                 f"{Stash(cube.attributes['STASH']).long_name}."
             )
+
 
 def apply_mask_to_pressure_level_field(
     cube,
@@ -140,9 +145,7 @@ def apply_mask_to_pressure_level_field(
     """
     itemcode = stash.itemcode
     # Heaviside_uv
-    if ((30201 <= itemcode <= 30288)
-    or
-    (30302 <= itemcode <= 30303)):
+    if (30201 <= itemcode <= 30288) or (30302 <= itemcode <= 30303):
         if heaviside_uv:
             LOGGER.info(
                 f"Masking field '{stash.long_name}' using heaviside_uv field "
@@ -152,11 +155,11 @@ def apply_mask_to_pressure_level_field(
             apply_mask(cube, heaviside_uv, hcrit)
         else:
             LOGGER.warning(
-            "Heaviside_uv field needed for masking pressure level data "
-            f"is not present. The field '{stash.long_name} -- ITEMCODE:{itemcode}' "
-            f"will be skipped.\n"
-            "If you still want convert this field without masking, "
-            "use the '--nomask' option."
+                "Heaviside_uv field needed for masking pressure level data "
+                f"is not present. The field '{stash.long_name} -- ITEMCODE:{itemcode}' "
+                f"will be skipped.\n"
+                "If you still want convert this field without masking, "
+                "use the '--nomask' option."
             )
             return False
     # Heaviside_t
@@ -170,14 +173,15 @@ def apply_mask_to_pressure_level_field(
             apply_mask(cube, heaviside_t, hcrit)
         else:
             LOGGER.warning(
-            "Heaviside_t field needed for masking pressure level data "
-            f"is not present. The field '{stash.long_name} -- ITEMCODE:{itemcode}' "
-            f"will be skipped.\n"
-            "If you still want convert this field without masking, "
-            "use the '--nomask' option."
+                "Heaviside_t field needed for masking pressure level data "
+                f"is not present. The field '{stash.long_name} -- ITEMCODE:{itemcode}' "
+                f"will be skipped.\n"
+                "If you still want convert this field without masking, "
+                "use the '--nomask' option."
             )
             return False
     return True
+
 
 def name_cube(
     cube,
@@ -235,6 +239,7 @@ def name_cube(
     if not cube.long_name and stash.long_name:
         cube.long_name = stash.long_name
 
+
 def fix_cell_methods(cube):
     """Remove intervals in cell methods as it's not reliable."""
     # Input is tuple of cell methods
@@ -249,6 +254,7 @@ def fix_cell_methods(cube):
         newm.append(n)
     cube.cell_methods = tuple(newm)
 
+
 def fix_latlon_coord(cube, grid_type):
     """Get proper lat/lon coordinate names based on cube grid_type"""
     def _add_coord_bounds(coord):
@@ -257,9 +263,9 @@ def fix_latlon_coord(cube, grid_type):
                 coord.guess_bounds()
             # For length 1, assume it's global. guess_bounds doesn't work in this case
             elif coord.name() == 'latitude':
-                coord.bounds = np.array([[-90.,90.]])
+                coord.bounds = np.array([[-90., 90.]])
             elif coord.name() == 'longitude':
-                coord.bounds = np.array([[0.,360.]])
+                coord.bounds = np.array([[0., 360.]])
     try:
         lat = cube.coord('latitude')
         # Force to double for consistency with CMOR
@@ -305,6 +311,7 @@ def fix_latlon_coord(cube, grid_type):
             "(https://ncas-cms.github.io/xconv-doc/html/example1.html)."
         )
 
+
 def fix_level_coord(cube, z_rho, z_theta):
     """Rename model_level_number coordinates to better distinguish rho and theta levels"""
     try:
@@ -322,6 +329,7 @@ def fix_level_coord(cube, z_rho, z_theta):
         c_height.var_name = 'theta_level_height'
         c_sigma.var_name = 'sigma_theta'
 
+
 def fix_pressure_coord(cube):
     """Fix pressure coords"""
     try:
@@ -330,7 +338,7 @@ def fix_pressure_coord(cube):
         plevs.convert_units('Pa')
         # Round coord points otherwise
         # they're off by 1e-10 which looks odd in ncdump
-        plevs.points = np.round(plevs.points,5)
+        plevs.points = np.round(plevs.points, 5)
         # If needed, flip to get pressure decreasing as in CMIP6 standard
         if plevs.points[0] < plevs.points[-1]:
             cube = iris.util.reverse(cube, 'pressure')
@@ -338,12 +346,14 @@ def fix_pressure_coord(cube):
         pass
     return cube
 
+
 def to32bit_data(cube):
     """Change data to 32 bit"""
     if cube.data.dtype == 'float64':
         cube.data = cube.data.astype(np.float32)
     elif cube.data.dtype == 'int64':
         cube.data = cube.data.astype(np.int32)
+
 
 def set_missing_value(cube):
     """
@@ -355,9 +365,10 @@ def set_missing_value(cube):
         fill_value = 1.e20
     else:
         # Use netCDF defaults
-        key=f"{kind}{cube.data.dtype.itemsize:1d}"
+        key = f"{kind}{cube.data.dtype.itemsize:1d}"
         fill_value = netCDF4.default_fillvals[key]
     cube.attributes['missing_value'] = np.array([fill_value], cube.data.dtype)
+
 
 def convert_proleptic_calendar(cube):
     """
@@ -385,7 +396,7 @@ def convert_proleptic_calendar(cube):
                 date.second
             )
             tvals[i] = newunits.date2num(newdate)
-            if has_bnds: # Fields with instantaneous data don't have bounds
+            if has_bnds:  # Fields with instantaneous data don't have bounds
                 for j in range(2):
                     date = time.units.num2date(tbnds[i][j])
                     newdate = cftime.DatetimeProlepticGregorian(
@@ -427,6 +438,7 @@ def convert_proleptic_calendar(cube):
     cube.remove_coord('forecast_period')
     cube.remove_coord('forecast_reference_time')
 
+
 def cubewrite(cube, sman, compression):
     """Write cube to file"""
     fill_value = cube.attributes['missing_value']
@@ -439,7 +451,7 @@ def cubewrite(cube, sman, compression):
                 tdim = tdim[0]
                 neworder = list(range(cube.ndim))
                 neworder.remove(tdim)
-                neworder.insert(0,tdim)
+                neworder.insert(0, tdim)
                 LOGGER.warning(
                     "Incorrect dimension order for ITEMCODE: "
                     f"{Stash(cube.attributes['STASH']).itemcode}.\n"
@@ -447,7 +459,7 @@ def cubewrite(cube, sman, compression):
                 )
                 cube.transpose(neworder)
         else:
-            cube = iris.util.new_axis(cube,cube.coord('time'))
+            cube = iris.util.new_axis(cube, cube.coord('time'))
         sman.write(
             cube,
             zlib=True,
@@ -463,6 +475,7 @@ def cubewrite(cube, sman, compression):
             fill_value=fill_value
         )
 
+
 def main(args):
     """
     Main function for `um2nc` subcommand
@@ -475,7 +488,7 @@ def main(args):
     outfile = get_abspath(args.outfile, checkdir=True)
     # Get netCDF format
     nc_format = get_nc_format(args.format)
-    check_ncformat(nc_format,args.use64bit)
+    check_ncformat(nc_format, args.use64bit)
     # Use mule to get the model levels to help with dimension naming
     LOGGER.info(f"Reading UM file {infile}")
     ff = umutils.read_fieldsfile(infile)
@@ -490,8 +503,9 @@ def main(args):
     stash_order = list(dict.fromkeys([f.lbuser4 for f in ff.fields]))
     LOGGER.debug(f"{stash_order=}")
     # Order the cubelist based on input order
-    cubes.sort(key = lambda c:
+    cubes.sort(key=lambda c:
                stash_order.index(c.attributes['STASH'].section*1000 + c.attributes['STASH'].item))
+
     # Get heaviside fields for pressure level masking
     if not args.nomask:
         heaviside_uv = get_heaviside_uv(cubes)
@@ -504,6 +518,7 @@ def main(args):
     z_theta = umutils.get_sealevel_theta(ff)
     # Write output file
     LOGGER.info(f"Writing netCDF file {outfile}")
+
     try:
         with iris.fileformats.netcdf.Saver(outfile, nc_format) as sman:
             # Add global attributes
@@ -526,7 +541,7 @@ def main(args):
                     )
                     continue
                 # Name cube
-                name_cube(c,stash,args.simple)
+                name_cube(c, stash, args.simple)
                 # Remove unreliable intervals in cell methods
                 fix_cell_methods(c)
                 # Properly name lat/lon coordinates
@@ -556,7 +571,7 @@ def main(args):
                     f"Writing field '{c.var_name}' -- ITEMCODE: {itemcode}"
                 )
                 cubewrite(c, sman, args.compression)
-    except Exception as e: #If there is an error, remove the netCDF file created
+    except Exception as e:
         os.remove(outfile)
         LOGGER.error(e)
     LOGGER.info("Done!")
