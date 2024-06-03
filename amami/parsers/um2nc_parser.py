@@ -11,7 +11,8 @@ import argparse
 from typing import List
 from amami.helpers import create_unexistent_file
 from amami.parsers import SubcommandParser
-from amami.loggers import LOGGER
+from amami.parsers.main_parser import ParserError
+
 
 DESCRIPTION = """
 Convert UM fieldsfile to netCDF.
@@ -61,9 +62,9 @@ def callback_function(known_args: argparse.Namespace, unknown_args: List[str]) -
         and
         (len(unknown_args) > 1)
             ):
-        LOGGER.error(f"Too many arguments.\n\nusage: {' '.join(USAGE.split())}")
+        raise ParserError("Too many arguments.")
     elif (known_args_dict['infile'] is None) and (len(unknown_args) == 0):
-        LOGGER.error(f"No input file provided.\n\nusage: {' '.join(USAGE.split())}")
+        raise ParserError("No input file provided.")
     elif known_args_dict['infile'] is None:
         known_args_dict['infile'] = unknown_args[0]
         if known_args_dict['outfile'] is None:

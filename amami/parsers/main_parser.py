@@ -18,6 +18,12 @@ from amami.parsers import (
 )
 from amami import commands as amami_commands
 
+
+class ParserError(Exception):
+    """Base exception for parser errors."""
+    pass
+
+
 COMMANDS = [command.name for command in pkgutil.iter_modules(amami_commands.__path__)]
 
 class MainParser(argparse.ArgumentParser):
