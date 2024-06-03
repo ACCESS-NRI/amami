@@ -13,11 +13,10 @@ from amami.helpers import create_unexistent_file
 from amami.parsers import SubcommandParser
 from amami.loggers import LOGGER
 
-DESCRIPTION="""
+DESCRIPTION = """
 Convert UM fieldsfile to netCDF.
-For more information about UM fieldsfiles, please refer to"""\
-""" https://code.metoffice.gov.uk/doc/um/latest/papers/umdp_F03.pdf"""\
-""" (MOSRS account needed).
+For more information about UM fieldsfiles, please refer to
+https://code.metoffice.gov.uk/doc/um/latest/papers/umdp_F03.pdf (MOSRS account needed).
 
 Examples:
 `um2nc [-i] INPUT_FILE`
@@ -27,21 +26,19 @@ Converts INPUT_FILE to netCDF and saves the output as INPUT_FILE.nc.
 Converts INPUT_FILE to netCDF and saves the output as OUTPUT_FILE. Verbosity is enabled.
 
 `um2nc [-i] INPUT_FILE [-o] OUTPUT_FILE --format NETCDF3_CLASSIC --simple`
-Converts INPUT_FILE to a NETCDF3 CLASSIC netCDF, using "simple" variable names"""\
-""" (in the form "fld_s01i123"), and saves the output as OUTPUT_FILE.
+Converts INPUT_FILE to a NETCDF3 CLASSIC netCDF, using "simple" variable names
+(in the form "fld_s01i123"), and saves the output as OUTPUT_FILE.
 """
 
-USAGE="""
-amami um2nc [-h] [-i] INPUT_FILE [[-o] OUTPUT_FILE] [-v|-s|--debug] """\
-"""[--format {NETCDF4,NETCDF4_CLASSIC,NETCDF3_CLASSIC,NETCDF3_64BIT,1,2,3,4}] """\
-"""[-c COMPRESSION] [--64] [--nohist] [--simple] [--nomask|--hcrit HCRIT] """\
-"""[--include STASH_CODE1 [STASH_CODE2 ...]|--exclude STASH_CODE1 [STASH_CODE2 ...]]
+USAGE = """
+amami um2nc [-h] [-i] INPUT_FILE [[-o] OUTPUT_FILE] [-v|-s|--debug]
+[--format {NETCDF4,NETCDF4_CLASSIC,NETCDF3_CLASSIC,NETCDF3_64BIT,1,2,3,4}]
+[-c COMPRESSION] [--64] [--nohist] [--simple] [--nomask|--hcrit HCRIT]
+[--include STASH_CODE1 [STASH_CODE2 ...]|--exclude STASH_CODE1 [STASH_CODE2 ...]]
 """
 
-def callback_function(
-        known_args: argparse.Namespace,
-        unknown_args: List[str]
-    ) -> argparse.Namespace:
+
+def callback_function(known_args: argparse.Namespace, unknown_args: List[str]) -> argparse.Namespace:
     """
     Preprocessing for `um2nc` parser.
     Does the following tasks:
