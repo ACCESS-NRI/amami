@@ -8,8 +8,8 @@ from hypothesis import given, strategies as st
 # import mule
 # from iris.fileformats.pp import STASH as irisSTASH
 
-REGEX_FOR_STRCODE = Stash.REGEX_FOR_STRCODE
-REGEX_FOR_ITEMCODE = Stash.REGEX_FOR_ITEMCODE
+REGEX_FOR_STRENCODED = Stash.REGEX_FOR_STRENCODED
+REGEX_FOR_STRITEM = Stash.REGEX_FOR_STRITEM
 
 
 @pytest.fixture
@@ -96,15 +96,35 @@ def stash_with_all() -> Stash:
     return Stash("m01s30i295")
 
 
-@given(st.from_regex(REGEX_FOR_STRCODE, fullmatch=True))
-def test_stash_from_string(string: str):
+@given(st.from_regex(REGEX_FOR_STRENCODED, fullmatch=True))
+def test_stash_from_string_encoded_nofail(string: str):
     Stash(string)
 
 
-@given(st.from_regex(REGEX_FOR_STRCODE, fullmatch=True))
-def test_stash_from_string(string: str):
+@given(st.from_regex(REGEX_FOR_STRITEM, fullmatch=True))
+def test_stash_from_stringitem_nofail(string: str):
     Stash(string)
 
+
+def test_stash_from_itemcode():
+    stash = Stash(2003)
+    assert stash.model == 1
+    assert stash.section == 2
+    assert stash.item == 3
+
+
+def test_stash_from_stringitem():
+    stash = Stash("2003")
+    assert stash.model == 1
+    assert stash.section == 2
+    assert stash.item == 3
+
+
+def test_stash_from_string_encoded():
+    stash = Stash("m01s12i323")
+    assert stash.model == 1
+    assert stash.section == 12
+    assert stash.item == 323
 
 # def test_stash_string():
 #     assert stash_without_params.string == "m01s01i002"

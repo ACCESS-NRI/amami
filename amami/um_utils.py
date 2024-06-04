@@ -36,17 +36,8 @@ class Stash:
         "unique_name",
     ]
 
-    REGEX_FOR_STRCODE = r"^m\d{2}s\d{2}i\d{3}$"
-    REGEX_FOR_ITEMCODE = r"^\d{1,5}$"
-
-    def __new__(
-        cls,
-        code: Union[str, int, irisSTASH],
-    ):
-        if isinstance(code, str) and re.match(cls.REGEX_FOR_ITEMCODE, code.strip()):
-            return cls(int(code))
-        else:
-            return cls(code)
+    REGEX_FOR_STRENCODED = r"^m\d{2}s\d{2}i\d{3}$"
+    REGEX_FOR_STRITEM = r"^\d{1,5}$"
 
     def __init__(
         self,
@@ -54,8 +45,10 @@ class Stash:
     ):
         if isinstance(code, str):
             code = code.strip()
-            if re.match(self.REGEX_FOR_STRCODE, code):
+            if re.match(self.REGEX_FOR_STRENCODED, code):
                 self.model, self.section, self.item = self._from_string(code)
+            elif re.match(self.REGEX_FOR_STRITEM, code):
+                code = int(code)
             else:
                 LOGGER.error(
                     "STASH code needs to be either an integer between 0 and 54999, "
@@ -63,7 +56,7 @@ class Stash:
                     "an integer between 0-9.\nThe part wrapped in squared brackets "
                     "('[]') is optional."
                 )
-        elif isinstance(code, int):
+        if isinstance(code, int):
             if code > 54999 or code < 0:
                 LOGGER.error(
                     f"Invalid STASH item code '{code}'. For item codes reference "
@@ -74,6 +67,13 @@ class Stash:
             self.model, self.section, self.item = self._from_itemcode(code)
         elif isinstance(code, irisSTASH):
             self.model, self.section, self.item = code.model, code.section, code.item
+        else:
+            LOGGER.error(
+                "STASH code needs to be either an integer between 0 and 54999, "
+                "or a string in the format '[m--]s--i---', with each '-' being "
+                "an integer between 0-9.\nThe part wrapped in squared brackets "
+                "('[]') is optional."
+            )
         self.string = self._to_string()
         self.itemcode = self._to_itemcode()
         self.long_name = ""
