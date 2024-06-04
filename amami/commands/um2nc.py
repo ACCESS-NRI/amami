@@ -27,6 +27,12 @@ from amami.um_utils import Stash
 from amami.loggers import LOGGER
 from amami.helpers import get_abspath
 
+
+class UMError(Exception):
+    """Base Exception for Unified Model related errors"""
+    pass
+
+
 def get_nc_format(format_arg: str) -> str:
     """Convert format numbers to format strings"""
     nc_formats = {
@@ -117,19 +123,17 @@ def apply_mask(
             h_tmp = heaviside.extract(constraint)
             # Double check they're actually the same after extraction
             if not np.all(c_p == h_tmp.coord('pressure').points):
-                LOGGER.error(
-                    'Unexpected mismatch in levels of extracted heaviside function.'
-                )
+                raise UMError("Unexpected mismatch in levels of extracted heaviside function.")
+
             with np.errstate(divide='ignore', invalid='ignore'):
                 cube.data = np.ma.masked_array(
                     cube.data/h_tmp.data,
                     h_tmp.data <= hcrit
                 ).astype(np.float32)
         else:
-            LOGGER.error(
-                "Unable to match levels of heaviside function to variable "
-                f"{Stash(cube.attributes['STASH']).long_name}."
-            )
+            long_name = Stash(cube.attributes['STASH']).long_name
+            msg = f"Unable to match levels of heaviside function to variable {long_name}."
+            raise UMError(msg)
 
 
 def apply_mask_to_pressure_level_field(
@@ -305,11 +309,9 @@ def fix_latlon_coord(cube, grid_type):
         else:
             lon.var_name = 'lon'
     except iris.exceptions.CoordinateNotFoundError:
-        LOGGER.error(
-            "File can not be processed. UM files with time series are currently not supported.\n"
-            "Please consider converting using convsh "
-            "(https://ncas-cms.github.io/xconv-doc/html/example1.html)."
-        )
+        msg = ("File cannot be processed. UM files with time series currently unsupported. Consider"
+               " converting with convsh https://ncas-cms.github.io/xconv-doc/html/example1.html")
+        raise UMError(msg)
 
 
 def fix_level_coord(cube, z_rho, z_theta):
@@ -495,10 +497,10 @@ def main(args):
     try:
         cubes = iris.load(infile)
     except iris.exceptions.CannotAddError:
-        LOGGER.error(
-            "UM file can not be processed. UM files with time series currently not supported.\n"
-            "Please convert using convsh (https://ncas-cms.github.io/xconv-doc/html/example1.html)."
-        )
+        msg = ("UM file can not be processed. UM files with time series currently not supported."
+               "Convert with convsh https://ncas-cms.github.io/xconv-doc/html/example1.html.")
+        raise UMError(msg)
+
     # Get order of fields (from stash codes)
     stash_order = list(dict.fromkeys([f.lbuser4 for f in ff.fields]))
     LOGGER.debug(f"{stash_order=}")
@@ -571,7 +573,10 @@ def main(args):
                     f"Writing field '{c.var_name}' -- ITEMCODE: {itemcode}"
                 )
                 cubewrite(c, sman, args.compression)
+
+    # TODO: handle various exceptions here or in the caller?
+    #       Avoid single catchall clause
     except Exception as e:
-        os.remove(outfile)
-        LOGGER.error(e)
-    LOGGER.info("Done!")
+        if os.path.exists(outfile):
+            os.remove(outfile)
+        raise  # capture higher up
