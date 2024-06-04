@@ -8,25 +8,30 @@ Miscellaneous module for different utility functions.
 """
 
 import os
-from amami.loggers import LOGGER
 
-def get_abspath(
-    fpath:str,
-    check:bool=True,
-    checkdir:bool=False
-    ) -> str:
+
+# TODO: refactor/delete, let I/O ops raise IOErrors on missing files
+def get_abspath(fpath: str, check: bool = True, checkdir: bool = False) -> str:
     """
-    Return an absolute path from the provided path and optionally check if path or 
-    directory exists.
+    Return absolute path from given path.
+
+    :param fpath:
+    :param check:
+    :param checkdir: True to check if base directory exists.
     """
     if checkdir:
         check = False
     abspath = os.path.abspath(fpath)
+
     if check and not os.path.exists(abspath):
-        LOGGER.error(f"File '{abspath}' does not exist.")
-    elif checkdir and not os.path.exists(absdir:=os.path.dirname(abspath)):
-        LOGGER.error(f"Directory '{absdir}' does not exist.")
+        raise IOError(f"File '{abspath}' does not exist.")
+    elif checkdir:
+        absdir = os.path.dirname(abspath)
+
+        if not os.path.exists(absdir):
+            raise IOError(f"Directory '{absdir}' does not exist.")
     return abspath
+
 
 def create_unexistent_file(path):
     """
