@@ -79,21 +79,21 @@ class Stash:
         self._get_names()
 
     def __repr__(self):
-        '''
+        """
         Representation of Stash class.
-        '''
+        """
         return f"STASH {self.string} ({self.long_name})"
     
     def __str__(self):
-        '''
+        """
         Representation of Stash class when printed out.
-        '''
+        """
         return f"STASH {self.string} ({self.long_name})"
     
     def __eq__(self, other):
-        '''
+        """
         Set criteria to check equality for Stash class instances.
-        '''
+        """
         if isinstance(other, Stash):
             return other.itemcode == self.itemcode
         elif isinstance(other, str):
@@ -162,9 +162,9 @@ def get_grid_type(um_file: type[mule.UMFile]) -> str:
     """Get UM grid type from mule UMFile"""
     gs = um_file.fixed_length_header.grid_staggering
     if gs == 6:
-        return 'EG'  # End Game
+        return "EG"  # End Game
     elif gs == 3:
-        return 'ND'  # New Dynamics
+        return "ND"  # New Dynamics
     else:
         LOGGER.error(
             "Unable to determine grid staggering from UM Fielsfile header. "
