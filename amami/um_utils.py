@@ -7,9 +7,6 @@ Script created by Davide Marchegiani (davide.marchegiani@anu.edu.au) at ACCESS-N
 Utility module for UM fieldsfiles and STASH-related functionalities
 """
 
-
-
-
 import re
 import mule
 from typing import Union, List
@@ -17,8 +14,9 @@ from amami.loggers import LOGGER
 from iris.fileformats.pp import STASH as irisSTASH
 from amami._atm_stashlist import ATM_STASHLIST
 
-IMDI=-32768 #(-2.0**15)
-RMDI=-1073741824.0 #(-2.0**30)
+IMDI = -32768  # (-2.0**15)
+RMDI = -1073741824.0  # (-2.0**30)
+
 
 class Stash:
     """
@@ -38,23 +36,26 @@ class Stash:
         "unique_name",
     ]
 
+    REGEX_FOR_STRCODE = r"^m\d{2}s\d{2}i\d{3}$"
+    REGEX_FOR_ITEMCODE = r"^\d{1,5}$"
+
+    def __new__(
+        cls,
+        code: Union[str, int, irisSTASH],
+    ):
+        if isinstance(code, str) and re.match(cls.REGEX_FOR_ITEMCODE, code.strip()):
+            return cls(int(code))
+        else:
+            return cls(code)
+
     def __init__(
         self,
-        code:Union[str,int,irisSTASH],
+        code: Union[str, int, irisSTASH],
     ):
-        if isinstance(code,str):
-            if re.match(r"^(m\d{2})?s\d{2}i\d{3}$",code):
-                self.model,self.section,self.item = self._from_string(code)
-            elif re.match(r"^\d{1,5}$",code):
-                code = int(code)
-                if code > 54999 or code < 0:
-                    LOGGER.error(
-                        f"Invalid STASH item code '{code}'. For item codes reference "
-                        "please check the UM Documentation Paper C04 about 'Storage "
-                        "Handling and Diagnostic System (STASH)' --> "
-                        "https://code.metoffice.gov.uk/doc/um/latest/papers/umdp_C04.pdf"
-                    )
-                self.model,self.section,self.item = self._from_itemcode(code)
+        if isinstance(code, str):
+            code = code.strip()
+            if re.match(self.REGEX_FOR_STRCODE, code):
+                self.model, self.section, self.item = self._from_string(code)
             else:
                 LOGGER.error(
                     "STASH code needs to be either an integer between 0 and 54999, "
@@ -62,7 +63,7 @@ class Stash:
                     "an integer between 0-9.\nThe part wrapped in squared brackets "
                     "('[]') is optional."
                 )
-        elif isinstance(code,int):
+        elif isinstance(code, int):
             if code > 54999 or code < 0:
                 LOGGER.error(
                     f"Invalid STASH item code '{code}'. For item codes reference "
@@ -70,9 +71,9 @@ class Stash:
                     "Handling and Diagnostic System (STASH)' --> "
                     "https://code.metoffice.gov.uk/doc/um/latest/papers/umdp_C04.pdf"
                 )
-            self.model,self.section,self.item = self._from_itemcode(code)
+            self.model, self.section, self.item = self._from_itemcode(code)
         elif isinstance(code, irisSTASH):
-            self.model,self.section,self.item = code.model,code.section,code.item
+            self.model, self.section, self.item = code.model, code.section, code.item
         self.string = self._to_string()
         self.itemcode = self._to_itemcode()
         self.long_name = ""
@@ -87,13 +88,13 @@ class Stash:
         Representation of Stash class.
         '''
         return f"STASH {self.string} ({self.long_name})"
-    
+
     def __str__(self):
         '''
         Representation of Stash class when printed out.
         '''
         return f"STASH {self.string} ({self.long_name})"
-    
+
     def __eq__(self, other):
         '''
         Set criteria to check equality for Stash class instances.
@@ -108,24 +109,24 @@ class Stash:
             return self.model == other.model and self.section == other.section and self.item == other.item
         else:
             return False
-    
+
     def __ne__(self, other):
         return not self.__eq__(other)
 
     def _from_string(
         self,
-        strcode:str,
+        strcode: str,
     ) -> tuple[int]:
         """Function to get the model, item and section from a STASH code string"""
-        model = int(strcode[1:3]) if len(strcode)==10 else 1
+        model = int(strcode[1:3]) if len(strcode) == 10 else 1
         return model, int(strcode[-6:-4]), int(strcode[-3:])
 
     def _from_itemcode(
         self,
-        itemcode:int,
+        itemcode: int,
     ) -> tuple[int]:
         """Function to get the model, item and section from a STASH item code"""
-        return 1, itemcode//1000, itemcode%1000
+        return 1, itemcode//1000, itemcode % 1000
 
     def _to_string(self) -> str:
         """Function to return the STASH code string from model, section and item"""
@@ -147,58 +148,65 @@ class Stash:
                 "Could not identify STASH variable from STASH item code %s.",
                 self.itemcode,
             )
-            var = ["UNKNOWN VARIABLE","", "", "", ""]
+            var = ["UNKNOWN VARIABLE", "", "", "", ""]
         self.long_name = var[0]
         self.name = var[1] if var[1] else self.string
         self.units = var[2]
         self.standard_name = var[3]
         self.unique_name = var[4] if var[4] else self.name
 
+
 def read_fieldsfile(
     um_filename: str,
-    check_ancil:bool=False
-    ) -> type[mule.UMFile]:
+    check_ancil: bool = False
+) -> type[mule.UMFile]:
     """Read UM fieldsfile with mule, and optionally check if type is AncilFile"""
 
     try:
         file = mule.load_umfile(um_filename)
         file.remove_empty_lookups()
     except ValueError:
-        LOGGER.error(f"'{um_filename.resolve()}' does not appear to be a UM file.")
+        LOGGER.error(
+            f"'{um_filename.resolve()}' does not appear to be a UM file.")
     if check_ancil and (not isinstance(file, mule.ancil.AncilFile)):
-        LOGGER.error(f"'{um_filename}' does not appear to be a UM ancillary file.")
+        LOGGER.error(
+            f"'{um_filename}' does not appear to be a UM ancillary file.")
     return file
 
-def get_grid_type(um_file:type[mule.UMFile]) -> str:
+
+def get_grid_type(um_file: type[mule.UMFile]) -> str:
     """Get UM grid type from mule UMFile"""
     gs = um_file.fixed_length_header.grid_staggering
     if gs == 6:
-        return 'EG' # End Game
+        return 'EG'  # End Game
     elif gs == 3:
-        return 'ND' # New Dynamics
+        return 'ND'  # New Dynamics
     else:
         LOGGER.error(
-            "Unable to determine grid staggering from UM Fielsfile header. "\
+            "Unable to determine grid staggering from UM Fielsfile header. "
             f"Grid staggering '{gs}' not supported."
         )
 
-def get_sealevel_rho(um_file:type[mule.UMFile]) -> float:
+
+def get_sealevel_rho(um_file: type[mule.UMFile]) -> float:
     """Get UM sea level on rho levels from mule UMFile"""
     try:
         return um_file.level_dependent_constants.zsea_at_rho
     except AttributeError:
         return 0.
 
-def get_sealevel_theta(um_file:type[mule.UMFile]) -> float:
+
+def get_sealevel_theta(um_file: type[mule.UMFile]) -> float:
     """Get UM sea level on thetha levels from mule UMFile"""
     try:
         return um_file.level_dependent_constants.zsea_at_theta
     except AttributeError:
         return 0.
-    
+
+
 def get_stash(
-    um_file:type[mule.UMFile],
-    repeat:bool=True,
+    um_file: type[mule.UMFile],
+    repeat: bool = True,
 ) -> List:
     """
     Get ordered list of stash codes in mule UMFile

@@ -13,6 +13,7 @@ Modified by Davide Marchegiani (davide.marchegiani@anu.edu.au) at ACCESS-NRI
 """
 
 ATM_STASHLIST = {
+    1: ["PSTAR AFTER TIMESTEP", "", "", "", ""],
     2: ["U COMPNT OF WIND AFTER TIMESTEP", "ua", "m s-1", "eastward_wind", ""],
     3: ["V COMPNT OF WIND AFTER TIMESTEP", "va", "m s-1", "northward_wind", ""],
     4: ["THETA AFTER TIMESTEP", "theta", "K", "", ""],
