@@ -18,6 +18,11 @@ IMDI = -32768  # (-2.0**15)
 RMDI = -1073741824.0  # (-2.0**30)
 
 
+class UMError(Exception):
+    """Base Exception for Unified Model related errors"""
+    pass
+
+
 class Stash:
     """
     Class to implement STASH-related functionalities

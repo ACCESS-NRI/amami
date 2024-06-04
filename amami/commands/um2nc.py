@@ -24,13 +24,9 @@ import iris.fileformats
 import amami
 import amami.um_utils as umutils
 from amami.um_utils import Stash
+from amami.um_utils import UMError
 from amami.loggers import LOGGER
 from amami.helpers import get_abspath
-
-
-class UMError(Exception):
-    """Base Exception for Unified Model related errors"""
-    pass
 
 
 def get_nc_format(format_arg: str) -> str:
