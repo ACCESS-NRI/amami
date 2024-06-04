@@ -8,6 +8,7 @@ Miscellaneous module for different utility functions.
 """
 
 import os
+import itertools
 
 
 # TODO: refactor/delete, let I/O ops raise IOErrors on missing files
@@ -33,13 +34,11 @@ def get_abspath(fpath: str, check: bool = True, checkdir: bool = False) -> str:
     return abspath
 
 
+# TODO: rename file --> path as func does not create the file
 def create_unexistent_file(path):
     """
-    Create a new file.
+    Return unique file path by adding a numeric suffix.
     """
-    n=1
-    newpath = path
-    while os.path.exists(newpath):
-        n+=1
-        newpath = f"{path}_{n}"
-    return newpath
+    for n in itertools.count(1):
+        if not os.path.exists(new_path := f"{path}_{n}"):
+            return new_path
