@@ -48,28 +48,25 @@ class Stash:
             elif re.match(r"^\d{1,5}$", code):
                 code = int(code)
                 if code > 54999 or code < 0:
-                    LOGGER.error(
-                        f"Invalid STASH item code '{code}'. For item codes reference "
-                        "please check the UM Documentation Paper C04 about 'Storage "
-                        "Handling and Diagnostic System (STASH)' --> "
-                        "https://code.metoffice.gov.uk/doc/um/latest/papers/umdp_C04.pdf"
-                    )
+                    # TODO: refactor to single message
+                    msg = (f"Invalid STASH item code '{code}'. For item codes reference please "
+                           "check the UM Documentation Paper C04 about 'Storage Handling and "
+                           "Diagnostic System (STASH)' --> "
+                           "https://code.metoffice.gov.uk/doc/um/latest/papers/umdp_C04.pdf")
+                    raise UMError(msg)
                 self.model, self.section, self.item = self._from_itemcode(code)
             else:
-                LOGGER.error(
-                    "STASH code needs to be either an integer between 0 and 54999, "
-                    "or a string in the format '[m--]s--i---', with each '-' being "
-                    "an integer between 0-9.\nThe part wrapped in squared brackets "
-                    "('[]') is optional."
-                )
+                msg = ("STASH code needs to be either an integer between 0 and 54999, or a string "
+                       "in the format '[m--]s--i---', with each '-' being an integer between 0-9.\n"
+                       "The part wrapped in squared brackets ('[]') is optional.")
+                raise UMError(msg)
         elif isinstance(code, int):
             if code > 54999 or code < 0:
-                LOGGER.error(
-                    f"Invalid STASH item code '{code}'. For item codes reference "
-                    "please check the UM Documentation Paper C04 about 'Storage "
-                    "Handling and Diagnostic System (STASH)' --> "
-                    "https://code.metoffice.gov.uk/doc/um/latest/papers/umdp_C04.pdf"
-                )
+                msg = (f"Invalid STASH item code '{code}'. For item codes reference please "
+                       "check the UM Documentation Paper C04 about 'Storage Handling and "
+                       "Diagnostic System (STASH)' --> "
+                       "https://code.metoffice.gov.uk/doc/um/latest/papers/umdp_C04.pdf")
+                raise UMError(msg)
             self.model, self.section, self.item = self._from_itemcode(code)
         elif isinstance(code, irisSTASH):
             self.model, self.section, self.item = code.model, code.section, code.item
@@ -154,13 +151,15 @@ def read_fieldsfile(um_filename: str, check_ancil: bool = False) -> type[mule.UM
     """Read UM fieldsfile with mule, and optionally check if type is AncilFile"""
 
     try:
-        file = mule.load_umfile(um_filename)
-        file.remove_empty_lookups()
+        ufile = mule.load_umfile(um_filename)
+        ufile.remove_empty_lookups()
     except ValueError:
-        LOGGER.error(f"'{um_filename.resolve()}' does not appear to be a UM file.")
-    if check_ancil and (not isinstance(file, mule.ancil.AncilFile)):
-        LOGGER.error(f"'{um_filename}' does not appear to be a UM ancillary file.")
-    return file
+        raise UMError(f"'{um_filename.resolve()}' does not appear to be a UM file.")
+
+    if check_ancil and (not isinstance(ufile, mule.ancil.AncilFile)):
+        raise UMError(f"'{um_filename}' does not appear to be a UM ancillary file.")
+
+    return ufile
 
 
 def get_grid_type(um_file: type[mule.UMFile]) -> str:
@@ -170,11 +169,8 @@ def get_grid_type(um_file: type[mule.UMFile]) -> str:
         return "EG"  # End Game
     elif gs == 3:
         return "ND"  # New Dynamics
-    else:
-        LOGGER.error(
-            "Unable to determine grid staggering from UM Fielsfile header. "
-            f"Grid staggering '{gs}' not supported."
-        )
+
+    raise UMError(f"Unrecognised grid staggering in UM Fieldsfile header: '{gs}' not supported.")
 
 
 def get_sealevel_rho(um_file: type[mule.UMFile]) -> float:
