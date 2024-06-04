@@ -55,11 +55,7 @@ def check_ncformat(ncformat, use64bit):
         )
 
 
-def add_global_attrs(
-    infile,
-    fid,
-    nohist
-) -> None:
+def add_global_attrs(infile, fid, nohist) -> None:
     """Add global attributes to converted NetCDF file"""
     if not nohist:
         date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -74,7 +70,6 @@ def get_heaviside_uv(cubes):
     for c in cubes:
         if Stash(c.attributes['STASH']).itemcode == 30301:
             return c
-    return None
 
 
 def get_heaviside_t(cubes):
@@ -82,14 +77,9 @@ def get_heaviside_t(cubes):
     for c in cubes:
         if Stash(c.attributes['STASH']).itemcode == 30304:
             return c
-    return None
 
 
-def apply_mask(
-    cube,
-    heaviside, 
-    hcrit
-):
+def apply_mask(cube, heaviside, hcrit):
     """
     Apply heaviside function to cube
     """
@@ -183,11 +173,7 @@ def apply_mask_to_pressure_level_field(
     return True
 
 
-def name_cube(
-    cube,
-    stash,
-    simple
-):
+def name_cube(cube, stash, simple):
     """
     Assign different name properties to cube
     """
