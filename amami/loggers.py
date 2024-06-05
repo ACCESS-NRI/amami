@@ -22,7 +22,9 @@ def indent(msg, numtabs):
     """
     Indent a message by a given number of tabs.
     """
-    return msg.replace('\n','\n\t'.expandtabs(numtabs))
+    return msg.replace('\n', '\n\t'.expandtabs(numtabs))
+
+# TODO: refactor multiple functions for multiple logging levels to be condensed in one single fuction
 
 
 def custom_debug(self, msg, *args, **kwargs):
@@ -32,9 +34,9 @@ def custom_debug(self, msg, *args, **kwargs):
     if self.isEnabledFor(logging.DEBUG):
         msg = indent(msg, self.TABS)
         self._log(
-            logging.DEBUG, 
+            logging.DEBUG,
             msg,
-            args, 
+            args,
             **kwargs
         )
 
@@ -46,9 +48,9 @@ def custom_info(self, msg, *args, **kwargs):
     if self.isEnabledFor(logging.INFO):
         msg = indent(msg, self.TABS)
         self._log(
-            logging.INFO, 
+            logging.INFO,
             msg,
-            args, 
+            args,
             **kwargs
         )
 
@@ -60,9 +62,9 @@ def custom_warning(self, msg, *args, **kwargs):
     if self.isEnabledFor(logging.WARNING):
         msg = indent(msg, self.TABS)
         self._log(
-            logging.WARNING, 
+            logging.WARNING,
             msg,
-            args, 
+            args,
             **kwargs
         )
 
@@ -73,10 +75,11 @@ def custom_error(self, msg, *args, **kwargs):
     add traceback if DEBUG level is active,
     and automatically exit after the message is logged.
     """
-    msg = indent(msg, self.TABS)
-    if ((self.isEnabledFor(logging.DEBUG)) and
-            (traceback.format_exc() != "NoneType: None\n")):
-        msg += "\n" + traceback.format_exc()
+    if self.isEnabledFor(logging.ERROR):
+        msg = indent(msg, self.TABS)
+        if ((self.isEnabledFor(logging.DEBUG)) and
+                (traceback.format_exc() != "NoneType: None\n")):
+            msg += "\n" + traceback.format_exc()
         self._log(logging.ERROR, msg, args, **kwargs)
 
 
@@ -86,9 +89,10 @@ def custom_critical(self, msg, *args, **kwargs):
     add traceback if DEBUG level is active,
     and automatically exit after the message is logged.
     """
-    msg = indent(msg, self.TABS)
-    if self.isEnabledFor(logging.DEBUG):
-        msg += "\n" + indent(traceback.format_exc(), self.TABS)
+    if self.isEnabledFor(logging.CRITICAL):
+        msg = indent(msg, self.TABS)
+        if self.isEnabledFor(logging.DEBUG):
+            msg += "\n" + indent(traceback.format_exc(), self.TABS)
         self._log(logging.CRITICAL, msg, args, **kwargs)
 
 
@@ -96,15 +100,16 @@ class CustomConsoleFormatter(logging.Formatter):
     """
     Format messages based on log level.
     """
+
     def __init__(
-            self,
-            fmt_debug: str=None,
-            fmt_info: str=None,
-            fmt_warning: str=None,
-            fmt_error: str=None,
-            fmt_critical=None,
-            **formatter_kwargs,
-        ) -> None:
+        self,
+        fmt_debug: str = None,
+        fmt_info: str = None,
+        fmt_warning: str = None,
+        fmt_error: str = None,
+        fmt_critical=None,
+        **formatter_kwargs,
+    ) -> None:
         default_kwargs = {
             'fmt': '%(levelname)s: %(message)s',
             'style': '%',
@@ -161,26 +166,26 @@ def generate_logger():
     # Add handler to logger
     logger.addHandler(handler)
     # Set custom logging methods
-    logger.debug = MethodType(custom_debug,logger)
-    logger.info = MethodType(custom_info,logger)
-    logger.warning = MethodType(custom_warning,logger)
-    logger.error = MethodType(custom_error,logger)
-    logger.critical = MethodType(custom_critical,logger)
+    logger.debug = MethodType(custom_debug, logger)
+    logger.info = MethodType(custom_info, logger)
+    logger.warning = MethodType(custom_warning, logger)
+    logger.error = MethodType(custom_error, logger)
+    logger.critical = MethodType(custom_critical, logger)
     return logger
 
 
 LOGGER = generate_logger()
 # Set tabs space for logging indentation
-setattr(LOGGER,"TABS",9)
+setattr(LOGGER, "TABS", 9)
 
 
 # Make warnings use LOGGER.warning instead of the default format
 def external_warning_formatting(
-    message, 
-    category, 
-    filename, 
-    lineno, 
-    file=None, 
+    message,
+    category,
+    filename,
+    lineno,
+    file=None,
     line=None
 ):
     """
@@ -188,7 +193,8 @@ def external_warning_formatting(
     and keep proper indentation.
     """
     LOGGER.warning(
-        f"{filename}:{lineno} - {message}".replace('\n','\n\t').expandtabs(LOGGER.TABS)
+        f"{filename}:{lineno} - {message}".replace(
+            '\n', '\n\t').expandtabs(LOGGER.TABS)
     )
 
 
