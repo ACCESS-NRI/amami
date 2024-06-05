@@ -556,9 +556,9 @@ def main(args):
                 )
                 cubewrite(c, sman, args.compression)
 
-    # TODO: handle various exceptions here or in the caller?
-    #       Avoid single catchall clause
-    except Exception as e:
+    # Catch normal operation/user errors. Don't trap other exceptions to *fail fast* & provide
+    # a stack trace for reporting debugging information
+    except (OSError, ValueError, iris.exceptions.IrisError) as ex:
+        LOGGER.error(ex)
         if os.path.exists(outfile):
             os.remove(outfile)
-        raise  # capture higher up

@@ -54,6 +54,7 @@ List of supported commands:
 For more information about a specific command, run `amami <command> -h`.
 """
 
+
 class Amami:
     """A class that represents the `amami` application."""
     def __init__(
@@ -77,6 +78,8 @@ class Amami:
         # Call 'main' function of chosen command
         command_entry_point(self.args)
 
+
 def main() -> None:
     """Entry point for CLI usage of `amami`."""
+    # TODO: add exception handling here after the parsing modules are cleaned
     Amami(sys.argv).run_command()
