@@ -10,17 +10,13 @@ Utility module for UM fieldsfiles and STASH-related functionalities
 import re
 import mule
 from typing import Union, List
-from amami.loggers import LOGGER
 from iris.fileformats.pp import STASH as irisSTASH
+from amami.loggers import LOGGER
 from amami._atm_stashlist import ATM_STASHLIST
+from amami.exceptions import UMError
 
 IMDI = -32768  # (-2.0**15)
 RMDI = -1073741824.0  # (-2.0**30)
-
-
-class UMError(Exception):
-    """Base Exception for Unified Model related errors"""
-    pass
 
 
 class Stash:
@@ -85,13 +81,13 @@ class Stash:
         Representation of Stash class.
         """
         return f"STASH {self.string} ({self.long_name})"
-    
+
     def __str__(self):
         """
         Representation of Stash class when printed out.
         """
         return f"STASH {self.string} ({self.long_name})"
-    
+
     def __eq__(self, other):
         """
         Set criteria to check equality for Stash class instances.
@@ -106,7 +102,7 @@ class Stash:
             return self.model == other.model and self.section == other.section and self.item == other.item
         else:
             return False
-    
+
     def __ne__(self, other):
         return not self.__eq__(other)
 
@@ -154,10 +150,12 @@ def read_fieldsfile(um_filename: str, check_ancil: bool = False) -> type[mule.UM
         ufile = mule.load_umfile(um_filename)
         ufile.remove_empty_lookups()
     except ValueError:
-        raise UMError(f"'{um_filename.resolve()}' does not appear to be a UM file.")
+        raise UMError(
+            f"'{um_filename.resolve()}' does not appear to be a UM file.")
 
     if check_ancil and (not isinstance(ufile, mule.ancil.AncilFile)):
-        raise UMError(f"'{um_filename}' does not appear to be a UM ancillary file.")
+        raise UMError(
+            f"'{um_filename}' does not appear to be a UM ancillary file.")
 
     return ufile
 
@@ -170,7 +168,8 @@ def get_grid_type(um_file: type[mule.UMFile]) -> str:
     elif gs == 3:
         return "ND"  # New Dynamics
 
-    raise UMError(f"Unrecognised grid staggering in UM Fieldsfile header: '{gs}' not supported.")
+    raise UMError(
+        f"Unrecognised grid staggering in UM Fieldsfile header: '{gs}' not supported.")
 
 
 def get_sealevel_rho(um_file: type[mule.UMFile]) -> float:

@@ -11,7 +11,7 @@ import argparse
 from typing import List
 from amami.helpers import create_unexistent_file
 from amami.parsers import SubcommandParser
-from amami.parsers.main_parser import ParserError
+from amami.exceptions import ParsingError
 
 
 DESCRIPTION = """
@@ -53,30 +53,33 @@ def callback_function(known_args: argparse.Namespace, unknown_args: List[str]) -
     # Check optional and positional parameters to determine input and output paths.
     if (
         len(unknown_args) > 2
-        ) or (
+    ) or (
         (None not in [known_args_dict['infile'], known_args_dict['outfile']])
         and
         (len(unknown_args) > 0)
-        ) or (
-        ((known_args_dict['infile'] is None) ^ (known_args_dict['outfile'] is None))
+    ) or (
+        ((known_args_dict['infile'] is None) ^
+         (known_args_dict['outfile'] is None))
         and
         (len(unknown_args) > 1)
-            ):
-        raise ParserError("Too many arguments.")
+    ):
+        raise ParsingError("Too many arguments.")
     elif (known_args_dict['infile'] is None) and (len(unknown_args) == 0):
-        raise ParserError("No input file provided.")
+        raise ParsingError("No input file provided.")
     elif known_args_dict['infile'] is None:
         known_args_dict['infile'] = unknown_args[0]
         if known_args_dict['outfile'] is None:
             if len(unknown_args) == 2:
                 known_args_dict['outfile'] = unknown_args[1]
             else:
-                known_args_dict['outfile'] = create_unexistent_file(f"{known_args_dict['infile']}.nc")
+                known_args_dict['outfile'] = create_unexistent_file(
+                    f"{known_args_dict['infile']}.nc")
     elif known_args_dict['outfile'] is None:
         if len(unknown_args) == 1:
             known_args_dict['outfile'] = unknown_args[0]
         else:
-            known_args_dict['outfile'] = create_unexistent_file(f"{known_args_dict['infile']}.nc")
+            known_args_dict['outfile'] = create_unexistent_file(
+                f"{known_args_dict['infile']}.nc")
     return argparse.Namespace(**known_args_dict)
 
 
@@ -116,7 +119,8 @@ PARSER.add_argument(
     required=False,
     type=str,
     default='NETCDF4',
-    choices=['NETCDF4', 'NETCDF4_CLASSIC', 'NETCDF3_CLASSIC', 'NETCDF3_64BIT', '1', '2', '3', '4'],
+    choices=['NETCDF4', 'NETCDF4_CLASSIC', 'NETCDF3_CLASSIC',
+             'NETCDF3_64BIT', '1', '2', '3', '4'],
     help="""Specify netCDF format among 1 ('NETCDF4'), 2 ('NETCDF4_CLASSIC'),
 3 ('NETCDF3_CLASSIC') or 4 ('NETCDF3_64BIT').
 Either numbers or strings are accepted. 

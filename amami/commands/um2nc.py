@@ -24,7 +24,7 @@ import iris.fileformats
 import amami
 import amami.um_utils as umutils
 from amami.um_utils import Stash
-from amami.um_utils import UMError
+from amami.exceptions import AmamiError, UMError
 from amami.loggers import LOGGER
 from amami.helpers import get_abspath
 
@@ -109,7 +109,8 @@ def apply_mask(cube, heaviside, hcrit):
             h_tmp = heaviside.extract(constraint)
             # Double check they're actually the same after extraction
             if not np.all(c_p == h_tmp.coord('pressure').points):
-                raise UMError("Unexpected mismatch in levels of extracted heaviside function.")
+                raise UMError(
+                    "Unexpected mismatch in levels of extracted heaviside function.")
 
             with np.errstate(divide='ignore', invalid='ignore'):
                 cube.data = np.ma.masked_array(
@@ -236,7 +237,8 @@ def fix_cell_methods(cube):
             # Skip the misleading hour intervals
             if i.find('hour') == -1:
                 newi.append(i)
-        n = iris.coords.CellMethod(m.method, m.coord_names, tuple(newi), m.comments)
+        n = iris.coords.CellMethod(
+            m.method, m.coord_names, tuple(newi), m.comments)
         newm.append(n)
     cube.cell_methods = tuple(newm)
 
@@ -267,9 +269,10 @@ def fix_latlon_coord(cube, grid_type):
             (lat.points[0] == -90 and grid_type == 'EG')
             or
             (
-            np.allclose(-90.+np.abs(0.5*(lat.points[1]-lat.points[0])), lat.points[0])
-            and
-            grid_type == 'ND'
+                np.allclose(-90.+np.abs(0.5 *
+                            (lat.points[1]-lat.points[0])), lat.points[0])
+                and
+                grid_type == 'ND'
             )
         ):
             lat.var_name = 'lat_v'
@@ -282,9 +285,10 @@ def fix_latlon_coord(cube, grid_type):
             (lon.points[0] == 0 and grid_type == 'EG')
             or
             (
-            np.allclose(np.abs(0.5*(lon.points[1]-lon.points[0])), lon.points[0])
-            and
-            grid_type == 'ND'
+                np.allclose(
+                    np.abs(0.5*(lon.points[1]-lon.points[0])), lon.points[0])
+                and
+                grid_type == 'ND'
             )
         ):
             lon.var_name = 'lon_u'
@@ -361,7 +365,8 @@ def convert_proleptic_calendar(cube):
     """
     def _convert_proleptic(time):
         """Convert units from hours to days and shift origin from 1970 to 0001"""
-        newunits = cf_units.Unit("days since 0001-01-01 00:00", calendar='proleptic_gregorian')
+        newunits = cf_units.Unit(
+            "days since 0001-01-01 00:00", calendar='proleptic_gregorian')
         # Need a copy because can't assign to time.points[i]
         tvals = np.array(time.points)
         if time.bounds is not None:
@@ -415,7 +420,8 @@ def convert_proleptic_calendar(cube):
             new_calendar = 'proleptic_gregorian'
         else:
             new_calendar = time.units.calendar
-        time.units = cf_units.Unit("days since 1970-01-01 00:00", calendar=new_calendar)
+        time.units = cf_units.Unit(
+            "days since 1970-01-01 00:00", calendar=new_calendar)
         time.points = time.points/24.
         if time.bounds is not None:
             time.bounds = time.bounds/24.
@@ -556,9 +562,8 @@ def main(args):
                 )
                 cubewrite(c, sman, args.compression)
 
-    # Catch normal operation/user errors. Don't trap other exceptions to *fail fast* & provide
-    # a stack trace for reporting debugging information
-    except (OSError, ValueError, iris.exceptions.IrisError) as ex:
-        LOGGER.error(ex)
+    # Catch any errors and remove the output file if it exists
+    except Exception as ex:
         if os.path.exists(outfile):
             os.remove(outfile)
+        raise AmamiError(ex)

@@ -19,30 +19,28 @@ from amami.parsers import (
 from amami import commands as amami_commands
 
 
-class ParserError(Exception):
-    """Base exception for parser errors."""
-    pass
+COMMANDS = [command.name for command in pkgutil.iter_modules(
+    amami_commands.__path__)]
 
-
-COMMANDS = [command.name for command in pkgutil.iter_modules(amami_commands.__path__)]
 
 class MainParser(argparse.ArgumentParser):
     """
     Class to extend the functionality of argparse.ArgumentParser and create a custom
     parser that allow preprocessing according to the spefcified command.
     """
+
     def __init__(self) -> None:
         # Generate help parser
         self.help_parser = self._generate_help_parser()
         # Generate common parser
         self.common_parser = self._generate_common_parser()
         kwargs = {
-            "prog":amami.__name__,
-            "description":amami.__doc__,
-            "parents":[self.help_parser],
-            'allow_abbrev':False,
-            'formatter_class':ParseFormatter,
-            'add_help':False,
+            "prog": amami.__name__,
+            "description": amami.__doc__,
+            "parents": [self.help_parser],
+            'allow_abbrev': False,
+            'formatter_class': ParseFormatter,
+            'add_help': False,
         }
         # Generate main parser
         super().__init__(**kwargs)
@@ -146,20 +144,19 @@ Cannot be used together with '-s/--silent' or '-v/--verbose'.
             )
 
     def parse_and_process(
-            self,
-            *args,
-            **kwargs
-        ) -> Union[Callable, None]:
+        self,
+        *args,
+        **kwargs
+    ) -> Union[Callable, None]:
         """
         Parse arguments and preprocess according to the specified command.
         """
-        known_args, unknown_args = self.parse_known_args(*args,**kwargs)
+        known_args, unknown_args = self.parse_known_args(*args, **kwargs)
         if known_args.subcommand is not None:
             if (callback := self.subparsers
-                .choices[known_args.subcommand].callback): # Assignment expression
+                    .choices[known_args.subcommand].callback):  # Assignment expression
                 return callback(known_args, unknown_args)
-            self.parse_args(*args,**kwargs)
+            self.parse_args(*args, **kwargs)
         else:
             self.print_usage()
             sys.exit(f"Option '{unknown_args[0]}' not supported.")
-

@@ -9,9 +9,10 @@ Miscellaneous module for different utility functions.
 
 import os
 import itertools
+from amami.exceptions import ParsingError
 
 
-# TODO: refactor/delete, let I/O ops raise IOErrors on missing files
+# TODO: refactor/delete, let I/O ops raise ParsingErrors on missing files
 def get_abspath(fpath: str, check: bool = True, checkdir: bool = False) -> str:
     """
     Return absolute path from given path.
@@ -25,12 +26,12 @@ def get_abspath(fpath: str, check: bool = True, checkdir: bool = False) -> str:
     abspath = os.path.abspath(fpath)
 
     if check and not os.path.exists(abspath):
-        raise IOError(f"File '{abspath}' does not exist.")
+        raise ParsingError(f"File '{abspath}' does not exist.")
     elif checkdir:
         absdir = os.path.dirname(abspath)
 
         if not os.path.exists(absdir):
-            raise IOError(f"Directory '{absdir}' does not exist.")
+            raise ParsingError(f"Directory '{absdir}' does not exist.")
     return abspath
 
 
