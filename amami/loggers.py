@@ -18,7 +18,7 @@ def indent(msg, numtabs):
     """
     Indent a message by a given number of tabs.
     """
-    return msg.replace('\n', '\n\t'.expandtabs(numtabs))
+    return msg.replace('\r', '').replace('\n', '\n\t'.expandtabs(numtabs))
 
 
 class CustomConsoleFormatter(logging.Formatter):
