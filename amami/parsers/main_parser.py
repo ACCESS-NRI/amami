@@ -8,7 +8,7 @@ import pkgutil
 from importlib import import_module
 import argparse
 import amami
-import sys
+from amami import commands as amami_commands
 from amami.parsers import (
     ParseFormatter,
     SubcommandParser,
@@ -16,7 +16,7 @@ from amami.parsers import (
     SilentAction,
     DebugAction,
 )
-from amami import commands as amami_commands
+from amami.exceptions import ParsingError
 
 
 COMMANDS = [command.name for command in pkgutil.iter_modules(
@@ -156,7 +156,11 @@ Cannot be used together with '-s/--silent' or '-v/--verbose'.
             if (callback := self.subparsers
                     .choices[known_args.subcommand].callback):  # Assignment expression
                 return callback(known_args, unknown_args)
-            self.parse_args(*args, **kwargs)
+            elif unknown_args:
+                raise ParsingError(
+                    f"Option '{unknown_args[0]}' not supported.")
+            else:
+                return known_args
         else:
             self.print_usage()
-            sys.exit(f"Option '{unknown_args[0]}' not supported.")
+            raise ParsingError(f"Option '{unknown_args[0]}' not supported.")
