@@ -2,10 +2,13 @@
 # SPDX-License-Identifier: Apache-2.0
 
 """
-Module to define custom exceptions and exception hooks.
+Module to define custom exceptions, custom exception hooks and
+custom warning formatting.
 """
+
 import sys
 import traceback
+import warnings
 from amami.loggers import LOGGER
 
 
@@ -45,3 +48,28 @@ def custom_excepthook(exc_type, exc_value, exc_traceback):
 
 # Assign the custom excepthook to the system excepthook
 sys.excepthook = custom_excepthook
+
+
+# Make external warnings (not raised by amami) use LOGGER.warning
+# instead of the default format
+def external_warning_formatting(
+    message,
+    category,
+    filename,
+    lineno,
+    file=None,
+    line=None
+):
+    """
+    Custom formatting for warnings, to use 'LOGGER.warning'
+    and keep proper indentation.
+    """
+    LOGGER.warning(
+        "%s:%s - %s",
+        filename,
+        lineno,
+        message,
+    )
+
+
+warnings.showwarning = external_warning_formatting

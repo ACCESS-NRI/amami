@@ -6,7 +6,6 @@ Module to control logging for 'amami' package
 """
 
 import logging
-import warnings
 
 _COLOR_DEBUG = '\033[1;38;2;130;70;160m'
 _COLOR_INFO = '\033[1;38;2;0;130;180m'
@@ -106,27 +105,3 @@ class CustomLogRecord(logging.LogRecord):
 # Set custom logRecordFactory to apply indentation to logging messages
 logging._logRecordFactory = CustomLogRecord
 LOGGER = generate_logger()
-# Set tabs space for logging indentation
-setattr(LOGGER, "TABS", 8)
-
-
-# Make warnings use LOGGER.warning instead of the default format
-def external_warning_formatting(
-    message,
-    category,
-    filename,
-    lineno,
-    file=None,
-    line=None
-):
-    """
-    Custom formatting for warnings, to use 'LOGGER.warning'
-    and keep proper indentation.
-    """
-    LOGGER.warning(
-        f"{filename}:{lineno} - {message}".replace(
-            '\n', '\n\t').expandtabs(LOGGER.TABS)
-    )
-
-
-warnings.showwarning = external_warning_formatting
