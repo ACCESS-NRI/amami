@@ -13,4 +13,3 @@ def main(args):
     LOGGER.info('Test info')
     LOGGER.warning('Test warning')
     LOGGER.error('Test error')
-    LOGGER.critical('Test critical')

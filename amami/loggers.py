@@ -14,7 +14,6 @@ _COLOR_DEBUG = '\033[1;38;2;130;70;160m'
 _COLOR_INFO = '\033[1;38;2;0;130;180m'
 _COLOR_WARNING = '\033[1;38;2;200;120;50m'
 _COLOR_ERROR = '\033[1;38;2;230;50;50m'
-_COLOR_CRITICAL = '\033[1;38;2;255;10;10m'
 _COLOR_END = '\033[0m'
 
 
@@ -84,19 +83,6 @@ def custom_error(self, msg, *args, **kwargs):
         self._log(logging.ERROR, msg, args, **kwargs)
 
 
-def custom_critical(self, msg, *args, **kwargs):
-    """
-    Extend logging.critical method to add indentation to logging messages,
-    add traceback if DEBUG level is active,
-    and automatically exit after the message is logged.
-    """
-    if self.isEnabledFor(logging.CRITICAL):
-        msg = indent(msg, self.TABS)
-        if self.isEnabledFor(logging.DEBUG):
-            msg += "\n" + indent(traceback.format_exc(), self.TABS)
-        self._log(logging.CRITICAL, msg, args, **kwargs)
-
-
 class CustomConsoleFormatter(logging.Formatter):
     """
     Format messages based on log level.
@@ -108,7 +94,6 @@ class CustomConsoleFormatter(logging.Formatter):
         fmt_info: str = "",
         fmt_warning: str = "",
         fmt_error: str = "",
-        fmt_critical: str = "",
         **formatter_kwargs,
     ) -> None:
         default_kwargs = {
@@ -122,7 +107,6 @@ class CustomConsoleFormatter(logging.Formatter):
         self._fmt_info = fmt_info
         self._fmt_warning = fmt_warning
         self._fmt_error = fmt_error
-        self._fmt_critical = fmt_critical
 
     def format(self, record):
         """
@@ -139,8 +123,6 @@ class CustomConsoleFormatter(logging.Formatter):
             self._style._fmt = self._fmt_warning
         elif (record.levelno == logging.ERROR) and (self._fmt_error is not None):
             self._style._fmt = self._fmt_error
-        elif (record.levelno == logging.CRITICAL) and (self._fmt_critical is not None):
-            self._style._fmt = self._fmt_critical
         # Call the original formatter class to do the grunt work
         result = logging.Formatter.format(self, record)
         # Restore the original format configured by the user
@@ -160,7 +142,6 @@ def generate_logger():
         fmt_info=f"{_COLOR_INFO}%(levelname)-8s{_COLOR_END} %(message)s",
         fmt_warning=f"{_COLOR_WARNING}%(levelname)-8s{_COLOR_END} %(message)s",
         fmt_error=f"{_COLOR_ERROR}%(levelname)-8s{_COLOR_END} %(message)s",
-        fmt_critical=f"{_COLOR_CRITICAL}%(levelname)-8s{_COLOR_END} %(message)s",
     )
     handler = logging.StreamHandler()
     handler.setFormatter(formatter)
@@ -171,8 +152,6 @@ def generate_logger():
     logger.info = MethodType(custom_info, logger)
     logger.warning = MethodType(custom_warning, logger)
     logger.error = MethodType(custom_error, logger)
-    logger.critical = MethodType(custom_critical, logger)
-    # TODO: add logger.exception method
     return logger
 
 

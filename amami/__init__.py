@@ -18,7 +18,9 @@ try:
 except importlib.metadata.PackageNotFoundError:
     __version__ = ""
     LOGGER.warning(
-        "Unable to interrogate version string from installed amami distribution.")
+        "Unable to interrogate version string from installed %s distribution.",
+        __name__,
+    )
 
 __authors__ = [
     "Davide Marchegiani <davide.marchegiani@anu.edu.au>",
