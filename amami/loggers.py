@@ -5,9 +5,7 @@
 Module to control logging for 'amami' package
 """
 
-import traceback
 import logging
-from types import MethodType
 import warnings
 
 _COLOR_DEBUG = '\033[1;38;2;130;70;160m'
@@ -22,65 +20,6 @@ def indent(msg, numtabs):
     Indent a message by a given number of tabs.
     """
     return msg.replace('\n', '\n\t'.expandtabs(numtabs))
-
-# TODO: refactor multiple functions for multiple logging levels to be condensed in one single fuction
-#       using LOGGER.getEffectiveLevel()
-
-
-def custom_debug(self, msg, *args, **kwargs):
-    """
-    Extend logging.debug method to add indentation to logging messages.
-    """
-    if self.isEnabledFor(logging.DEBUG):
-        msg = indent(msg, self.TABS)
-        self._log(
-            logging.DEBUG,
-            msg,
-            args,
-            **kwargs
-        )
-
-
-def custom_info(self, msg, *args, **kwargs):
-    """
-    Extend logging.info method to add indentation to logging messages.
-    """
-    if self.isEnabledFor(logging.INFO):
-        msg = indent(msg, self.TABS)
-        self._log(
-            logging.INFO,
-            msg,
-            args,
-            **kwargs
-        )
-
-
-def custom_warning(self, msg, *args, **kwargs):
-    """
-    Extend logging.warning method to add indentation to logging messages.
-    """
-    if self.isEnabledFor(logging.WARNING):
-        msg = indent(msg, self.TABS)
-        self._log(
-            logging.WARNING,
-            msg,
-            args,
-            **kwargs
-        )
-
-
-def custom_error(self, msg, *args, **kwargs):
-    """
-    Extend logging.error method to add indentation to logging messages,
-    add traceback if DEBUG level is active,
-    and automatically exit after the message is logged.
-    """
-    if self.isEnabledFor(logging.ERROR):
-        msg = indent(msg, self.TABS)
-        if ((self.isEnabledFor(logging.DEBUG)) and
-                (traceback.format_exc() != "NoneType: None\n")):
-            msg += "\n" + traceback.format_exc()
-        self._log(logging.ERROR, msg, args, **kwargs)
 
 
 class CustomConsoleFormatter(logging.Formatter):
@@ -133,31 +72,42 @@ class CustomConsoleFormatter(logging.Formatter):
 def generate_logger():
     """Generate main logger"""
     # Get logger
-    logger = logging.getLogger('amami')
+    logger = logging.getLogger(__name__)
     # Set basic level
     logger.setLevel(logging.WARNING)
     # Set handler (console) and custom formatter
     formatter = CustomConsoleFormatter(
-        fmt_debug=f"{_COLOR_DEBUG}%(levelname)-8s{_COLOR_END} %(message)s",
-        fmt_info=f"{_COLOR_INFO}%(levelname)-8s{_COLOR_END} %(message)s",
-        fmt_warning=f"{_COLOR_WARNING}%(levelname)-8s{_COLOR_END} %(message)s",
-        fmt_error=f"{_COLOR_ERROR}%(levelname)-8s{_COLOR_END} %(message)s",
+        fmt_debug=f"{_COLOR_DEBUG}%(levelname)-7s{_COLOR_END} %(message)s",
+        fmt_info=f"{_COLOR_INFO}%(levelname)-7s{_COLOR_END} %(message)s",
+        fmt_warning=f"{_COLOR_WARNING}%(levelname)-7s{_COLOR_END} %(message)s",
+        fmt_error=f"{_COLOR_ERROR}%(levelname)-7s{_COLOR_END} %(message)s",
     )
     handler = logging.StreamHandler()
     handler.setFormatter(formatter)
     # Add handler to logger
     logger.addHandler(handler)
-    # Set custom logging methods
-    logger.debug = MethodType(custom_debug, logger)
-    logger.info = MethodType(custom_info, logger)
-    logger.warning = MethodType(custom_warning, logger)
-    logger.error = MethodType(custom_error, logger)
     return logger
 
 
+class CustomLogRecord(logging.LogRecord):
+    """
+    Custom LogRecord class to add indentation to logging messages.
+    """
+
+    def __init__(self, name, level, pathname, lineno,
+                 msg, args, exc_info, func=None, sinfo=None, **kwargs):
+        TABS = 8
+        indented_msg = indent(msg, TABS)
+        super().__init__(name, level, pathname, lineno,
+                         indented_msg, args, exc_info, func=None,
+                         sinfo=None, **kwargs)
+
+
+# Set custom logRecordFactory to apply indentation to logging messages
+logging._logRecordFactory = CustomLogRecord
 LOGGER = generate_logger()
 # Set tabs space for logging indentation
-setattr(LOGGER, "TABS", 9)
+setattr(LOGGER, "TABS", 8)
 
 
 # Make warnings use LOGGER.warning instead of the default format
