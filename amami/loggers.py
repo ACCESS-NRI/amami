@@ -25,6 +25,7 @@ def indent(msg, numtabs):
     return msg.replace('\n', '\n\t'.expandtabs(numtabs))
 
 # TODO: refactor multiple functions for multiple logging levels to be condensed in one single fuction
+#       using LOGGER.getEffectiveLevel()
 
 
 def custom_debug(self, msg, *args, **kwargs):
@@ -103,11 +104,11 @@ class CustomConsoleFormatter(logging.Formatter):
 
     def __init__(
         self,
-        fmt_debug: str = None,
-        fmt_info: str = None,
-        fmt_warning: str = None,
-        fmt_error: str = None,
-        fmt_critical=None,
+        fmt_debug: str = "",
+        fmt_info: str = "",
+        fmt_warning: str = "",
+        fmt_error: str = "",
+        fmt_critical: str = "",
         **formatter_kwargs,
     ) -> None:
         default_kwargs = {
@@ -171,6 +172,7 @@ def generate_logger():
     logger.warning = MethodType(custom_warning, logger)
     logger.error = MethodType(custom_error, logger)
     logger.critical = MethodType(custom_critical, logger)
+    # TODO: add logger.exception method
     return logger
 
 
