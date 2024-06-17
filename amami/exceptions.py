@@ -28,7 +28,7 @@ class ParsingError(AmamiError):
 
 
 class AmamiNotImplementedError(AmamiError):
-    """Exception for CLI parsing errors."""
+    """Exception for the amami NotImplementedError."""
     pass
 
 
@@ -39,7 +39,7 @@ def custom_excepthook(exc_type, exc_value, exc_traceback):
     if issubclass(exc_type, AmamiError):
         # If the logger is enabled for DEBUG level print the traceback
         if LOGGER.isEnabledFor(10):
-            print("*** Traceback (most recent call last) ***\n")
+            print("\n*** Traceback (most recent call last) ***\n", file=sys.stderr)
             traceback.print_tb(exc_traceback)
         LOGGER.error("%s", exc_value)
     else:

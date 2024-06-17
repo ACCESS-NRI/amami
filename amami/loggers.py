@@ -6,6 +6,7 @@ Module to control logging for 'amami' package
 """
 
 import logging
+import sys
 
 _COLOR_DEBUG = '\033[1;38;2;130;70;160m'
 _COLOR_INFO = '\033[1;38;2;0;130;180m'
@@ -28,10 +29,10 @@ class CustomConsoleFormatter(logging.Formatter):
 
     def __init__(
         self,
-        fmt_debug: str = "",
-        fmt_info: str = "",
-        fmt_warning: str = "",
-        fmt_error: str = "",
+        fmt_debug: str,
+        fmt_info: str,
+        fmt_warning: str,
+        fmt_error: str,
         **formatter_kwargs,
     ) -> None:
         default_kwargs = {
@@ -68,26 +69,6 @@ class CustomConsoleFormatter(logging.Formatter):
         return result
 
 
-def generate_logger():
-    """Generate main logger"""
-    # Get logger
-    logger = logging.getLogger(__name__)
-    # Set basic level
-    logger.setLevel(logging.WARNING)
-    # Set handler (console) and custom formatter
-    formatter = CustomConsoleFormatter(
-        fmt_debug=f"{_COLOR_DEBUG}%(levelname)-7s{_COLOR_END} %(message)s",
-        fmt_info=f"{_COLOR_INFO}%(levelname)-7s{_COLOR_END} %(message)s",
-        fmt_warning=f"{_COLOR_WARNING}%(levelname)-7s{_COLOR_END} %(message)s",
-        fmt_error=f"{_COLOR_ERROR}%(levelname)-7s{_COLOR_END} %(message)s",
-    )
-    handler = logging.StreamHandler()
-    handler.setFormatter(formatter)
-    # Add handler to logger
-    logger.addHandler(handler)
-    return logger
-
-
 class CustomLogRecord(logging.LogRecord):
     """
     Custom LogRecord class to add indentation to logging messages.
@@ -102,6 +83,32 @@ class CustomLogRecord(logging.LogRecord):
                          sinfo=None, **kwargs)
 
 
-# Set custom logRecordFactory to apply indentation to logging messages
-logging._logRecordFactory = CustomLogRecord
+def generate_logger():
+    """Generate main logger"""
+    # Set custom logRecordFactory to apply indentation to logging messages
+    logging._logRecordFactory = CustomLogRecord
+    # Get logger
+    logger = logging.getLogger(__name__)
+    # Set handler (console) and custom formatter
+    formatter = CustomConsoleFormatter(
+        fmt_debug=f"{_COLOR_DEBUG}%(levelname)-7s{_COLOR_END} %(message)s",
+        fmt_info=f"{_COLOR_INFO}%(levelname)-7s{_COLOR_END} %(message)s",
+        fmt_warning=f"{_COLOR_WARNING}%(levelname)-7s{_COLOR_END} %(message)s",
+        fmt_error=f"{_COLOR_ERROR}%(levelname)-7s{_COLOR_END} %(message)s",
+    )
+    # Create handlers for stdout and stderr
+    outhandler = logging.StreamHandler(stream=sys.stdout)
+    outhandler.setFormatter(formatter)
+    # Add filter to send anything below WARNING to stdout
+    outhandler.addFilter(lambda record: record.levelno < logging.WARNING)
+    errhandler = logging.StreamHandler(stream=sys.stderr)
+    errhandler.setFormatter(formatter)
+    # Add filter to send WARNING and ERROR to stderr
+    errhandler.addFilter(lambda record: record.levelno >= logging.WARNING)
+    # Add handler to logger
+    logger.addHandler(outhandler)
+    logger.addHandler(errhandler)
+    return logger
+
+
 LOGGER = generate_logger()
