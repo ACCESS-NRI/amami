@@ -7,7 +7,7 @@ import os
 import argparse
 import pkgutil
 import amami
-from typing import Union, Callable
+from typing import Union, Callable, Sequence
 from importlib import import_module
 from amami.loggers import LOGGER
 from amami.exceptions import ParsingError
@@ -15,6 +15,8 @@ from amami import commands as amami_commands
 
 
 # Dynamically declare commands by checking files in the amami/commands folder
+# Every command should be paired with its parser, named as <command>_parser.py,
+# in the amami/parsers folder.
 COMMANDS = [command.name for command in pkgutil.iter_modules(
     amami_commands.__path__)]
 
@@ -58,6 +60,7 @@ class NoColourAction(argparse.Action):
         super().__init__(option_strings, dest, nargs=nargs, **kwargs)
 
     def __call__(self, parser, namespace, values, option_string=None):
+        # Set TERM environment variable to disable colours for rich module
         os.environ["TERM"] = "dumb"
 
 
@@ -75,55 +78,91 @@ class ParserWithCallback(argparse.ArgumentParser):
         callback: Union[Callable, None] = None,
         **argparse_kwargs
     ) -> None:
-        default_kwargs = {
-            'allow_abbrev': False,
-            'add_help': False,
-        }
-        default_kwargs.update(**argparse_kwargs)
-        super().__init__(**default_kwargs)
+        super().__init__(add_help=False, **argparse_kwargs)
         self.callback = callback
 
 
 class MainParser(argparse.ArgumentParser):
     """
     Class for the main custom parser. 
-    The main parser structure is the following:
-    |--- self 
-    |    |  Higher level parser for options valid only for the `amami` program 
-    |    |  (for example the '--version' option: `amami --version`)
-    |    |
-    |--- global_parser
+    The MainParser structure is the following:
+    |--- global_options_parser
     |    |  Parser for options valid for both the `amami` program and all its commands
     |    |  (for example the '--help' option: `amami --help` or `amami um2nc --help`)
     |    |
-    |    |--- common_parser
-    |    |      Parser for options valid for any `amami` command
-    |    |      (for example the '--debug' option: `amami um2nc --debug` or `amami modify --debug`)
+    |    self (MainParser)
+    |    |  Parser for options valid only for the `amami` program 
+    |    |  (for example the '--version' option: `amami --version`)
     |    |
     |    |--- command_parser
-                Parser for options valid for each specific `amami` command
-
-
-
+    |    |    |  Parser for the `amami` commands
+    |    |    |  (for example: `amami um2nc` or `amami modfy`)
+    |    |    |
+    |    |    |--- common_options_parser
+    |    |    |     Parser for options valid for all `amami` commands
+    |    |    |     (for example the '--debug' option: `amami um2nc --debug` or `amami modify --debug`)
+    |    |    |
+    |    |    |--- subparsers
+    |    |    |     Parsers for options valid for each specific `amami` command
+    |    |    |     One for each command in the `amami.commands` folder (created dynamically)
     """
 
     def __init__(self) -> None:
-        # Generate help parser
-        self.global_parser = self.generate_global_parser()
-        # Generate common parser
-        self.common_parser = self._generate_common_parser()
-        kwargs = {
-            "prog": amami.__name__,
-            "description": amami.__doc__,
-            "parents": [self.global_parser],
-            'allow_abbrev': False,
-            'formatter_class': ParseFormatter,
-            'add_help': False,
-        }
-        # Generate main parser
-        super().__init__(**kwargs)
-        # Add arguments to main parser
-        # Version option
+        # Generate global options parser
+        self.global_options_parser = self._generate_global_parser()
+        # Generate MainParser
+        self._generate_main_parser()
+        # Generate command_parser
+        self._generate_command_parser()
+        # Generate common_options_parser
+        self.common_options_parser = self._generate_common_parser()
+        self.generate_subparsers()
+
+    @staticmethod
+    def _generate_global_parser() -> argparse.ArgumentParser:
+        """
+        Generate the global options parser, for options valid for both the `amami` 
+        program and its commands.
+        """
+        # Create parser
+        global_parser = argparse.ArgumentParser(
+            add_help=False,
+            allow_abbrev=False,
+            argument_default=argparse.SUPPRESS,
+        )
+
+        # Add help option
+        global_parser.add_argument(
+            "-h",
+            "--help",
+            action="help",
+            help="""Show this help message and exit.
+
+""")
+
+        # Add no colours option
+        global_parser.add_argument(
+            "--nocolours", "--nocolors", "--nocolour", "--nocolor",
+            "--no-colours", "--no-colors", "--no-colour", "--no-color",
+            "--nostyles", "--nostyle", "--no-styles", "--no-style",
+            action=NoColourAction,
+            help="""Remove colours and styles from output messages.
+
+""")
+        return global_parser
+
+    def _generate_main_parser(self) -> None:
+        """Generate the main parser for options valid only for the `amami` program."""
+        super().__init__(
+            prog=amami.__name__,
+            usage=None,
+            description=amami.__doc__,
+            parents=[self.global_options_parser],
+            formatter_class=ParseFormatter,
+            add_help=False,
+            allow_abbrev=False,
+        )
+        # Add version option
         self.add_argument(
             "-V",
             "--version",
@@ -131,55 +170,19 @@ class MainParser(argparse.ArgumentParser):
             version=f"{amami.__version__}",
             help="""Show program's version number and exit.
 
-"""
-        )
-        # Add subparsers for subcommands
-        self.subparsers = self.add_subparsers(
-            dest="subcommand",
-            metavar="command",
-            parser_class=ParserWithCallback
-        )
-        self.generate_subparsers()
+""")
 
     @staticmethod
-    def generate_global_parser() -> argparse.ArgumentParser:
-        """
-        Generate the global parser, for options valid for both the `amami` program and its commands
-        """
-        # Create parser
-        parser = argparse.ArgumentParser(
-            add_help=False,
-            allow_abbrev=False,
-            argument_default=argparse.SUPPRESS,
-        )
-
-        # Add help option
-        parser.add_argument(
-            "-h",
-            "--help",
-            action="help",
-            help="""Show this help message and exit.
-
-    """)
-
-        # Add no colours option
-        parser.add_argument(
-            "--nocolours", "--nocolors", "--nocolour", "--nocolor",
-            "--no-colours", "--no-colors", "--no-colour", "--no-color",
-            action=NoColourAction,
-            help="""Remove colours and styles from output messages.
-
-    """)
-        return parser
-
-    def _generate_common_parser(self) -> argparse.ArgumentParser:
-        # parser for arguments common to all subcommands
+    def _generate_common_parser() -> argparse.ArgumentParser:
+        """Generate the common options parser, for options valid for all `amami` commands."""
         common_parser = argparse.ArgumentParser(
             add_help=False,
             allow_abbrev=False,
             argument_default=argparse.SUPPRESS,
         )
+        # Add mutually exclusive group for verbose, silent and debug options
         _mutual = common_parser.add_mutually_exclusive_group()
+        # Add verbose option
         _mutual.add_argument(
             "-v",
             "--verbose",
@@ -190,6 +193,7 @@ Cannot be used together with '-s/--silent' or '--debug'.
 
 """,
         )
+        # Add silent option
         _mutual.add_argument(
             "-s",
             "--silent",
@@ -200,6 +204,7 @@ Cannot be used together with '-v/--verbose' or '--debug'.
 
 """,
         )
+        # Add debug option
         _mutual.add_argument(
             "--debug",
             dest="debug",
@@ -211,12 +216,22 @@ Cannot be used together with '-s/--silent' or '-v/--verbose'.
         )
         return common_parser
 
+    def _generate_command_parser(self) -> None:
+        # Add subparsers for amami commands
+        self.subparsers = self.add_subparsers(
+            dest="command",
+            metavar="command",
+            parser_class=ParserWithCallback,
+        )
+
     def generate_subparsers(self) -> None:
         """
-        Function to generate the subparsers dynamically, as they are added to the
-        amami/parsers folder.
-        The parser name need to be in the format `<command>_parser.py`.
-        For example, the parser for the `um2nc` command should be named `um2nc_parser.py`.
+        Function to generate the subparsers for each amami command dynamically.
+        Each command parser file needs to be in the amami/parsers folder and the filename
+        needs to be in the format '<command>_parser.py'.
+        For example, the parser for the 'um2nc' command should be named 'um2nc_parser.py'.
+        Each command parser file should have a 'PARSER' variable as an instance of 
+        'ParserWithCallback' that represents the command parser.
         """
         for command in COMMANDS:
             subparser = getattr(
@@ -226,14 +241,14 @@ Cannot be used together with '-s/--silent' or '-v/--verbose'.
             self.subparsers.add_parser(
                 command,
                 parents=[
-                    self.global_parser,
-                    self.common_parser,
+                    self.global_options_parser,
+                    self.common_options_parser,
                     subparser,
                 ],
                 usage=" ".join(subparser.usage.split()),
                 description=subparser.description,
                 formatter_class=ParseFormatter,
-                add_help=False,
+                allow_abbrev=False,
                 callback=subparser.callback,
             )
 
@@ -246,9 +261,9 @@ Cannot be used together with '-s/--silent' or '-v/--verbose'.
         Parse arguments and preprocess according to the specified command.
         """
         known_args, unknown_args = self.parse_known_args(*args, **kwargs)
-        if known_args.subcommand is not None:
+        if known_args.command is not None:
             if (callback := self.subparsers
-                    .choices[known_args.subcommand].callback):  # Assignment expression
+                    .choices[known_args.command].callback):  # Assignment expression
                 return callback(known_args, unknown_args)
             elif unknown_args:
                 raise ParsingError(

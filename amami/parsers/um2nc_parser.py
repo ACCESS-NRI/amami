@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 """
-Module to define the parser for the `um2nc` subcommand.
+Module to define the parser for the `um2nc` command.
 
 Script created by Davide Marchegiani (davide.marchegiani@anu.edu.au) at ACCESS-NRI.
 """

@@ -468,7 +468,7 @@ def cubewrite(cube, sman, compression):
 
 def main(args):
     """
-    Main function for `um2nc` subcommand
+    Main function for `um2nc` command
     """
     # Get input path
     LOGGER.debug(f"{args=}")

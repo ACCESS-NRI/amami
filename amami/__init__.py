@@ -57,6 +57,9 @@ List of supported commands:
 For more information about a specific command, run `amami <command> -h`.
 """
 
+# Store the command that gets called so that it can be accessed by any module
+__command__ = None
+
 
 class Amami:
     """A class that represents the `amami` application."""
@@ -73,7 +76,7 @@ class Amami:
         """
         Calls the `main` function of the amami.commands.<chosen command> module.
         """
-        command = getattr(self.args, 'subcommand')
+        command = getattr(self.args, 'command')
         command_entry_point = getattr(
             import_module(f'amami.commands.{command}'),
             'main',
