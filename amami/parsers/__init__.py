@@ -3,6 +3,7 @@
 
 """Module to define and generate the main parser and run the parse processing."""
 
+import os
 import argparse
 import pkgutil
 import amami
@@ -22,43 +23,42 @@ class VerboseAction(argparse.Action):
     """Class to enable verbose option '-v/--verbose' to be run as an argparse action"""
 
     def __init__(self, option_strings, dest, nargs=0, **kwargs):
-        if nargs > 0:
-            raise ParsingError(
-                "Arguments not allowed for '-v/--verbose' option.")
         super().__init__(option_strings, dest, nargs=nargs, **kwargs)
 
     def __call__(self, parser, namespace, values, option_string=None):
         LOGGER.setLevel(20)  # logging.INFO
-        setattr(namespace, self.dest, True)
 
 
 class SilentAction(argparse.Action):
     """Class to enable silent option '-s/--silent' to be run as an argparse action"""
 
     def __init__(self, option_strings, dest, nargs=0, **kwargs):
-        if nargs > 0:
-            raise ParsingError(
-                "Arguments not allowed for '-s/--silent' option.")
         super().__init__(option_strings, dest, nargs=nargs, **kwargs)
 
     def __call__(self, parser, namespace, values, option_string=None):
         import warnings
         warnings.filterwarnings("ignore")
         LOGGER.setLevel(40)  # logging.ERROR
-        setattr(namespace, self.dest, True)
 
 
 class DebugAction(argparse.Action):
     """Class to enable debug option '--debug' to be run as an argparse action"""
 
     def __init__(self, option_strings, dest, nargs=0, **kwargs):
-        if nargs > 0:
-            raise ParsingError("Arguments not allowed for '--debug' option.")
         super().__init__(option_strings, dest, nargs=nargs, **kwargs)
 
     def __call__(self, parser, namespace, values, option_string=None):
         LOGGER.setLevel(10)  # logging.DEBUG
-        setattr(namespace, self.dest, True)
+
+
+class NoColourAction(argparse.Action):
+    """Class to enable option '--nocolours' to be run as an argparse action"""
+
+    def __init__(self, option_strings, dest, nargs=0, **kwargs):
+        super().__init__(option_strings, dest, nargs=nargs, **kwargs)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        os.environ["TERM"] = "dumb"
 
 
 class ParseFormatter(argparse.RawTextHelpFormatter, argparse.RawDescriptionHelpFormatter):
@@ -128,14 +128,21 @@ class MainParser(argparse.ArgumentParser):
         help_parser = argparse.ArgumentParser(
             add_help=False,
             allow_abbrev=False,
+            argument_default=argparse.SUPPRESS,
         )
 
         help_parser.add_argument(
             "-h",
             "--help",
             action="help",
-            default=argparse.SUPPRESS,
             help="""Show this help message and exit.
+
+""",
+        )
+        help_parser.add_argument(
+            "--nocolors", "--nocolours", "--nocolor", "--nocolour",
+            action=NoColourAction,
+            help="""Removes colours and styles from output messages.
 
 """,
         )
@@ -146,6 +153,7 @@ class MainParser(argparse.ArgumentParser):
         common_parser = argparse.ArgumentParser(
             add_help=False,
             allow_abbrev=False,
+            argument_default=argparse.SUPPRESS,
         )
         _mutual = common_parser.add_mutually_exclusive_group()
         _mutual.add_argument(
@@ -163,7 +171,7 @@ Cannot be used together with '-s/--silent' or '--debug'.
             "--silent",
             dest="silent",
             action=SilentAction,
-            help="""Make output completely silent (do not show warnings).
+            help="""Make output completely silent(do not show warnings).
 Cannot be used together with '-v/--verbose' or '--debug'.
 
 """,
@@ -181,9 +189,9 @@ Cannot be used together with '-s/--silent' or '-v/--verbose'.
 
     def generate_subparsers(self) -> None:
         """
-        Function to generate the subparsers dynamically, as they are added to the 
-        amami/parsers folder. 
-        The parser name need to be in the format `<command>_parser.py`.
+        Function to generate the subparsers dynamically, as they are added to the
+        amami/parsers folder.
+        The parser name need to be in the format `< command > _parser.py`.
         """
         for command in COMMANDS:
             subparser = getattr(
@@ -212,7 +220,6 @@ Cannot be used together with '-s/--silent' or '-v/--verbose'.
         """
         Parse arguments and preprocess according to the specified command.
         """
-        print('parse_and_process_called')
         known_args, unknown_args = self.parse_known_args(*args, **kwargs)
         if known_args.subcommand is not None:
             if (callback := self.subparsers
