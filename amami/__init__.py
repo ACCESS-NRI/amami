@@ -69,10 +69,9 @@ class Amami:
             argv[1:] if argv[1:] else ["-h"]
         )
 
-    def run_command(self):
+    def run_command_main_function(self):
         """
-        Calls the entry point for the chosen`amami` command, which is the `main` 
-        function of the amami.commands.<chosen command> module.
+        Calls the `main` function of the amami.commands.<chosen command> module.
         """
         command = getattr(self.args, 'subcommand')
         command_entry_point = getattr(
@@ -85,4 +84,4 @@ class Amami:
 
 def main() -> None:
     """Entry point for CLI usage of `amami`."""
-    Amami(sys.argv).run_command()
+    Amami(sys.argv).run_command_main_function()
