@@ -65,9 +65,9 @@ class ParseFormatter(argparse.RawTextHelpFormatter, argparse.RawDescriptionHelpF
     """Class to combine argparse Help and Description formatters"""
 
 
-class SubcommandParser(argparse.ArgumentParser):
+class ParserWithCallback(argparse.ArgumentParser):
     """
-    Class to create a parser for the subcommands to have a callback for pre-processing
+    Class to create a parser that has a callback for parsing pre-processing
     """
 
     def __init__(
@@ -86,19 +86,36 @@ class SubcommandParser(argparse.ArgumentParser):
 
 class MainParser(argparse.ArgumentParser):
     """
-    Class to extend the functionality of argparse.ArgumentParser and create a custom
-    parser that allow preprocessing according to the spefcified command.
+    Class for the main custom parser. 
+    The main parser structure is the following:
+    |--- self 
+    |    |  Higher level parser for options valid only for the `amami` program 
+    |    |  (for example the '--version' option: `amami --version`)
+    |    |
+    |--- global_parser
+    |    |  Parser for options valid for both the `amami` program and all its commands
+    |    |  (for example the '--help' option: `amami --help` or `amami um2nc --help`)
+    |    |
+    |    |--- common_parser
+    |    |      Parser for options valid for any `amami` command
+    |    |      (for example the '--debug' option: `amami um2nc --debug` or `amami modify --debug`)
+    |    |
+    |    |--- command_parser
+                Parser for options valid for each specific `amami` command
+
+
+
     """
 
     def __init__(self) -> None:
         # Generate help parser
-        self.help_parser = self._generate_help_parser()
+        self.global_parser = self.generate_global_parser()
         # Generate common parser
         self.common_parser = self._generate_common_parser()
         kwargs = {
             "prog": amami.__name__,
             "description": amami.__doc__,
-            "parents": [self.help_parser],
+            "parents": [self.global_parser],
             'allow_abbrev': False,
             'formatter_class': ParseFormatter,
             'add_help': False,
@@ -106,6 +123,7 @@ class MainParser(argparse.ArgumentParser):
         # Generate main parser
         super().__init__(**kwargs)
         # Add arguments to main parser
+        # Version option
         self.add_argument(
             "-V",
             "--version",
@@ -119,34 +137,40 @@ class MainParser(argparse.ArgumentParser):
         self.subparsers = self.add_subparsers(
             dest="subcommand",
             metavar="command",
-            parser_class=SubcommandParser
+            parser_class=ParserWithCallback
         )
         self.generate_subparsers()
 
-    def _generate_help_parser(self) -> argparse.ArgumentParser:
-        # help argument parser
-        help_parser = argparse.ArgumentParser(
+    @staticmethod
+    def generate_global_parser() -> argparse.ArgumentParser:
+        """
+        Generate the global parser, for options valid for both the `amami` program and its commands
+        """
+        # Create parser
+        parser = argparse.ArgumentParser(
             add_help=False,
             allow_abbrev=False,
             argument_default=argparse.SUPPRESS,
         )
 
-        help_parser.add_argument(
+        # Add help option
+        parser.add_argument(
             "-h",
             "--help",
             action="help",
             help="""Show this help message and exit.
 
-""",
-        )
-        help_parser.add_argument(
-            "--nocolors", "--nocolours", "--nocolor", "--nocolour",
-            action=NoColourAction,
-            help="""Removes colours and styles from output messages.
+    """)
 
-""",
-        )
-        return help_parser
+        # Add no colours option
+        parser.add_argument(
+            "--nocolours", "--nocolors", "--nocolour", "--nocolor",
+            "--no-colours", "--no-colors", "--no-colour", "--no-color",
+            action=NoColourAction,
+            help="""Remove colours and styles from output messages.
+
+    """)
+        return parser
 
     def _generate_common_parser(self) -> argparse.ArgumentParser:
         # parser for arguments common to all subcommands
@@ -191,7 +215,8 @@ Cannot be used together with '-s/--silent' or '-v/--verbose'.
         """
         Function to generate the subparsers dynamically, as they are added to the
         amami/parsers folder.
-        The parser name need to be in the format `< command > _parser.py`.
+        The parser name need to be in the format `<command>_parser.py`.
+        For example, the parser for the `um2nc` command should be named `um2nc_parser.py`.
         """
         for command in COMMANDS:
             subparser = getattr(
@@ -201,7 +226,7 @@ Cannot be used together with '-s/--silent' or '-v/--verbose'.
             self.subparsers.add_parser(
                 command,
                 parents=[
-                    self.help_parser,
+                    self.global_parser,
                     self.common_parser,
                     subparser,
                 ],

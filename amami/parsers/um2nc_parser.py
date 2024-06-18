@@ -10,7 +10,7 @@ Script created by Davide Marchegiani (davide.marchegiani@anu.edu.au) at ACCESS-N
 import argparse
 from typing import List
 from amami.helpers import create_unexistent_file
-from amami.parsers import SubcommandParser
+from amami.parsers import ParserWithCallback
 from amami.exceptions import ParsingError
 
 
@@ -84,7 +84,7 @@ def callback_function(known_args: argparse.Namespace, unknown_args: List[str]) -
 
 
 # Create parser
-PARSER = SubcommandParser(
+PARSER = ParserWithCallback(
     usage=USAGE,
     description=DESCRIPTION,
     callback=callback_function,
