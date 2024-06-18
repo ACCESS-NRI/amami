@@ -9,7 +9,7 @@ Module to define docs, main class and entry point for CLI usage of `amami`.
 import sys
 import importlib.metadata
 from importlib import import_module
-from amami.parsers.main_parser import MainParser
+from amami.parsers import MainParser
 from amami.loggers import LOGGER
 
 # Set version
