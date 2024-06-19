@@ -22,7 +22,7 @@ COMMANDS = [command.name for command in pkgutil.iter_modules(
 
 
 class VerboseAction(argparse.Action):
-    """Class to enable verbose option '-v/--verbose' to be run as an argparse action"""
+    """Class that enables the '--verbose' option to be run as an argparse action."""
 
     def __init__(self, option_strings, dest, nargs=0, **kwargs):
         super().__init__(option_strings, dest, nargs=nargs, **kwargs)
@@ -32,7 +32,7 @@ class VerboseAction(argparse.Action):
 
 
 class SilentAction(argparse.Action):
-    """Class to enable silent option '-s/--silent' to be run as an argparse action"""
+    """Class that enables the '--silent' option to be run as an argparse action."""
 
     def __init__(self, option_strings, dest, nargs=0, **kwargs):
         super().__init__(option_strings, dest, nargs=nargs, **kwargs)
@@ -44,7 +44,7 @@ class SilentAction(argparse.Action):
 
 
 class DebugAction(argparse.Action):
-    """Class to enable debug option '--debug' to be run as an argparse action"""
+    """Class that enables the '--debug' option to be run as an argparse action."""
 
     def __init__(self, option_strings, dest, nargs=0, **kwargs):
         super().__init__(option_strings, dest, nargs=nargs, **kwargs)
@@ -53,8 +53,8 @@ class DebugAction(argparse.Action):
         LOGGER.setLevel(10)  # logging.DEBUG
 
 
-class NoColourAction(argparse.Action):
-    """Class to enable option '--nocolours' to be run as an argparse action"""
+class NoStylingAction(argparse.Action):
+    """Class that enables the '--poor' option to be run as an argparse action."""
 
     def __init__(self, option_strings, dest, nargs=0, **kwargs):
         super().__init__(option_strings, dest, nargs=nargs, **kwargs)
@@ -143,11 +143,10 @@ class MainParser(argparse.ArgumentParser):
 
         # Add no colours option
         global_parser.add_argument(
-            "--nocolours", "--nocolors", "--nocolour", "--nocolor",
-            "--no-colours", "--no-colors", "--no-colour", "--no-color",
-            "--nostyles", "--nostyle", "--no-styles", "--no-style",
-            action=NoColourAction,
+            "--poor", "--nostyles", "--nocolours", "--nocolors",
+            action=NoStylingAction,
             help="""Remove colours and styles from output messages.
+(Remove the functionality brought by the 'rich' Python package - https://rich.readthedocs.io/en/latest/index.html).
 
 """)
         return global_parser

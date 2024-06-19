@@ -9,7 +9,7 @@ custom warning formatting.
 import sys
 import traceback
 import warnings
-from amami.loggers import LOGGER
+from amami.loggers import LOGGER, POOR_LOGGER
 
 
 class AmamiError(Exception):
@@ -64,7 +64,7 @@ def external_warning_formatting(
     Custom formatting for warnings, to use 'LOGGER.warning'
     and keep proper indentation.
     """
-    LOGGER.warning(
+    POOR_LOGGER.warning(
         "%s:%s - %s",
         filename,
         lineno,
