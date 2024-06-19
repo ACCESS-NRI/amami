@@ -68,7 +68,7 @@ class Amami:
         self,
         argv: list[str],
     ) -> None:
-        self.args = MainParser().parse_and_process(
+        self.args = MainParser().parse_with_callback(
             argv[1:] if argv[1:] else ["-h"]
         )
 

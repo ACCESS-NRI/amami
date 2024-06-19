@@ -7,7 +7,7 @@ import os
 import argparse
 import pkgutil
 import amami
-from typing import Union, Callable, Sequence
+from typing import Union, Callable, List
 from importlib import import_module
 from amami.loggers import LOGGER
 from amami.exceptions import ParsingError
@@ -75,10 +75,11 @@ class ParserWithCallback(argparse.ArgumentParser):
 
     def __init__(
         self,
-        callback: Union[Callable, None] = None,
+        callback=None,
         **argparse_kwargs
     ) -> None:
         super().__init__(add_help=False, **argparse_kwargs)
+        # If there is no callback in the specific command parser return the known args
         self.callback = callback
 
 
@@ -252,24 +253,26 @@ Cannot be used together with '-s/--silent' or '-v/--verbose'.
                 callback=subparser.callback,
             )
 
-    def parse_and_process(
+    def parse_with_callback(
         self,
         *args,
         **kwargs
     ) -> Union[Callable, None]:
         """
-        Parse arguments and preprocess according to the specified command.
+        Parse known and unknown arguments and calls a callback on them,
+        according to the specified command.
         """
         known_args, unknown_args = self.parse_known_args(*args, **kwargs)
-        if known_args.command is not None:
-            if (callback := self.subparsers
-                    .choices[known_args.command].callback):  # Assignment expression
-                return callback(known_args, unknown_args)
-            elif unknown_args:
-                raise ParsingError(
-                    f"Option '{unknown_args[0]}' not supported.")
-            else:
-                return known_args
-        else:
+        # Keep track of the command used
+        amami.__command__ = known_args.command
+        # Unkown args cannot be options (start with '-')
+        if unknown_args and any(isoption := [ua.startswith('-') for ua in unknown_args]):
             self.print_usage()
-            raise ParsingError(f"Option '{unknown_args[0]}' not supported.")
+            raise ParsingError(
+                f"Option '{unknown_args[isoption.index(True)]}' not supported.")
+        elif (callback := self.subparsers.choices[known_args.command].callback):
+            return callback(known_args, unknown_args)
+        elif unknown_args:
+            raise ParsingError(f"Too many arguments: {unknown_args}.")
+        else:
+            return known_args
