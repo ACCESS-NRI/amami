@@ -1,8 +1,6 @@
 # Copyright 2022 ACCESS-NRI and contributors. See the top-level COPYRIGHT file for details.
 # SPDX-License-Identifier: Apache-2.0
 """
-Script created by Davide Marchegiani (davide.marchegiani@anu.edu.au) at ACCESS-NRI.
-
 Module to define docs, main class and entry point for CLI usage of `amami`.
 """
 
@@ -10,17 +8,18 @@ import sys
 import importlib.metadata
 from importlib import import_module
 from amami.parsers import MainParser
-from amami.loggers import LOGGER
 
 # Set version
 try:
     __version__ = importlib.metadata.version(__name__)
 except importlib.metadata.PackageNotFoundError:
     __version__ = ""
-    LOGGER.warning(
-        "Unable to interrogate version string from installed %s distribution.",
-        __name__,
-    )
+    # TODO: Add warning but change logic because this causes a circular import because of __command__
+    # from amami.loggers import LOGGER
+    # LOGGER.warning(
+    #     "Unable to interrogate version string from installed %s distribution.",
+    #     __name__,
+    # )
 
 __authors__ = [
     "Davide Marchegiani <davide.marchegiani@anu.edu.au>",

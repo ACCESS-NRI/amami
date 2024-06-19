@@ -7,6 +7,7 @@ Module to control logging for 'amami' package
 
 import logging
 import sys
+import amami
 
 _COLOR_DEBUG = '\033[1;38;2;130;70;160m'
 _COLOR_INFO = '\033[1;38;2;0;130;180m'
@@ -77,9 +78,12 @@ class CustomLogRecord(logging.LogRecord):
     def __init__(self, name, level, pathname, lineno,
                  msg, args, exc_info, func=None, sinfo=None, **kwargs):
         TABS = 8
-        indented_msg = indent(msg, TABS)
+        # Add amami command and indent message
+        command = f" {amami.__command__}" if amami.__command__ else ""
+        new_msg = f"amami{command}: {msg}"
+        new_msg = indent(new_msg, TABS)
         super().__init__(name, level, pathname, lineno,
-                         indented_msg, args, exc_info, func=None,
+                         new_msg, args, exc_info, func=None,
                          sinfo=None, **kwargs)
 
 
