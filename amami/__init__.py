@@ -1,20 +1,17 @@
 # Copyright 2022 ACCESS-NRI and contributors. See the top-level COPYRIGHT file for details.
 # SPDX-License-Identifier: Apache-2.0
 """
-Module to define docs, main class and entry point for CLI usage of `amami`.
+Main amami module that sets docs, version, authors, command, and the consoles for output logging.
 """
 
-import sys
 import importlib.metadata
-from importlib import import_module
-from amami.parsers import MainParser
 
 # Set version
 try:
     __version__ = importlib.metadata.version(__name__)
 except importlib.metadata.PackageNotFoundError:
     __version__ = ""
-    # TODO: Add warning but change logic because this causes a circular import because of __command__
+    # TODO: Add warning but change logic because this causes a circular import
     # from amami.loggers import LOGGER
     # LOGGER.warning(
     #     "Unable to interrogate version string from installed %s distribution.",
@@ -58,32 +55,3 @@ For more information about a specific command, run `amami <command> -h`.
 
 # Store the command that gets called so that it can be accessed by any module
 __command__ = None
-
-
-class Amami:
-    """A class that represents the `amami` application."""
-
-    def __init__(
-        self,
-        argv: list[str],
-    ) -> None:
-        self.args = MainParser().parse_with_callback(
-            argv[1:] if argv[1:] else ["-h"]
-        )
-
-    def run_command_main_function(self):
-        """
-        Calls the `main` function of the amami.commands.<chosen command> module.
-        """
-        command = getattr(self.args, 'command')
-        command_entry_point = getattr(
-            import_module(f'amami.commands.{command}'),
-            'main',
-        )
-        # Call 'main' function of chosen command
-        command_entry_point(self.args)
-
-
-def main() -> None:
-    """Entry point for CLI usage of `amami`."""
-    Amami(sys.argv).run_command_main_function()

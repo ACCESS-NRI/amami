@@ -58,6 +58,7 @@ def generate_logger(name, markup=True):
     return logger
 
 
+# Create main logger
 LOGGER = generate_logger(__name__)
 # Create logger without markup formatting (needed mostly for external warnings )
 POOR_LOGGER = generate_logger('nomarkup', markup=False)

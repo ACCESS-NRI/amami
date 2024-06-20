@@ -3,13 +3,12 @@
 
 """Module to define and generate the main parser and run the parse processing."""
 
-import os
 import argparse
 import pkgutil
 import amami
-from typing import Union, Callable, List
+from typing import Union, Callable
 from importlib import import_module
-from amami.loggers import LOGGER
+from amami.loggers import LOGGER, CONSOLE_STDOUT, CONSOLE_STDERR
 from amami.exceptions import ParsingError
 from amami import commands as amami_commands
 
@@ -60,8 +59,9 @@ class NoStylingAction(argparse.Action):
         super().__init__(option_strings, dest, nargs=nargs, **kwargs)
 
     def __call__(self, parser, namespace, values, option_string=None):
-        # Set TERM environment variable to disable colours for rich module
-        os.environ["TERM"] = "dumb"
+        # Set _color_sistem = None to disable styling and colours for rich consoles
+        CONSOLE_STDOUT._color_system = None
+        CONSOLE_STDERR._color_system = None
 
 
 class ParseFormatter(argparse.RawTextHelpFormatter, argparse.RawDescriptionHelpFormatter):
@@ -85,14 +85,14 @@ class ParserWithCallback(argparse.ArgumentParser):
 
 class MainParser(argparse.ArgumentParser):
     """
-    Class for the main custom parser. 
+    Class for the main custom parser.
     The MainParser structure is the following:
     |--- global_options_parser
     |    |  Parser for options valid for both the `amami` program and all its commands
     |    |  (for example the '--help' option: `amami --help` or `amami um2nc --help`)
     |    |
     |    self (MainParser)
-    |    |  Parser for options valid only for the `amami` program 
+    |    |  Parser for options valid only for the `amami` program
     |    |  (for example the '--version' option: `amami --version`)
     |    |
     |    |--- command_parser
@@ -119,10 +119,10 @@ class MainParser(argparse.ArgumentParser):
         self.common_options_parser = self._generate_common_parser()
         self.generate_subparsers()
 
-    @staticmethod
+    @ staticmethod
     def _generate_global_parser() -> argparse.ArgumentParser:
         """
-        Generate the global options parser, for options valid for both the `amami` 
+        Generate the global options parser, for options valid for both the `amami`
         program and its commands.
         """
         # Create parser
