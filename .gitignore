@@ -7,3 +7,5 @@ amami.egg-info/
 .DS_Store
 .idea/
 .coverage
+amami/commands/test.py
+amami/parsers/test_parser.py

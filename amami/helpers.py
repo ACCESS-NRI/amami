@@ -8,33 +8,38 @@ Miscellaneous module for different utility functions.
 """
 
 import os
-from amami.loggers import LOGGER
+import itertools
+from amami.exceptions import ParsingError
 
-def get_abspath(
-    fpath:str,
-    check:bool=True,
-    checkdir:bool=False
-    ) -> str:
+
+# TODO: refactor/delete, let I/O ops raise ParsingErrors on missing files
+def get_abspath(fpath: str, check: bool = True, checkdir: bool = False) -> str:
     """
-    Return an absolute path from the provided path and optionally check if path or 
-    directory exists.
+    Return absolute path from given path.
+
+    :param fpath:
+    :param check:
+    :param checkdir: True to check if base directory exists.
     """
     if checkdir:
         check = False
     abspath = os.path.abspath(fpath)
+
     if check and not os.path.exists(abspath):
-        LOGGER.error(f"File '{abspath}' does not exist.")
-    elif checkdir and not os.path.exists(absdir:=os.path.dirname(abspath)):
-        LOGGER.error(f"Directory '{absdir}' does not exist.")
+        raise ParsingError(f"File '{abspath}' does not exist.")
+    elif checkdir:
+        absdir = os.path.dirname(abspath)
+
+        if not os.path.exists(absdir):
+            raise ParsingError(f"Directory '{absdir}' does not exist.")
     return abspath
 
+
+# TODO: rename file --> path as func does not create the file
 def create_unexistent_file(path):
     """
-    Create a new file.
+    Return unique file path by adding a numeric suffix.
     """
-    n=1
-    newpath = path
-    while os.path.exists(newpath):
-        n+=1
-        newpath = f"{path}_{n}"
-    return newpath
+    for n in itertools.count(1):
+        if not os.path.exists(new_path := f"{path}_{n}"):
+            return new_path
