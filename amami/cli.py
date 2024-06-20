@@ -16,9 +16,18 @@ class Amami:
         self,
         argv: list[str],
     ) -> None:
-        self.args = MainParser().parse_with_callback(
-            argv[1:] if argv[1:] else ["-h"]
-        )
+        # show help when amami is called without arguments or only with supported global option
+        parser = MainParser()
+        global_options = parser.global_options_parser._option_string_actions.keys()
+        if argv[1:]:
+            if all(ar in global_options for ar in argv[1:]):
+                args = ["-h"] + argv[1:]
+            else:
+                args = argv[1:]
+        else:
+            args = ["-h"]
+        argv = argv if argv else sys.argv
+        self.args = parser.parse_with_callback(args)
 
     def run_command_main_function(self):
         """

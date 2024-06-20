@@ -8,6 +8,7 @@ import pkgutil
 import amami
 from typing import Union, Callable
 from importlib import import_module
+from rich_argparse import RawTextRichHelpFormatter, RawDescriptionRichHelpFormatter
 from amami.loggers import LOGGER, CONSOLE_STDOUT, CONSOLE_STDERR
 from amami.exceptions import ParsingError
 from amami import commands as amami_commands
@@ -62,10 +63,19 @@ class NoStylingAction(argparse.Action):
         # Set _color_sistem = None to disable styling and colours for rich consoles
         CONSOLE_STDOUT._color_system = None
         CONSOLE_STDERR._color_system = None
+        print('poor action called')
 
 
-class ParseFormatter(argparse.RawTextHelpFormatter, argparse.RawDescriptionHelpFormatter):
-    """Class to combine argparse Help and Description formatters"""
+# class ParseFormatter(argparse.RawTextHelpFormatter, argparse.RawDescriptionHelpFormatter):
+#     """Class to combine argparse Help and Description formatters"""
+class RichParseFormatter(RawTextRichHelpFormatter, RawDescriptionRichHelpFormatter):
+    """Class to format argparse Help and Description with rich_argparse"""
+
+
+# Override RichParseFormatter styles
+# for %(prog)s in the usage (e.g. "foo" in "Usage: foo [options]")
+RichParseFormatter.styles['argparse.prog'] = 'rgb(145,185,220)'
+RichParseFormatter.console = CONSOLE_STDOUT
 
 
 class ParserWithCallback(argparse.ArgumentParser):
@@ -85,7 +95,7 @@ class ParserWithCallback(argparse.ArgumentParser):
 
 class MainParser(argparse.ArgumentParser):
     """
-    Class for the main custom parser.
+    Class for the main parser.
     The MainParser structure is the following:
     |--- global_options_parser
     |    |  Parser for options valid for both the `amami` program and all its commands
@@ -132,21 +142,20 @@ class MainParser(argparse.ArgumentParser):
             argument_default=argparse.SUPPRESS,
         )
 
+        # Add no colours option
+        global_parser.add_argument(
+            "--poor", "--nocolours", "--nocolors", "--nostyles",
+            action=NoStylingAction,
+            help="""Remove colours and styles from output messages.
+(Remove the functionality brought by the 'rich' Python package - https://rich.readthedocs.io/en/latest/index.html).
+
+""")
         # Add help option
         global_parser.add_argument(
             "-h",
             "--help",
             action="help",
             help="""Show this help message and exit.
-
-""")
-
-        # Add no colours option
-        global_parser.add_argument(
-            "--poor", "--nostyles", "--nocolours", "--nocolors",
-            action=NoStylingAction,
-            help="""Remove colours and styles from output messages.
-(Remove the functionality brought by the 'rich' Python package - https://rich.readthedocs.io/en/latest/index.html).
 
 """)
         return global_parser
@@ -158,7 +167,7 @@ class MainParser(argparse.ArgumentParser):
             usage=None,
             description=amami.__doc__,
             parents=[self.global_options_parser],
-            formatter_class=ParseFormatter,
+            formatter_class=RichParseFormatter,
             add_help=False,
             allow_abbrev=False,
         )
@@ -247,9 +256,9 @@ Cannot be used together with '-s/--silent' or '-v/--verbose'.
                 ],
                 usage=" ".join(subparser.usage.split()),
                 description=subparser.description,
-                formatter_class=ParseFormatter,
+                formatter_class=self.formatter_class,
                 allow_abbrev=False,
-                callback=subparser.callback,
+                callback=subparser.callback,  # type: ignore
             )
 
     def parse_with_callback(

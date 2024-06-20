@@ -13,11 +13,17 @@ from rich.theme import Theme
 
 # Override some default rich stylings and add custom ones
 custom_rich_theme = Theme({
+    # Custom styling for string representation
     "repr.str": "not bold not italic rgb(105,195,65)",
+    # Custom styling for DEBUG logging level
     'logging.level.debug': 'bold medium_orchid',
+    # Custom styling for INFO logging level
     'logging.level.info': 'bold dodger_blue1',
+    # Custom styling for WARNING logging level
     'logging.level.warning': 'bold orange3',
+    # Custom styling for ERROR logging level
     'logging.level.error': 'bold rgb(190,40,40)',
+    # Custom styling for amami <command> in logs
     'amami_command': 'bold italic rgb(145,185,220)',
 })
 # Create consoles for rich output
