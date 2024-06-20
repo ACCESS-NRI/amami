@@ -9,7 +9,7 @@ custom warning formatting.
 import sys
 import traceback
 import warnings
-from amami.loggers import LOGGER, POOR_LOGGER
+from amami.loggers import LOGGER, POOR_LOGGER, CONSOLE_STDERR
 
 
 class AmamiError(Exception):
@@ -39,9 +39,13 @@ def custom_excepthook(exc_type, exc_value, exc_traceback):
     if issubclass(exc_type, AmamiError):
         # If the logger is enabled for DEBUG level print the traceback
         if LOGGER.isEnabledFor(10):
-            print("\n*** Traceback (most recent call last) ***\n", file=sys.stderr)
+            CONSOLE_STDERR.print(
+                "\n*** Traceback (most recent call last) ***\n")
             traceback.print_tb(exc_traceback)
-        LOGGER.error("%s", exc_value)
+            CONSOLE_STDERR.print(
+                f"[logging.level.error]{exc_type.__name__}[/] [bold]-[/] {exc_value}")
+        else:
+            LOGGER.error("%s", exc_value)
     else:
         sys.__excepthook__(exc_type, exc_value, exc_traceback)
 
