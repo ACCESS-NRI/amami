@@ -9,10 +9,20 @@ import logging
 import amami
 from rich.logging import RichHandler
 from rich.console import Console
+from rich.theme import Theme
 
+# Override some default rich stylings and add custom ones
+custom_rich_theme = Theme({
+    "repr.str": "not bold not italic rgb(105,195,65)",
+    'logging.level.debug': 'bold medium_orchid',
+    'logging.level.info': 'bold dodger_blue1',
+    'logging.level.warning': 'bold orange3',
+    'logging.level.error': 'bold rgb(190,40,40)',
+    'amami_command': 'bold italic rgb(145,185,220)',
+})
 # Create consoles for rich output
-CONSOLE_STDOUT = Console()
-CONSOLE_STDERR = Console(stderr=True)
+CONSOLE_STDOUT = Console(theme=custom_rich_theme)
+CONSOLE_STDERR = Console(theme=custom_rich_theme, stderr=True)
 
 
 class CustomLogRecord(logging.LogRecord):
@@ -24,7 +34,7 @@ class CustomLogRecord(logging.LogRecord):
                  msg, args, exc_info, func=None, sinfo=None, **kwargs):
         # Add amami command to message
         command = f" {amami.__command__}" if amami.__command__ else ""
-        new_msg = f"amami{command}: {msg}"
+        new_msg = f"[amami_command]{amami.__name__}{command}[/]: {msg}"
         super().__init__(name, level, pathname, lineno,
                          new_msg, args, exc_info, func=None,
                          sinfo=None, **kwargs)
@@ -42,6 +52,7 @@ def generate_logger(name, markup=True):
         markup=markup,
         show_time=False,
         show_path=False,
+        keywords=[],
     )
     outhandler.addFilter(lambda record: record.levelno < logging.WARNING)
     # Create handler for stderr and add filter to send there anything from WARNING above
@@ -50,6 +61,7 @@ def generate_logger(name, markup=True):
         markup=markup,
         show_time=False,
         show_path=False,
+        keywords=[],
     )
     errhandler.addFilter(lambda record: record.levelno >= logging.WARNING)
     # Add handlers to logger
