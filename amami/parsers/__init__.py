@@ -63,19 +63,30 @@ class NoStylingAction(argparse.Action):
         # Set _color_sistem = None to disable styling and colours for rich consoles
         CONSOLE_STDOUT._color_system = None
         CONSOLE_STDERR._color_system = None
-        print('poor action called')
 
 
 # class ParseFormatter(argparse.RawTextHelpFormatter, argparse.RawDescriptionHelpFormatter):
 #     """Class to combine argparse Help and Description formatters"""
 class RichParseFormatter(RawTextRichHelpFormatter, RawDescriptionRichHelpFormatter):
-    """Class to format argparse Help and Description with rich_argparse"""
+    """
+    Class to format argparse Help and Description using the raw help and description classes from rich_argparse
+    """
 
 
-# Override RichParseFormatter styles
+# Set RichParseFormatter console
+RichParseFormatter.console = CONSOLE_STDOUT
+# Add/Override RichParseFormatter styles
 # for %(prog)s in the usage (e.g. "foo" in "Usage: foo [options]")
 RichParseFormatter.styles['argparse.prog'] = 'rgb(145,185,220)'
-RichParseFormatter.console = CONSOLE_STDOUT
+RichParseFormatter.styles['argparse.link'] = RichParseFormatter.console.get_style(
+    'repr.url')
+# Add RichParseFormatter highlights rules
+# Highlight amami/AMAMI
+RichParseFormatter.highlights.append(r"(?i)(?:^|\s)(?P<prog>amami)(?:$|\s)")
+# Highlight links
+RichParseFormatter.highlights.append(
+    r"(?:^|\s)(?P<link>http[s]?:[\\/]{2}[^\s]*[\w\\/_-])"
+)
 
 
 class ParserWithCallback(argparse.ArgumentParser):
@@ -146,8 +157,7 @@ class MainParser(argparse.ArgumentParser):
         global_parser.add_argument(
             "--poor", "--nocolours", "--nocolors", "--nostyles",
             action=NoStylingAction,
-            help="""Remove colours and styles from output messages.
-(Remove the functionality brought by the 'rich' Python package - https://rich.readthedocs.io/en/latest/index.html).
+            help="""Remove colours and styles from terminal output.
 
 """)
         # Add help option

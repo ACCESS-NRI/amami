@@ -27,14 +27,12 @@ For more information about ACCESS models and components, please refer to https:/
 Created at ACCESS-NRI.
 If you want to report any bugs, issues, or would like to request any functionality to be added to the \
 AMAMI package, please refer to the issue page of the GitHub repository: https://github.com/ACCESS-NRI/amami/issues.
- 
- 
- 
-List of supported commands:
 
- [bold]command[/]   [bold]description[/]
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- [rgb(10,150,200)]um2nc[/]     [rgb(215,175,30)]Convert a UM fieldsfile (https://code.metoffice.gov.uk/doc/um/latest/papers/umdp_F03.pdf) to netCDF.[/]    
+[argparse.groups]List of commands:[/]
+
+ [bold]Command[/]   [bold]Description[/]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ [rgb(10,150,200)]um2nc[/]     [rgb(215,175,30)]Convert a UM fieldsfile to netCDF.[/]
 
 For more information about a specific command, run `amami <command> -h`.
 """

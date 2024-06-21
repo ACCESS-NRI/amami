@@ -13,8 +13,10 @@ from rich.theme import Theme
 
 # Override some default rich stylings and add custom ones
 custom_rich_theme = Theme({
-    # Custom styling for string representation
+    # Custom styling for string highlight
     "repr.str": "not bold not italic rgb(105,195,65)",
+    # Custom styling for url highlight
+    'repr.url': 'not bold not italic underline rgb(145,205,230)',
     # Custom styling for DEBUG logging level
     'logging.level.debug': 'bold medium_orchid',
     # Custom styling for INFO logging level
