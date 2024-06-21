@@ -21,12 +21,11 @@ class Amami:
         global_options = parser.global_options_parser._option_string_actions.keys()
         if argv[1:]:
             if all(ar in global_options for ar in argv[1:]):
-                args = ["-h"] + argv[1:]
+                args = argv[1:]+["-h"]
             else:
                 args = argv[1:]
         else:
             args = ["-h"]
-        argv = argv if argv else sys.argv
         self.args = parser.parse_with_callback(args)
 
     def run_command_main_function(self):

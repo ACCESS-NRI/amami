@@ -270,6 +270,12 @@ Cannot be used together with '-s/--silent' or '-v/--verbose'.
         Parse known and unknown arguments and calls a callback on them,
         according to the specified command.
         """
+
+        # Make sure '--poor' (or related) option is always executed first to avoid printing help disregarding it
+        if any(lst := [arg in self.global_options_parser._option_string_actions['--poor'].option_strings for arg in args[0]]):
+            # Move the option as first argument
+            args[0].insert(0, args[0].pop(lst.index(True)))
+
         known_args, unknown_args = self.parse_known_args(*args, **kwargs)
         # Keep track of the command used
         amami.__command__ = known_args.command
