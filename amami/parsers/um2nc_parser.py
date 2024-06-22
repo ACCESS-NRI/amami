@@ -2,9 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 """
-Module to define the parser for the `um2nc` command.
-
-Script created by Davide Marchegiani (davide.marchegiani@anu.edu.au) at ACCESS-NRI.
+Module to define the parser for the 'um2nc' command.
 """
 
 import argparse
@@ -14,9 +12,9 @@ from amami.parsers import ParserWithCallback
 from amami.exceptions import ParsingError
 
 
-DESCRIPTION = """
+DESCRIPTION = """\
 Convert UM fieldsfile to netCDF.
-For more information about UM fieldsfiles, please refer to
+For more information about UM fieldsfiles, please refer to \
 https://code.metoffice.gov.uk/doc/um/latest/papers/umdp_F03.pdf (MOSRS account needed).
 
 Examples:
@@ -29,13 +27,6 @@ Converts INPUT_FILE to netCDF and saves the output as OUTPUT_FILE. Verbosity is 
 `um2nc [-i] INPUT_FILE [-o] OUTPUT_FILE --format NETCDF3_CLASSIC --simple`
 Converts INPUT_FILE to a NETCDF3 CLASSIC netCDF, using "simple" variable names
 (in the form "fld_s01i123"), and saves the output as OUTPUT_FILE.
-"""
-
-USAGE = """
-amami um2nc [-h] [-i] INPUT_FILE [[-o] OUTPUT_FILE] [-v|-s|--debug]
-[--format {NETCDF4,NETCDF4_CLASSIC,NETCDF3_CLASSIC,NETCDF3_64BIT,1,2,3,4}]
-[-c COMPRESSION] [--64] [--nohist] [--simple] [--nomask|--hcrit HCRIT]
-[--include STASH_CODE1 [STASH_CODE2 ...]|--exclude STASH_CODE1 [STASH_CODE2 ...]]
 """
 
 
@@ -85,7 +76,6 @@ def callback_function(known_args: argparse.Namespace, unknown_args: List[str]) -
 
 # Create parser
 PARSER = ParserWithCallback(
-    usage=USAGE,
     description=DESCRIPTION,
     callback=callback_function,
 )
@@ -168,7 +158,7 @@ mutual1.add_argument(
     dest='nomask',
     action='store_true',
     help="""Don't apply heavyside function mask to pressure level fields.
-Cannot be used together with '--hcrit'.
+Cannot be used together with --hcrit.
 
 """
 )
@@ -179,7 +169,7 @@ mutual1.add_argument(
     default=0.5,
     help="""Critical value of heavyside function for pressure level masking.
 Default: 0.5.
-Cannot be used together with '--nomask'.
+Cannot be used together with --nomask.
 
 """
 )
@@ -192,7 +182,7 @@ mutual2.add_argument(
     nargs='+',
     help="""List of STASH codes to include in the netCDF conversion.
 Only the variables with the included STASH codes will be converted.
-Cannot be used together with '--exclude'.
+Cannot be used together with --exclude.
 
 """
 )
@@ -204,7 +194,7 @@ mutual2.add_argument(
     nargs='+',
     help="""List of STASH codes to exclude from the netCDF conversion.
 The variables with the excluded STASH codes will not be converted.
-Cannot be used together with '--include'.
+Cannot be used together with --include.
 
 """
 )

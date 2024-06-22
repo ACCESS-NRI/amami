@@ -8,7 +8,7 @@ import pkgutil
 import amami
 from typing import Union, Callable
 from importlib import import_module
-from rich_argparse import RawTextRichHelpFormatter, RawDescriptionRichHelpFormatter
+from rich_argparse import RawTextRichHelpFormatter, RawDescriptionRichHelpFormatter, RichHelpFormatter
 from amami.loggers import LOGGER, CONSOLE_STDOUT, CONSOLE_STDERR
 from amami.exceptions import ParsingError
 from amami import commands as amami_commands
@@ -80,7 +80,21 @@ RichParseFormatter.console = CONSOLE_STDOUT
 RichParseFormatter.styles['argparse.prog'] = 'rgb(145,185,220)'
 RichParseFormatter.styles['argparse.link'] = RichParseFormatter.console.get_style(
     'repr.url')
-# Add RichParseFormatter highlights rules
+# Overwrite RichParseFormatter highlights rules
+# # Clear highlights rules
+# RichParseFormatter.highlights.clear()
+RichParseFormatter.highlights = [
+    # Highlight options (prefixed with '--' or '-')
+    '(?:^|[\\s[({`])(?P<args>-{1,2}[\\w]+[\\w-]*)',
+    # '(?:^|\\s)(?P<args>-{1,2}[\\w]+[\\w-]*)',
+    # Highlight text wrapped with backticks (`...`)
+    '`(?P<syntax>[^`]*)`',
+    # Highlight 'amami'/'AMAMI'
+    '(?i)(?:^|\\s)(?P<prog>amami)(?:$|\\s)',
+    # Highlight 'links'
+    '(?:^|\\s)(?P<link>http[s]?:[\\\\/]{2}[^\\s]*[\\w\\\\/_-])',
+]
+
 # Highlight amami/AMAMI
 RichParseFormatter.highlights.append(r"(?i)(?:^|\s)(?P<prog>amami)(?:$|\s)")
 # Highlight links
@@ -175,7 +189,7 @@ class MainParser(argparse.ArgumentParser):
         super().__init__(
             prog=amami.__name__,
             usage=None,
-            description=amami.__doc__,
+            description=self._add_description_title(amami.__doc__),
             parents=[self.global_options_parser],
             formatter_class=RichParseFormatter,
             add_help=False,
@@ -208,7 +222,7 @@ class MainParser(argparse.ArgumentParser):
             dest="verbose",
             action=VerboseAction,
             help="""Enable verbose output.
-Cannot be used together with '-s/--silent' or '--debug'.
+Cannot be used together with --silent or --debug.
 
 """,
         )
@@ -219,7 +233,7 @@ Cannot be used together with '-s/--silent' or '--debug'.
             dest="silent",
             action=SilentAction,
             help="""Make output completely silent(do not show warnings).
-Cannot be used together with '-v/--verbose' or '--debug'.
+Cannot be used together with --verbose or --debug.
 
 """,
         )
@@ -229,7 +243,7 @@ Cannot be used together with '-v/--verbose' or '--debug'.
             dest="debug",
             action=DebugAction,
             help="""Enable debug mode.
-Cannot be used together with '-s/--silent' or '-v/--verbose'.
+Cannot be used together with --silent or --verbose.
 
 """,
         )
@@ -249,7 +263,7 @@ Cannot be used together with '-s/--silent' or '-v/--verbose'.
         Each command parser file needs to be in the amami/parsers folder and the filename
         needs to be in the format '<command>_parser.py'.
         For example, the parser for the 'um2nc' command should be named 'um2nc_parser.py'.
-        Each command parser file should have a 'PARSER' variable as an instance of 
+        Each command parser file should have a 'PARSER' variable as an instance of
         'ParserWithCallback' that represents the command parser.
         """
         for command in COMMANDS:
@@ -264,8 +278,7 @@ Cannot be used together with '-s/--silent' or '-v/--verbose'.
                     self.common_options_parser,
                     subparser,
                 ],
-                usage=" ".join(subparser.usage.split()),
-                description=subparser.description,
+                description=self._add_description_title(subparser.description),
                 formatter_class=self.formatter_class,
                 allow_abbrev=False,
                 callback=subparser.callback,  # type: ignore
@@ -300,3 +313,10 @@ Cannot be used together with '-s/--silent' or '-v/--verbose'.
             raise ParsingError(f"Too many arguments: {unknown_args}.")
         else:
             return known_args
+
+    @staticmethod
+    def _add_description_title(description_text: str) -> str:
+        """
+        Add a title to the description of the parser, coloured using rich.
+        """
+        return f"[argparse.groups]Description:[/]\n{description_text}"

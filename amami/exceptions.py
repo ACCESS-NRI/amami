@@ -33,7 +33,7 @@ class AmamiNotImplementedError(AmamiError):
 
 
 # Create custom exception hook to customize the exceptions formatting
-# via the logging module.
+# using the logging module.
 def custom_excepthook(exc_type, exc_value, exc_traceback):
     """Custom excepthook to handle exceptions."""
     if issubclass(exc_type, AmamiError):
@@ -55,7 +55,7 @@ sys.excepthook = custom_excepthook
 
 
 # Make external warnings (not raised by amami) use LOGGER.warning
-# instead of the default format
+# instead of the default format, but don't use rich colouring
 def external_warning_formatting(
     message,
     category,
@@ -66,7 +66,7 @@ def external_warning_formatting(
 ):
     """
     Custom formatting for warnings, to use 'LOGGER.warning'
-    and keep proper indentation.
+    but don't use rich colouring.
     """
     POOR_LOGGER.warning(
         "%s:%s - %s",
