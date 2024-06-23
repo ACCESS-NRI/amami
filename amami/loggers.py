@@ -7,30 +7,7 @@ Module to control logging for 'amami' package
 
 import logging
 import amami
-from rich.logging import RichHandler
-from rich.console import Console
-from rich.theme import Theme
-
-# Override some default rich stylings and add custom ones
-custom_rich_theme = Theme({
-    # Custom styling for string highlight
-    "repr.str": "not bold not italic rgb(105,185,65)",
-    # Custom styling for url highlight
-    'repr.url': 'not bold not italic underline rgb(125,185,105)',
-    # Custom styling for DEBUG logging level
-    'logging.level.debug': 'bold medium_orchid',
-    # Custom styling for INFO logging level
-    'logging.level.info': 'bold dodger_blue1',
-    # Custom styling for WARNING logging level
-    'logging.level.warning': 'bold orange3',
-    # Custom styling for ERROR logging level
-    'logging.level.error': 'bold rgb(190,40,40)',
-    # Custom styling for amami <command> in logs
-    'amami_command': 'bold italic rgb(145,185,220)',
-})
-# Create consoles for rich output
-CONSOLE_STDOUT = Console(theme=custom_rich_theme)
-CONSOLE_STDERR = Console(theme=custom_rich_theme, stderr=True)
+from amami.rich_amami import generate_rich_handler
 
 
 class CustomLogRecord(logging.LogRecord):
@@ -48,29 +25,15 @@ class CustomLogRecord(logging.LogRecord):
                          sinfo=None, **kwargs)
 
 
-def generate_logger(name, markup=True):
+def generate_logger(name, outhandler, errhandler):
     """Generate custom logger that uses rich formatting"""
     # Set custom logRecordFactory to apply indentation to logging messages
     logging._logRecordFactory = CustomLogRecord  # type: ignore
     # Get logger
     logger = logging.getLogger(name)
     # Create handler for stdout and add filter to send there anything below WARNING
-    outhandler = RichHandler(
-        console=CONSOLE_STDOUT,
-        markup=markup,
-        show_time=False,
-        show_path=False,
-        keywords=[],
-    )
     outhandler.addFilter(lambda record: record.levelno < logging.WARNING)
     # Create handler for stderr and add filter to send there anything from WARNING above
-    errhandler = RichHandler(
-        console=CONSOLE_STDERR,
-        markup=markup,
-        show_time=False,
-        show_path=False,
-        keywords=[],
-    )
     errhandler.addFilter(lambda record: record.levelno >= logging.WARNING)
     # Add handlers to logger
     logger.addHandler(outhandler)
@@ -79,6 +42,14 @@ def generate_logger(name, markup=True):
 
 
 # Create main logger
-LOGGER = generate_logger(__name__)
+LOGGER = generate_logger(
+    name=__name__,
+    outhandler=generate_rich_handler(markup=True),
+    errhandler=generate_rich_handler(stdout=False, markup=True)
+)
 # Create logger without markup formatting (needed mostly for external warnings )
-POOR_LOGGER = generate_logger('nomarkup', markup=False)
+POOR_LOGGER = generate_logger(
+    name='nomarkup',
+    outhandler=generate_rich_handler(markup=False),
+    errhandler=generate_rich_handler(stdout=False, markup=False)
+)

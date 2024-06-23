@@ -9,7 +9,8 @@ custom warning formatting.
 import sys
 import traceback
 import warnings
-from amami.loggers import LOGGER, POOR_LOGGER, CONSOLE_STDERR
+from amami.loggers import LOGGER, POOR_LOGGER
+from amami.rich_amami import CONSOLE_STDERR
 
 
 class AmamiError(Exception):

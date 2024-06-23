@@ -20,7 +20,7 @@ except importlib.metadata.PackageNotFoundError:
 
 # Description of the package styled using rich markup
 __doc__ = """\
-AMAMI (ACCESS Models Ancessory Manipulation Interface) is a CLI package to facilitate the \
+AMAMI (ACCESS Models Accessory Manipulation Interface) is a CLI package to facilitate the \
 manipulation of input and output files associated with ACCESS models and their components.
 For more information about ACCESS models and components, please refer to https://access-hive.org.au/models/.
 

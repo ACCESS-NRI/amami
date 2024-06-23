@@ -8,10 +8,10 @@ import pkgutil
 import amami
 from typing import Union, Callable
 from importlib import import_module
-from rich_argparse import RawTextRichHelpFormatter, RawDescriptionRichHelpFormatter, RichHelpFormatter
-from amami.loggers import LOGGER, CONSOLE_STDOUT, CONSOLE_STDERR
+import amami.commands as amami_commands
+from amami.loggers import LOGGER
+from amami.rich_amami import CONSOLE_STDOUT, CONSOLE_STDERR, RichParseFormatter
 from amami.exceptions import ParsingError
-from amami import commands as amami_commands
 
 
 # Dynamically declare commands by checking files in the amami/commands folder
@@ -63,44 +63,6 @@ class NoStylingAction(argparse.Action):
         # Set _color_sistem = None to disable styling and colours for rich consoles
         CONSOLE_STDOUT._color_system = None
         CONSOLE_STDERR._color_system = None
-
-
-# class ParseFormatter(argparse.RawTextHelpFormatter, argparse.RawDescriptionHelpFormatter):
-#     """Class to combine argparse Help and Description formatters"""
-class RichParseFormatter(RawTextRichHelpFormatter, RawDescriptionRichHelpFormatter):
-    """
-    Class to format argparse Help and Description using the raw help and description classes from rich_argparse
-    """
-
-
-# Set RichParseFormatter console
-RichParseFormatter.console = CONSOLE_STDOUT
-# Add/Override RichParseFormatter styles
-# for %(prog)s in the usage (e.g. "foo" in "Usage: foo [options]")
-RichParseFormatter.styles['argparse.prog'] = 'rgb(145,185,220)'
-RichParseFormatter.styles['argparse.link'] = RichParseFormatter.console.get_style(
-    'repr.url')
-# Overwrite RichParseFormatter highlights rules
-# # Clear highlights rules
-# RichParseFormatter.highlights.clear()
-RichParseFormatter.highlights = [
-    # Highlight options (prefixed with '--' or '-')
-    '(?:^|[\\s[({`])(?P<args>-{1,2}[\\w]+[\\w-]*)',
-    # '(?:^|\\s)(?P<args>-{1,2}[\\w]+[\\w-]*)',
-    # Highlight text wrapped with backticks (`...`)
-    '`(?P<syntax>[^`]*)`',
-    # Highlight 'amami'/'AMAMI'
-    '(?i)(?:^|\\s)(?P<prog>amami)(?:$|\\s)',
-    # Highlight 'links'
-    '(?:^|\\s)(?P<link>http[s]?:[\\\\/]{2}[^\\s]*[\\w\\\\/_-])',
-]
-
-# Highlight amami/AMAMI
-RichParseFormatter.highlights.append(r"(?i)(?:^|\s)(?P<prog>amami)(?:$|\s)")
-# Highlight links
-RichParseFormatter.highlights.append(
-    r"(?:^|\s)(?P<link>http[s]?:[\\/]{2}[^\s]*[\w\\/_-])"
-)
 
 
 class ParserWithCallback(argparse.ArgumentParser):
