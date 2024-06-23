@@ -1,6 +1,6 @@
-# ACCESS Models Ancillary Manipulation Instruments (AMAMI)
+# ACCESS Models Accessory Manipulation Interface (AMAMI)
 
-`amami` is a CLI that bundles a set of commands to handle UM ancillary files.
+`amami` is a CLI that bundles a set of commands to handle ACCESS models input and output files.
 
 ## Usage 
 To execute a command run:
