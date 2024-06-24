@@ -94,7 +94,7 @@ class MainParser(argparse.ArgumentParser):
     |    |
     |    |--- command_parser
     |    |    |  Parser for the `amami` commands
-    |    |    |  (for example: `amami um2nc` or `amami modfy`)
+    |    |    |  (for example: `amami um2nc` or `amami modify`)
     |    |    |
     |    |    |--- common_options_parser
     |    |    |     Parser for options valid for all `amami` commands

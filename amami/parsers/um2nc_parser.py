@@ -18,14 +18,14 @@ For more information about UM fieldsfiles, please refer to \
 https://code.metoffice.gov.uk/doc/um/latest/papers/umdp_F03.pdf (MOSRS account needed).
 
 Examples:
-`um2nc [-i] INPUT_FILE`
+`amami um2nc [-i] INPUT_FILE`
 Converts INPUT_FILE to netCDF and saves the output as INPUT_FILE.nc.
 
-`um2nc [-i] INPUT_FILE [-o] OUTPUT_FILE -v`
+`amami um2nc [-i] INPUT_FILE [-o] OUTPUT_FILE -v`
 Converts INPUT_FILE to netCDF and saves the output as OUTPUT_FILE. Verbosity is enabled.
 
-`um2nc [-i] INPUT_FILE [-o] OUTPUT_FILE --format NETCDF3_CLASSIC --simple`
-Converts INPUT_FILE to a NETCDF3 CLASSIC netCDF, using "simple" variable names
+`amami um2nc [-i] INPUT_FILE [-o] OUTPUT_FILE --format NETCDF3_CLASSIC --simple`
+Converts INPUT_FILE to a NETCDF3 CLASSIC netCDF, using "simple" variable names \
 (in the form "fld_s01i123"), and saves the output as OUTPUT_FILE.
 """
 

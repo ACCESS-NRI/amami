@@ -8,12 +8,12 @@ To execute a command run:
 amami <command>
 ```
 
-## Supported commands
-- `um2nc`<br>
-  Converts a UM fieldsfile to NetCDF.
-
 For help on how to use a specific command, run:
 ```
 amami <command> --help
 ```
+
+## List of commands
+- `um2nc`<br>
+  Converts a UM fieldsfile to NetCDF.
 

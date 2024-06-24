@@ -55,6 +55,7 @@ RichParseFormatter.console = CONSOLE_STDOUT
 # Add/Override RichParseFormatter styles
 # for %(prog)s in the usage (e.g. "foo" in "Usage: foo [options]")
 RichParseFormatter.styles['argparse.prog'] = 'rgb(145,185,220)'
+# for URLs
 RichParseFormatter.styles['argparse.link'] = RichParseFormatter.console.get_style(
     'repr.url')
 # Overwrite RichParseFormatter highlights rules
@@ -63,11 +64,8 @@ RichParseFormatter.styles['argparse.link'] = RichParseFormatter.console.get_styl
 RichParseFormatter.highlights = [
     # Highlight options (prefixed with '--' or '-')
     '(?:^|[\\s[({`])(?P<args>-{1,2}[\\w]+[\\w-]*)',
-    # '(?:^|\\s)(?P<args>-{1,2}[\\w]+[\\w-]*)',
     # Highlight text wrapped with backticks (`...`)
     '`(?P<syntax>[^`]*)`',
-    # Highlight 'amami'/'AMAMI'
-    # '(?i)(?:^|\\s)(?P<prog>amami)(?:$|\\s)',
     # Highlight 'links'
     '(?:^|\\s)(?P<link>http[s]?:[\\\\/]{2}[^\\s]*[\\w\\\\/_-])',
 ]

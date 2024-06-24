@@ -41,10 +41,15 @@ def custom_excepthook(exc_type, exc_value, exc_traceback):
         # If the logger is enabled for DEBUG level print the traceback
         if LOGGER.isEnabledFor(10):
             CONSOLE_STDERR.print(
-                "\n*** Traceback (most recent call last) ***\n")
+                "\n*** Traceback (most recent call last) ***\n",
+                highlight=False,
+            )
             traceback.print_tb(exc_traceback)
             CONSOLE_STDERR.print(
-                f"[logging.level.error]{exc_type.__name__}[/] [bold]-[/] {exc_value}")
+                f"[logging.level.error]{exc_type.__name__}[/] [bold]-[/] {exc_value}",
+                highlight=False,
+                markup=False,
+            )
         else:
             LOGGER.error("%s", exc_value)
     else:
